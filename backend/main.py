@@ -1,0 +1,1240 @@
+from fastapi import FastAPI, HTTPException, Depends, Request
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from contextlib import asynccontextmanager
+import time
+from datetime import datetime
+
+from config import settings
+from database import get_db, init_db
+from models import (
+    ProjectCreate, ProjectResponse, AnalyzeURLRequest, AnalyzeTextRequest,
+    AnalysisResponse, InsightRequest, InsightResponse, Project, ContentItem, AnalysisResult, Insight,
+    HistoryResponse, HistoryItem, OptimizeContentRequest, SimulateAIRequest,
+    User, UserCreate, UserLogin, UserResponse, Token,
+    CitationTrackRequest, CompetitorCompareRequest, CitationTracking, CompetitorComparison
+)
+import models
+from content_fetcher import ContentFetcher
+from chunker import ContentChunker
+from vector_store import VectorStore
+from scoring import RuleBasedScorer, LLMScorer, ScoreAggregator
+from rag import RAGPipeline
+from monitoring import MonitoringService
+from citation_tracker import CitationTracker
+from competitor_analyzer import CompetitorAnalyzer
+from probability_model import CitationProbabilityModel
+from discovery_engine import PromptDiscoveryEngine
+from auth import (
+    get_password_hash, verify_password, create_access_token,
+    get_current_user, require_auth
+)
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+import bleach
+from logger import app_logger
+
+# Initialize Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize database on startup."""
+    init_db()
+    yield
+
+
+# Create FastAPI app
+app = FastAPI(
+    title="GEO Agent API",
+    description="Generative Engine Optimization Analysis API",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Setup Rate Limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize services
+content_fetcher = ContentFetcher()
+chunker = ContentChunker()
+vector_store = VectorStore()
+rule_scorer = RuleBasedScorer()
+llm_scorer = LLMScorer()
+aggregator = ScoreAggregator()
+rag_pipeline = RAGPipeline()
+citation_tracker = CitationTracker()
+competitor_analyzer = CompetitorAnalyzer(content_fetcher, rule_scorer, llm_scorer, aggregator)
+probability_model = CitationProbabilityModel()
+discovery_engine = PromptDiscoveryEngine()
+
+
+class ExtractContentRequest(BaseModel):
+    url: str
+
+@app.post("/api/extract-content")
+async def extract_content_from_url(request: ExtractContentRequest):
+    """Extract raw content from a URL for the frontend editor."""
+    try:
+        # Use existing fetcher
+        content_data = await content_fetcher.fetch(request.url)
+        return {
+            "content": content_data['content'],
+            "title": content_data.get('title', ''),
+            "success": True
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch content: {str(e)}")
+
+
+@app.get("/")
+def root():
+    """Root endpoint."""
+    return {
+        "message": "GEO Agent API",
+        "version": "1.0.0",
+        "endpoints": {
+            "analyze_url": "/api/analyze-url",
+            "analyze_text": "/api/analyze-text",
+            "projects": "/api/projects",
+            "insights": "/api/generate-insights"
+        }
+    }
+
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "vector_store": vector_store.get_collection_stats()
+    }
+
+
+# ========================
+# Authentication Endpoints
+# ========================
+
+@app.post("/api/auth/register", response_model=Token)
+def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
+    """Register a new user."""
+    # Check if email exists
+    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create user
+    hashed_password = get_password_hash(user_data.password)
+    new_user = User(
+        email=user_data.email,
+        hashed_password=hashed_password,
+        name=user_data.name
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    # Create token
+    access_token = create_access_token(data={"sub": str(new_user.id), "email": new_user.email})
+    
+    return Token(
+        access_token=access_token,
+        user=UserResponse(
+            id=new_user.id,
+            email=new_user.email,
+            name=new_user.name,
+            is_active=new_user.is_active,
+            created_at=new_user.created_at
+        )
+    )
+
+
+@app.post("/api/auth/login", response_model=Token)
+def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
+    """Login and get access token."""
+    # Find user
+    user = db.query(User).filter(User.email == credentials.email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Verify password
+    if not verify_password(credentials.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Check if active
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="Account is disabled")
+    
+    # Create token
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    
+    return Token(
+        access_token=access_token,
+        user=UserResponse(
+            id=user.id,
+            email=user.email,
+            name=user.name,
+            is_active=user.is_active,
+            created_at=user.created_at
+        )
+    )
+
+
+@app.get("/api/auth/me", response_model=UserResponse)
+def get_current_user_profile(
+    current_user: dict = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Get current user's profile."""
+    user = db.query(User).filter(User.id == current_user["id"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@app.get("/api/stats")
+def get_stats(db: Session = Depends(get_db)):
+    """Get dashboard statistics."""
+    from sqlalchemy import func
+    
+    # Count URL analyses (content items with urls)
+    urls_analyzed = db.query(ContentItem).filter(ContentItem.url.isnot(None)).count()
+    
+    # Count text optimizations (content items without urls)
+    content_optimized = db.query(ContentItem).filter(ContentItem.url.is_(None)).count()
+    
+    # Calculate average score from analysis results
+    avg_result = db.query(func.avg(
+        (AnalysisResult.ai_visibility_score + 
+         AnalysisResult.citation_worthiness_score + 
+         AnalysisResult.semantic_coverage_score + 
+         AnalysisResult.technical_readability_score) / 4
+    )).scalar()
+    
+    avg_score = round(float(avg_result), 1) if avg_result else 0
+    
+    return {
+        "urls_analyzed": urls_analyzed,
+        "content_optimized": content_optimized,
+        "avg_score": avg_score,
+        "total_projects": db.query(Project).count()
+    }
+
+
+@app.get("/api/history")
+def get_history(
+    type: str = None, 
+    limit: int = 10, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Get recent content items with their scores."""
+    from sqlalchemy import func
+    
+    # We join Project to filter by user_id
+    query = db.query(ContentItem).join(Project).filter(Project.user_id == current_user["id"])
+    
+    # Filter by type
+    if type == "url":
+        query = query.filter(ContentItem.url.isnot(None))
+    elif type == "text":
+        query = query.filter(ContentItem.url.is_(None))
+    
+    # Get recent items
+    items = query.order_by(ContentItem.created_at.desc()).limit(limit).all()
+    
+    result = []
+    for item in items:
+        # Get latest analysis for this item
+        analysis = db.query(AnalysisResult).filter(
+            AnalysisResult.content_item_id == item.id
+        ).order_by(AnalysisResult.created_at.desc()).first()
+        
+        score = None
+        if analysis:
+            score = (
+                analysis.ai_visibility_score +
+                analysis.citation_worthiness_score +
+                analysis.semantic_coverage_score +
+                analysis.technical_readability_score
+            ) / 4
+        
+        result.append({
+            "id": item.id,
+            "title": item.title or (item.url[:50] if item.url else "Text Content"),
+            "url": item.url,
+            "type": "url" if item.url else "text",
+            "score": round(score, 1) if score else None,
+            "created_at": item.created_at.isoformat(),
+            "project_id": item.project_id
+        })
+    
+    return {"items": result}
+
+
+@app.delete("/api/history")
+def clear_history(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Clear all analysis history for the current user."""
+    try:
+        # Find all projects owned by the user
+        projects = db.query(Project).filter(Project.user_id == current_user["id"]).all()
+        project_ids = [p.id for p in projects]
+        
+        if not project_ids:
+            return {"message": "No history to clear."}
+            
+        # Delete items matching the user's project IDs
+        num_deleted = db.query(ContentItem).filter(ContentItem.project_id.in_(project_ids)).delete(synchronize_session=False)
+        db.commit()
+        return {"message": f"History cleared successfully. Removed {num_deleted} items."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Project Management
+@app.post("/api/projects", response_model=ProjectResponse)
+def create_project(
+    project: ProjectCreate, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Create a new project attached to user."""
+    db_project = Project(
+        name=project.name,
+        description=project.description,
+        user_id=current_user["id"]
+    )
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
+    return db_project
+
+
+@app.get("/api/projects", response_model=list[ProjectResponse])
+def list_projects(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """List all projects for user."""
+    projects = db.query(Project).filter(Project.user_id == current_user["id"]).all()
+    # Default array instead of returning 404
+    return projects or []
+    projects = db.query(Project).all()
+    return projects
+
+
+@app.get("/api/projects/{project_id}", response_model=ProjectResponse)
+def get_project(
+    project_id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Get a specific project."""
+    project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user["id"]).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+
+@app.delete("/api/projects/{project_id}")
+def delete_project(
+    project_id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Delete a project."""
+    project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user["id"]).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    db.delete(project)
+    db.commit()
+    return {"message": "Project deleted successfully"}
+
+
+@app.delete("/api/projects")
+def delete_all_projects(db: Session = Depends(get_db)):
+    """Delete ALL projects."""
+    try:
+        num_deleted = db.query(Project).delete()
+        db.commit()
+        return {"message": f"All projects deleted successfully. Removed {num_deleted} projects."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/projects/{project_id}/items")
+def get_project_items(
+    project_id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Get all content items for a project with their scores."""
+    # Check project exists
+    project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user["id"]).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Get content items with latest analysis
+    items = db.query(ContentItem).filter(ContentItem.project_id == project_id).all()
+    
+    result = []
+    for item in items:
+        # Get latest analysis result for this item
+        latest = db.query(AnalysisResult).filter(
+            AnalysisResult.content_item_id == item.id
+        ).order_by(AnalysisResult.created_at.desc()).first()
+        
+        score = None
+        if latest:
+            score = (
+                latest.ai_visibility_score + 
+                latest.citation_worthiness_score + 
+                latest.semantic_coverage_score + 
+                latest.technical_readability_score
+            ) / 4
+        
+        result.append({
+            "id": item.id,
+            "title": item.title,
+            "url": item.url,
+            "created_at": item.created_at.isoformat(),
+            "score": score
+        })
+    
+    return {"items": result}
+
+
+@app.get("/api/analysis/{item_id}")
+def get_analysis_by_item(
+    item_id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Get full analysis results for a content item."""
+    # Get content item and join Project to ensure ownership
+    item = db.query(ContentItem).join(Project).filter(
+        ContentItem.id == item_id,
+        Project.user_id == current_user["id"]
+    ).first()
+    
+    if not item:
+        raise HTTPException(status_code=404, detail="Content item not found or access denied")
+    
+    # Get latest analysis
+    analysis = db.query(AnalysisResult).filter(
+        AnalysisResult.content_item_id == item_id
+    ).order_by(AnalysisResult.created_at.desc()).first()
+    
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    
+    # Calculate overall score
+    overall_score = (
+        analysis.ai_visibility_score +
+        analysis.citation_worthiness_score +
+        analysis.semantic_coverage_score +
+        analysis.technical_readability_score
+    ) / 4
+    
+    # Fetch stored insights
+    stored_insights = db.query(Insight).filter(
+        Insight.content_item_id == item_id
+    ).order_by(Insight.created_at.desc()).all()
+    
+    insights_data = [
+        {"type": i.insight_type, "content": i.content, "created_at": i.created_at.isoformat()}
+        for i in stored_insights
+    ]
+    # Calculate Citation Probability
+    probability_metrics = probability_model.calculate_probability(
+        overall_score=overall_score,
+        rule_scores=analysis.rule_based_scores or {},
+        llm_scores=analysis.llm_scores or {},
+        content_type=item.content_metadata.get('content_type', 'general') if item.content_metadata else "general"
+    )
+
+    # Get historical analyses for this content item
+    history = db.query(AnalysisResult).filter(
+        AnalysisResult.content_item_id == item_id
+    ).order_by(AnalysisResult.created_at.asc()).all()
+    
+    historical_scores = [
+        {
+            "date": h.created_at.isoformat(),
+            "score": (h.ai_visibility_score + h.citation_worthiness_score + h.semantic_coverage_score + h.technical_readability_score) / 4
+        }
+        for h in history
+    ]
+
+    # Calculate delta if there is history
+    score_delta = 0
+    if len(history) > 1:
+        oldest_score = (history[0].ai_visibility_score + history[0].citation_worthiness_score + history[0].semantic_coverage_score + history[0].technical_readability_score) / 4
+        newest_score = (history[-1].ai_visibility_score + history[-1].citation_worthiness_score + history[-1].semantic_coverage_score + history[-1].technical_readability_score) / 4
+        score_delta = newest_score - oldest_score
+
+    return {
+        "id": item.id,
+        "title": item.title,
+        "url": item.url,
+        "content": item.content[:500] + "..." if item.content and len(item.content) > 500 else item.content,
+        "created_at": item.created_at.isoformat(),
+        "project_id": item.project_id,
+        "analysis": {
+            "overall_score": round(overall_score, 1),
+            "ai_visibility_score": analysis.ai_visibility_score,
+            "citation_worthiness_score": analysis.citation_worthiness_score,
+            "semantic_coverage_score": analysis.semantic_coverage_score,
+            "technical_readability_score": analysis.technical_readability_score,
+            "llm_feedback": analysis.llm_scores.get('top_suggestion', '') if analysis.llm_scores else None,
+            "rule_details": analysis.rule_based_scores,
+            "recommendations": [s.get('text', str(s)) for s in (analysis.suggestions or [])[:8]],
+            "analyzed_at": analysis.created_at.isoformat(),
+            "probability_metrics": probability_metrics,
+            "historical_trend": historical_scores,
+            "score_delta": round(score_delta, 1) if score_delta != 0 else None,
+            "previous_analyses_count": len(history)
+        },
+        "insights": insights_data
+    }
+
+
+# Content Analysis
+@app.post("/api/analyze-url", response_model=AnalysisResponse)
+@limiter.limit("10/minute")
+async def analyze_url(request: Request, payload: AnalyzeURLRequest, db: Session = Depends(get_db)):
+    """Analyze content from a URL."""
+    start_time = time.time()
+    
+    try:
+        # Fetch content
+        extracted = content_fetcher.fetch_url(payload.url)
+        
+        # Check if URL already exists in this project
+        content_item = db.query(ContentItem).filter(
+            ContentItem.project_id == payload.project_id,
+            ContentItem.url == payload.url
+        ).first()
+
+        content_type = getattr(payload, 'content_type', 'general') or 'general'
+
+        if content_item:
+            # Update existing item (Historical Tracking)
+            content_item.content = extracted['content']
+            content_item.title = extracted['title']
+            
+            # Preserve old metadata but update content_type
+            meta = content_item.content_metadata or {}
+            meta.update(extracted['metadata'])
+            meta['content_type'] = content_type
+            content_item.content_metadata = meta
+        else:
+            # Create new content item
+            extracted['metadata']['content_type'] = content_type
+            content_item = ContentItem(
+                project_id=payload.project_id,
+                url=payload.url,
+                content=extracted['content'],
+                title=extracted['title'],
+                content_metadata=extracted['metadata']
+            )
+            db.add(content_item)
+            
+        db.commit()
+        db.refresh(content_item)
+        
+        # Chunk and store in vector DB (optional - don't fail if this errors)
+        try:
+            chunks = chunker.chunk_content(
+                extracted['content'],
+                {
+                    'title': extracted['title'],
+                    'url': payload.url,
+                    **extracted['metadata']
+                }
+            )
+            vector_store.add_chunks(chunks, content_item.id)
+        except Exception as e:
+            print(f"Warning: Vector storage failed (this is OK): {str(e)}")
+        
+        # Perform analysis
+        analysis = await perform_analysis(extracted['content'], extracted, db, content_item.id)
+        
+        # Log metrics
+        latency_ms = (time.time() - start_time) * 1000
+        monitor = MonitoringService(db)
+        monitor.log_request(
+            endpoint="/api/analyze-url",
+            method="POST",
+            status_code=200,
+            latency_ms=latency_ms
+        )
+        
+        return analysis
+        
+    except Exception as e:
+        # Check for scraping errors
+        if "403" in str(e) or "Forbidden" in str(e):
+            raise HTTPException(
+                status_code=400, 
+                detail="Designed Security: This website blocks automated access. Please copy the text and use the 'Check Text' tab instead."
+            )
+            
+        # Log other errors
+        import traceback
+        traceback.print_exc()
+        latency_ms = (time.time() - start_time) * 1000
+        monitor = MonitoringService(db)
+        monitor.log_request(
+            endpoint="/api/analyze-url",
+            method="POST",
+            status_code=500,
+            latency_ms=latency_ms,
+            error_message=str(e)
+        )
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+@app.post("/api/analyze-text", response_model=AnalysisResponse)
+@limiter.limit("10/minute")
+async def analyze_text(request: Request, payload: AnalyzeTextRequest, db: Session = Depends(get_db)):
+    """Analyze direct text content."""
+    start_time = time.time()
+    
+    try:
+        # Sanitize text
+        clean_content = bleach.clean(payload.content)
+        clean_title = bleach.clean(payload.title) if payload.title else "Direct Text Input"
+
+        # Create content item
+        content_item = ContentItem(
+            project_id=payload.project_id,
+            content=clean_content,
+            title=clean_title,
+            content_metadata={}
+        )
+        db.add(content_item)
+        db.commit()
+        db.refresh(content_item)
+        
+        # Chunk and store (optional)
+        try:
+            chunks = chunker.chunk_content(
+                clean_content,
+                {'title': clean_title}
+            )
+            vector_store.add_chunks(chunks, content_item.id)
+        except Exception as e:
+            print(f"Warning: Vector storage failed (this is OK): {str(e)}")
+        
+        # Perform analysis
+        extracted = {
+            'content': clean_content,
+            'title': clean_title,
+            'content_type': getattr(payload, 'content_type', 'general') or 'general',
+            'metadata': {},
+            'headings': {},
+            'schema': {}
+        }
+        analysis = await perform_analysis(clean_content, extracted, db, content_item.id)
+        
+        # Log metrics
+        latency_ms = (time.time() - start_time) * 1000
+        monitor = MonitoringService(db)
+        monitor.log_request(
+            endpoint="/api/analyze-text",
+            method="POST",
+            status_code=200,
+            latency_ms=latency_ms
+        )
+        
+        return analysis
+        
+    except Exception as e:
+        latency_ms = (time.time() - start_time) * 1000
+        monitor = MonitoringService(db)
+        monitor.log_request(
+            endpoint="/api/analyze-text",
+            method="POST",
+            status_code=500,
+            latency_ms=latency_ms,
+            error_message=str(e)
+        )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/optimize-content")
+async def optimize_content(request: OptimizeContentRequest):
+    """Generate or Rewrite content."""
+    try:
+        optimized_text = await llm_scorer.optimize(
+            content=request.content,
+            mode=request.mode,
+            content_type=request.content_type
+        )
+        return {"optimized_content": optimized_text}
+    except Exception as e:
+         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/simulate-ai")
+async def simulate_ai(request: SimulateAIRequest):
+    """Simulate AI perception - test if AI would cite user content."""
+    try:
+        result = await llm_scorer.simulate_ai_response(
+            query=request.query,
+            content=request.content,
+            domain=request.domain
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/semantic-search")
+def semantic_search(query: str, limit: int = 5, content_item_id: int = None):
+    """
+    Search for semantically similar content using ChromaDB vectors.
+    
+    Args:
+        query: Search query text
+        limit: Maximum number of results (default 5)
+        content_item_id: Optional filter to search within specific content
+        
+    Returns:
+        List of similar content chunks with metadata and similarity scores
+    """
+    try:
+        results = vector_store.similarity_search(
+            query=query,
+            content_item_id=content_item_id,
+            n_results=limit
+        )
+        
+        # Format response
+        formatted_results = []
+        for result in results:
+            formatted_results.append({
+                "content": result.get('content', '')[:500],  # Limit content size
+                "metadata": result.get('metadata', {}),
+                "similarity_score": 1 - result.get('distance', 0) if result.get('distance') else None
+            })
+        
+        return {
+            "query": query,
+            "results": formatted_results,
+            "total_found": len(formatted_results)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Semantic search failed: {str(e)}")
+
+
+@app.get("/api/vector-stats")
+def get_vector_stats():
+    """Get ChromaDB vector store statistics."""
+    try:
+        stats = vector_store.get_collection_stats()
+        return {
+            "status": "connected",
+            **stats
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
+
+# Schema Generator
+from schema_generator import schema_generator
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
+
+
+class GenerateSchemaRequest(BaseModel):
+    content: str
+    content_type: Optional[str] = None  # 'article', 'product', 'faq', 'howto', or None for auto-detect
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@app.post("/api/generate-schema")
+def generate_schema(request: GenerateSchemaRequest):
+    """
+    Generate JSON-LD Schema.org markup for content.
+    
+    Args:
+        content: The text content to generate schema for
+        content_type: Optional type ('article', 'product', 'faq', 'howto')
+                     If not provided, auto-detects from content
+        metadata: Optional metadata (title, author, url, price, etc.)
+        
+    Returns:
+        schema_type: The detected/used schema type
+        json_ld: The JSON-LD object
+        html_snippet: Ready-to-use HTML script tag
+    """
+    try:
+        # Auto-detect content type if not provided
+        if not request.content_type:
+            detected_type = schema_generator.detect_schema_type(request.content, request.metadata)
+        else:
+            detected_type = request.content_type
+        
+        # Generate schema
+        result = schema_generator.generate_schema(
+            content=request.content,
+            content_type=detected_type,
+            metadata=request.metadata or {}
+        )
+        
+        return {
+            "success": True,
+            "detected_type": detected_type,
+            **result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Schema generation failed: {str(e)}")
+
+
+# Keyword Extraction
+class ExtractKeywordsRequest(BaseModel):
+    content: str
+    content_type: Optional[str] = "general"
+
+
+@app.post("/api/extract-keywords")
+async def extract_keywords(request: ExtractKeywordsRequest):
+    """
+    Extract target keywords from content using LLM.
+    
+    Returns:
+        primary_keyword: The main topic/keyword
+        secondary_keywords: Related keywords and phrases
+        long_tail_keywords: Question-based long-tail variations
+    """
+    try:
+        from google import genai
+        from config import settings
+        
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        
+        prompt = f"""Analyze this content and extract SEO target keywords.
+
+Content:
+{request.content[:3000]}
+
+Content Type: {request.content_type}
+
+Return a JSON object with:
+1. "primary_keyword": The single main keyword/phrase this content should rank for (3-5 words max)
+2. "secondary_keywords": Array of 3-5 related keywords/phrases
+3. "long_tail_keywords": Array of 2-3 question-based search queries users might ask
+
+Example output:
+{{
+    "primary_keyword": "best laptops 2024",
+    "secondary_keywords": ["laptop buying guide", "gaming laptop reviews", "budget laptops"],
+    "long_tail_keywords": ["what is the best laptop for students", "how to choose a laptop"]
+}}
+
+Return ONLY the JSON object, no other text."""
+
+        response = client.models.generate_content(
+            model=settings.GEMINI_MODEL,
+            contents=prompt
+        )
+        result_text = response.text.strip()
+        
+        # Parse JSON from response
+        import json
+        import re
+        
+        # Extract JSON from response (handle markdown code blocks)
+        json_match = re.search(r'\{[\s\S]*\}', result_text)
+        if json_match:
+            keywords = json.loads(json_match.group())
+        else:
+            keywords = {
+                "primary_keyword": "content optimization",
+                "secondary_keywords": ["SEO tips", "content strategy"],
+                "long_tail_keywords": ["how to optimize content"]
+            }
+        
+        return {
+            "success": True,
+            **keywords
+        }
+    except Exception as e:
+        # Fallback keywords
+        return {
+            "success": False,
+            "error": str(e),
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "long_tail_keywords": []
+        }
+
+
+async def perform_analysis(content: str, extracted: dict, db: Session, content_item_id: int) -> AnalysisResponse:
+    """Perform complete GEO analysis."""
+    # Rule-based scoring
+    rule_scores = rule_scorer.analyze(content, extracted, extracted.get('content_type', 'general'))
+    
+    # LLM scoring (Async)
+    llm_scores = await llm_scorer.analyze(content, extracted)
+    
+    # Aggregate scores
+    final_scores = aggregator.aggregate(rule_scores, llm_scores)
+    
+    # Calculate initial probability baseline
+    prob_calc = probability_model.calculate_probability(
+        overall_score=(final_scores['ai_visibility_score'] + final_scores['citation_worthiness_score'] + final_scores['semantic_coverage_score'] + final_scores['technical_readability_score']) / 4,
+        rule_scores=final_scores['rule_based_scores'],
+        llm_scores=final_scores['llm_scores'],
+        content_type=extracted.get('content_type', 'general')
+    )
+    
+    # Store probability in llm_scores temporarily so it saves to JSON DB column
+    final_scores['llm_scores']['probability_metrics'] = prob_calc
+    
+    # Save results to database
+    analysis_result = AnalysisResult(
+        content_item_id=content_item_id,
+        ai_visibility_score=final_scores['ai_visibility_score'],
+        citation_worthiness_score=final_scores['citation_worthiness_score'],
+        semantic_coverage_score=final_scores['semantic_coverage_score'],
+        technical_readability_score=final_scores['technical_readability_score'],
+        rule_based_scores=final_scores['rule_based_scores'],
+        llm_scores=final_scores['llm_scores'],
+        suggestions=final_scores['suggestions']
+    )
+    db.add(analysis_result)
+    db.commit()
+    
+    # Create response
+    response = AnalysisResponse(
+        content_item_id=content_item_id,
+        ai_visibility_score=final_scores['ai_visibility_score'],
+        citation_worthiness_score=final_scores['citation_worthiness_score'],
+        semantic_coverage_score=final_scores['semantic_coverage_score'],
+        technical_readability_score=final_scores['technical_readability_score'],
+        rule_based_scores=final_scores['rule_based_scores'],
+        llm_scores=final_scores['llm_scores'],
+        suggestions=final_scores['suggestions'],
+        timestamp=datetime.utcnow()
+    )
+    
+    return response
+
+
+# RAG Insights
+@app.post("/api/generate-insights", response_model=InsightResponse)
+def generate_insights(request: InsightRequest, db: Session = Depends(get_db)):
+    """Generate RAG-powered insights."""
+    # Get content item and analysis
+    content_item = db.query(ContentItem).filter(ContentItem.id == request.content_item_id).first()
+    if not content_item:
+        raise HTTPException(status_code=440, detail="Content item not found")
+    
+    analysis = db.query(AnalysisResult).filter(
+        AnalysisResult.content_item_id == request.content_item_id
+    ).order_by(AnalysisResult.created_at.desc()).first()
+    
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found. Run analysis first.")
+    
+    # Prepare analysis results
+    analysis_dict = {
+        'ai_visibility_score': analysis.ai_visibility_score,
+        'citation_worthiness_score': analysis.citation_worthiness_score,
+        'semantic_coverage_score': analysis.semantic_coverage_score,
+        'technical_readability_score': analysis.technical_readability_score
+    }
+    
+    # Generate insights
+    insights = rag_pipeline.generate_insights(
+        request.content_item_id,
+        request.insight_type,
+        analysis_dict
+    )
+    
+    # Save insight to DB
+    new_insight = Insight(
+        content_item_id=request.content_item_id,
+        insight_type=request.insight_type,
+        content=insights
+    )
+    db.add(new_insight)
+    db.commit()
+    
+    return InsightResponse(
+        content_item_id=request.content_item_id,
+        insight_type=request.insight_type,
+        insights=insights,
+        timestamp=datetime.utcnow()
+    )
+
+
+@app.post("/api/reset")
+def factory_reset(db: Session = Depends(get_db)):
+    """Factory Reset: Wipe all data."""
+    try:
+        # Delete in order of dependencies
+        db.query(AnalysisResult).delete()
+        db.query(ContentItem).delete()
+        db.query(Project).delete()
+        # Optionally delete users? For now let's keep users to avoid locking them out immediately without warning
+        # db.query(User).delete() 
+        
+        db.commit()
+        
+        # Also clear vector store
+        try:
+            vector_store.client.reset() 
+        except:
+            pass # Chroma reset might not be available or needed depending on version
+            
+        return {"message": "Factory reset complete. All data cleared."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========================
+# Citation Tracking
+# ========================
+
+@app.post("/api/citation-track")
+@limiter.limit("5/minute")
+async def track_citations(
+    request: Request,
+    payload: CitationTrackRequest, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Track domain citations across AI platforms."""
+    try:
+        # Generate prompts if not provided
+        if payload.custom_prompts and len(payload.custom_prompts) > 0:
+            prompts = payload.custom_prompts[:10]  # Max 10 custom prompts
+        else:
+            prompts = citation_tracker.generate_test_prompts(
+                payload.domain, payload.niche, payload.brand_name
+            )
+
+        # Run citation tracking
+        results = await citation_tracker.track_citations(
+            domain=payload.domain,
+            prompts=prompts,
+            brand_name=payload.brand_name
+        )
+
+        # Save to database
+        tracking = CitationTracking(
+            user_id=current_user["id"],
+            domain=payload.domain,
+            brand_name=payload.brand_name,
+            niche=payload.niche,
+            platforms_checked=results["summary"]["platforms_checked"],
+            prompts_tested=results["summary"]["prompts_tested"],
+            total_citations=results["summary"]["total_citations"],
+            citation_rate=results["summary"]["overall_citation_rate"],
+            results=results
+        )
+        db.add(tracking)
+        db.commit()
+        db.refresh(tracking)
+
+        results["tracking_id"] = tracking.id
+        return results
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Citation tracking failed: {str(e)}")
+
+
+@app.get("/api/citation-history")
+def get_citation_history(
+    domain: str = None, 
+    limit: int = 10, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Get citation tracking history for current user."""
+    query = db.query(CitationTracking).filter(CitationTracking.user_id == current_user["id"])
+    if domain:
+        query = query.filter(CitationTracking.domain == domain)
+    
+    items = query.order_by(CitationTracking.created_at.desc()).limit(limit).all()
+    
+    return {
+        "items": [
+            {
+                "id": item.id,
+                "domain": item.domain,
+                "brand_name": item.brand_name,
+                "niche": item.niche,
+                "platforms_checked": item.platforms_checked,
+                "prompts_tested": item.prompts_tested,
+                "total_citations": item.total_citations,
+                "citation_rate": item.citation_rate,
+                "created_at": item.created_at.isoformat()
+            }
+            for item in items
+        ]
+    }
+
+
+@app.get("/api/citation-track/{tracking_id}")
+def get_citation_detail(
+    tracking_id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Get detailed citation tracking results."""
+    tracking = db.query(CitationTracking).filter(
+        CitationTracking.id == tracking_id,
+        CitationTracking.user_id == current_user["id"]
+    ).first()
+    if not tracking:
+        raise HTTPException(status_code=404, detail="Tracking not found or access denied")
+    return tracking.results
+
+
+# ========================
+# Competitor Analysis
+# ========================
+
+@app.post("/api/competitor-compare")
+@limiter.limit("5/minute")
+async def compare_competitors(
+    request: Request,
+    payload: CompetitorCompareRequest, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Compare user content against competitors."""
+    try:
+        results = await competitor_analyzer.compare(
+            user_url=payload.user_url,
+            competitor_urls=payload.competitor_urls,
+            content_type=payload.content_type
+        )
+
+        # Save to database
+        comparison = CompetitorComparison(
+            user_id=current_user["id"],
+            user_url=payload.user_url,
+            competitor_urls=payload.competitor_urls,
+            content_type=payload.content_type,
+            user_overall_score=results["user"]["scores"]["overall"],
+            competitor_avg_score=results["comparison"].get("competitor_avg_overall", 0),
+            comparison_results=results
+        )
+        db.add(comparison)
+        db.commit()
+        db.refresh(comparison)
+
+        results["comparison_id"] = comparison.id
+        return results
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Competitor analysis failed: {str(e)}")
+
+
+@app.get("/api/competitor-history")
+def get_competitor_history(
+    limit: int = 10, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Get competitor comparison history."""
+    items = db.query(CompetitorComparison).filter(
+        CompetitorComparison.user_id == current_user["id"]
+    ).order_by(
+        CompetitorComparison.created_at.desc()
+    ).limit(limit).all()
+    
+    return {
+        "items": [
+            {
+                "id": item.id,
+                "user_url": item.user_url,
+                "competitor_urls": item.competitor_urls,
+                "content_type": item.content_type,
+                "user_overall_score": item.user_overall_score,
+                "competitor_avg_score": item.competitor_avg_score,
+                "created_at": item.created_at.isoformat()
+            }
+            for item in items
+        ]
+    }
+
+
+@app.get("/api/competitor-compare/{comparison_id}")
+def get_comparison_detail(
+    comparison_id: int, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Get detailed comparison results."""
+    comparison = db.query(CompetitorComparison).filter(
+        CompetitorComparison.id == comparison_id,
+        CompetitorComparison.user_id == current_user["id"]
+    ).first()
+    if not comparison:
+        raise HTTPException(status_code=404, detail="Comparison not found or access denied")
+    return comparison.comparison_results
+
+
+# ========================
+# Content Strategy / Discovery
+# ========================
+
+class PromptDiscoveryRequest(BaseModel):
+    keyword: str
+    niche: Optional[str] = "general"
+
+@app.post("/api/discover-prompts")
+async def discover_prompts(request: PromptDiscoveryRequest):
+    """Discover 'People Also Ask' and high-value AI prompts for a topic."""
+    try:
+        results = await discovery_engine.discover_prompts(
+            keyword=request.keyword,
+            niche=request.niche
+        )
+        return {
+            "success": True,
+            "keyword": request.keyword,
+            "niche": request.niche,
+            "prompts": results
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Prompt discovery failed: {str(e)}")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

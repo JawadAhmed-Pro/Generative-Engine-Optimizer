@@ -1,0 +1,34 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+pydantic-settings
+langchain
+google-genai
+langchain-google-genai
+langchain-groq
+langchain-community
+chromadb
+beautifulsoup4
+requests
+textstat
+sqlalchemy
+psycopg2-binary
+python-dotenv
+alembic
+lxml
+html5lib
+
+selenium
+webdriver-manager
+
+# RAG Enhancement - Cross-encoder for re-ranking
+sentence-transformers
+
+# Authentication
+python-jose[cryptography]
+passlib[bcrypt]
+
+# Security (Rate Limiting, Sanitization)
+slowapi
+bleach
