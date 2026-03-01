@@ -70,7 +70,7 @@ function Sidebar({ collapsed }) {
             </div>
 
             {/* Navigation */}
-            <nav style={{ flex: 1, padding: collapsed ? '1.5rem 0.5rem' : '1.5rem 1rem' }}>
+            <nav style={{ flex: 1, padding: collapsed ? '1.5rem 0.5rem' : '1.5rem 1rem', overflowY: 'auto', overflowX: 'hidden' }}>
                 {!collapsed && (
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: '600', marginBottom: '0.75rem', paddingLeft: '0.75rem' }}>
                         MAIN MENU
