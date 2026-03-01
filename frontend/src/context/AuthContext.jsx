@@ -2,7 +2,8 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
-const API_BASE = 'http://localhost:8000';
+// Using explicit URL since environment variables might be failing on Render static site
+const API_BASE = 'https://generative-engine-optimizer.onrender.com';
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
