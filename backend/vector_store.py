@@ -23,21 +23,15 @@ class VectorStore:
             path=settings.CHROMA_PERSIST_DIR
         )
         
-        # Get or create collection with the lightweight Google API embedding function
-        try:
-            self.collection = self.client.get_collection(
-                name=settings.CHROMA_COLLECTION_NAME,
-                embedding_function=self.embedding_function
-            )
-            app_logger.info("Successfully loaded existing ChromaDB collection with Google Embeddings.")
-        except:
-            # Create collection
-            self.collection = self.client.create_collection(
-                name=settings.CHROMA_COLLECTION_NAME,
-                embedding_function=self.embedding_function,
-                metadata={"description": "GEO content chunks"}
-            )
-            app_logger.info("Created new ChromaDB collection with Google Embeddings.")
+        # Use get_or_create to safely handle the transition 
+        # from default embeddings to Google embeddings
+        app_logger.info(f"Loading or creating Chroma collection: {settings.CHROMA_COLLECTION_NAME}")
+        self.collection = self.client.get_or_create_collection(
+            name=settings.CHROMA_COLLECTION_NAME,
+            embedding_function=self.embedding_function,
+            metadata={"description": "GEO content chunks"}
+        )
+        app_logger.info("ChromaDB collection loaded successfully with Google Embeddings.")
     
     def add_chunks(self, chunks: List[Dict[str, Any]], content_item_id: int) -> List[str]:
         """
