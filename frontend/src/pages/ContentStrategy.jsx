@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { SparklesIcon, MagnifyingGlassIcon, BookOpenIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { Sparkles, Search, BookOpen, BarChart2 } from 'lucide-react';
+import axios from 'axios';
 
 export default function ContentStrategy() {
     const [keyword, setKeyword] = useState('');
@@ -16,23 +17,10 @@ export default function ContentStrategy() {
         setError('');
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/discover-prompts`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ keyword, niche }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setPrompts(data.prompts || []);
-            } else {
-                throw new Error(data.detail || 'Failed to discover prompts');
-            }
+            const response = await axios.post('/api/discover-prompts', { keyword, niche });
+            setPrompts(response.data.prompts || []);
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.detail || err.message || 'Failed to discover prompts');
         } finally {
             setIsLoading(false);
         }
@@ -40,139 +28,167 @@ export default function ContentStrategy() {
 
     const getVolumeColor = (volume) => {
         switch (volume?.toLowerCase()) {
-            case 'high': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-            case 'medium': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
-            case 'low': return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
-            default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+            case 'high': return { bg: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', border: '1px solid rgba(16, 185, 129, 0.2)' };
+            case 'medium': return { bg: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', border: '1px solid rgba(245, 158, 11, 0.2)' };
+            case 'low': return { bg: 'rgba(148, 163, 184, 0.1)', color: 'var(--text-secondary)', border: '1px solid rgba(148, 163, 184, 0.2)' };
+            default: return { bg: 'rgba(148, 163, 184, 0.1)', color: 'var(--text-secondary)', border: '1px solid rgba(148, 163, 184, 0.2)' };
         }
     };
 
     return (
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <header>
-                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <SparklesIcon className="w-6 h-6 text-purple-400" />
+                <h1 style={{ fontSize: '2rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                    <Sparkles size={28} color="var(--accent-secondary)" />
                     Content Strategy Discovery
                 </h1>
-                <p className="text-gray-400 mt-1">Discover what users are asking AI in your niche.</p>
+                <p style={{ color: 'var(--text-secondary)' }}>Discover what users are asking AI in your niche.</p>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem' }}>
                 {/* Left Column - Input */}
-                <div className="lg:col-span-1">
-                    <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 backdrop-blur-xl">
-                        <h2 className="text-lg font-semibold text-white mb-4">Discovery Engine</h2>
-                        <form onSubmit={handleDiscover} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Target Keyword / Topic</label>
-                                <input
-                                    type="text"
-                                    value={keyword}
-                                    onChange={(e) => setKeyword(e.target.value)}
-                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
-                                    placeholder="e.g., ai automation tools"
-                                    required
-                                />
-                            </div>
+                <div className="glass-card" style={{ flex: '1 1 300px', height: 'fit-content' }}>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1.5rem' }}>Discovery Engine</h2>
+                    <form onSubmit={handleDiscover} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                Target Keyword / Topic
+                            </label>
+                            <input
+                                type="text"
+                                value={keyword}
+                                onChange={(e) => setKeyword(e.target.value)}
+                                placeholder="e.g., ai automation tools"
+                                required
+                                style={{
+                                    width: '100%',
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '8px',
+                                    padding: '0.75rem 1rem',
+                                    color: 'white',
+                                    fontSize: '0.95rem'
+                                }}
+                            />
+                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Industry / Niche</label>
-                                <select
-                                    value={niche}
-                                    onChange={(e) => setNiche(e.target.value)}
-                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
-                                >
-                                    <option value="general">General</option>
-                                    <option value="ecommerce">E-Commerce</option>
-                                    <option value="saas">SaaS / Software</option>
-                                    <option value="finance">Finance</option>
-                                    <option value="health">Healthcare</option>
-                                    <option value="education">Education</option>
-                                </select>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className={`w-full py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-300
-                  ${isLoading
-                                        ? 'bg-purple-600/50 text-white/50 cursor-not-allowed'
-                                        : 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_25px_rgba(147,51,234,0.5)]'
-                                    }`}
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                Industry / Niche
+                            </label>
+                            <select
+                                value={niche}
+                                onChange={(e) => setNiche(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '8px',
+                                    padding: '0.75rem 1rem',
+                                    color: 'white',
+                                    fontSize: '0.95rem'
+                                }}
                             >
-                                {isLoading ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Discovering...
-                                    </>
-                                ) : (
-                                    <>
-                                        <MagnifyingGlassIcon className="w-5 h-5" />
-                                        Generate Strategy
-                                    </>
-                                )}
-                            </button>
-                        </form>
+                                <option value="general">General</option>
+                                <option value="ecommerce">E-Commerce</option>
+                                <option value="saas">SaaS / Software</option>
+                                <option value="finance">Finance</option>
+                                <option value="health">Healthcare</option>
+                                <option value="education">Education</option>
+                            </select>
+                        </div>
 
-                        {error && (
-                            <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400">
-                                {error}
-                            </div>
-                        )}
-                    </div>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="btn btn-primary"
+                            style={{ width: '100%', marginTop: '0.5rem', opacity: isLoading ? 0.7 : 1 }}
+                        >
+                            {isLoading ? 'Discovering...' : (
+                                <>
+                                    <Search size={18} /> Generate Strategy
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    {error && (
+                        <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', color: 'var(--error)', fontSize: '0.9rem' }}>
+                            {error}
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Column - Results */}
-                <div className="lg:col-span-2">
+                <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column' }}>
                     {prompts.length === 0 ? (
-                        <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-12 text-center h-full flex flex-col items-center justify-center">
-                            <BookOpenIcon className="w-16 h-16 text-gray-600 mb-4" />
-                            <h3 className="text-xl font-medium text-gray-300">No Prompts Discovered Yet</h3>
-                            <p className="text-gray-500 mt-2 max-w-sm">
+                        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', textAlign: 'center', height: '100%' }}>
+                            <BookOpen size={48} color="var(--text-tertiary)" style={{ marginBottom: '1rem' }} />
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: '500', marginBottom: '0.5rem' }}>No Prompts Discovered Yet</h3>
+                            <p style={{ color: 'var(--text-secondary)', maxWidth: '400px' }}>
                                 Enter a target keyword and your niche to uncover what questions real users are asking AI platforms.
                             </p>
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-                                <ChartBarIcon className="w-5 h-5 text-emerald-400" />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <BarChart2 size={24} color="var(--success)" />
                                 Recommended Content Strategy ({prompts.length} Opportunities)
                             </h2>
 
-                            <div className="grid gap-4">
-                                {prompts.map((item, index) => (
-                                    <div key={index} className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-5 hover:border-purple-500/30 transition-colors">
-                                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
-                                            <h3 className="text-lg font-medium text-white group cursor-text">
-                                                "{item.prompt}"
-                                            </h3>
-                                            <div className="flex gap-2 flex-shrink-0">
-                                                <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${getVolumeColor(item.search_volume_estimate)}`}>
-                                                    Vol: {item.search_volume_estimate?.toUpperCase() || 'UNKNOWN'}
-                                                </span>
-                                                <span className="px-2.5 py-1 text-xs font-medium rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">
-                                                    {item.intent?.toUpperCase()}
-                                                </span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {prompts.map((item, index) => {
+                                    const volStyle = getVolumeColor(item.search_volume_estimate);
+
+                                    return (
+                                        <div key={index} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                                                <h3 style={{ fontSize: '1.1rem', fontWeight: '500', flex: 1, minWidth: '200px' }}>
+                                                    "{item.prompt}"
+                                                </h3>
+                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <span style={{
+                                                        padding: '0.25rem 0.75rem',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: '600',
+                                                        borderRadius: '999px',
+                                                        background: volStyle.bg,
+                                                        color: volStyle.color,
+                                                        border: volStyle.border
+                                                    }}>
+                                                        Vol: {item.search_volume_estimate?.toUpperCase() || 'UNKNOWN'}
+                                                    </span>
+                                                    <span style={{
+                                                        padding: '0.25rem 0.75rem',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: '600',
+                                                        borderRadius: '999px',
+                                                        background: 'rgba(59, 130, 246, 0.1)',
+                                                        color: 'var(--accent-primary)',
+                                                        border: '1px solid rgba(59, 130, 246, 0.2)'
+                                                    }}>
+                                                        {item.intent?.toUpperCase()}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <p style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--accent-secondary)', marginBottom: '0.5rem' }}>
+                                                    Content Gap Challenge:
+                                                </p>
+                                                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                                    {item.content_gap}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <button className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}>
+                                                    Write Content
+                                                </button>
                                             </div>
                                         </div>
-
-                                        <div className="mt-4 p-4 rounded-lg bg-gray-900/50 border border-gray-800">
-                                            <p className="text-sm font-medium text-purple-400 mb-1">Content Gap Challenge:</p>
-                                            <p className="text-sm text-gray-300">
-                                                {item.content_gap}
-                                            </p>
-                                        </div>
-
-                                        <div className="mt-4 flex gap-3">
-                                            <button
-                                                onClick={() => {/* future action: map to optimization pipeline */ }}
-                                                className="text-sm font-medium text-white bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg transition-colors"
-                                            >
-                                                Write Content
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         </div>
                     )}
