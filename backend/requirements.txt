@@ -5,6 +5,7 @@ pydantic
 pydantic-settings
 langchain
 google-genai
+google-generativeai
 langchain-google-genai
 langchain-groq
 langchain-community
