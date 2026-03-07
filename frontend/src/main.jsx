@@ -8,7 +8,7 @@ import { AnalysisProvider } from './context/AnalysisContext.jsx'
 import './styles/globals.css'
 
 // Configure global axios defaults explicitly
-axios.defaults.baseURL = 'https://generative-engine-optimizer.onrender.com';
+axios.defaults.baseURL = 'https://api.geo-tool.site';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
