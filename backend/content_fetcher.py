@@ -51,48 +51,84 @@ class ContentFetcher:
 
     def fetch_url(self, url: str) -> Dict[str, Any]:
         """
-        Fetch content from a URL using Selenium to bypass anti-bot checks.
+        Fetch content from a URL using requests first, and falling back to Selenium if blocked.
         """
+        parsed = urlparse(url)
+        if not parsed.scheme in ['http', 'https']:
+            raise ValueError(f"Invalid URL scheme: {parsed.scheme}")
+            
+        page_content = ""
+        driver_title = ""
+        
+        # 1. Try lightweight requests first
+        try:
+            app_logger.info(f"Fetching URL with requests: {url}")
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1'
+            }
+            response = requests.get(url, headers=headers, timeout=self.timeout)
+            response.raise_for_status()
+            page_content = response.text
+            app_logger.info(f"Successfully fetched {url} via requests")
+            
+        except requests.exceptions.HTTPError as e:
+            # If we get a 403 Forbidden or 401, it's likely bot protection.
+            if e.response.status_code in [403, 401, 406, 429]:
+                app_logger.warning(f"Requests blocked by {url} ({e.response.status_code}). Falling back to Selenium.")
+                page_content, driver_title = self._fetch_via_selenium(url)
+            else:
+                raise Exception(f"Failed to fetch exactly {url}: HTTP {e.response.status_code}")
+        except Exception as e:
+           app_logger.warning(f"Requests connection error for {url}: {e}. Falling back to Selenium.")
+           page_content, driver_title = self._fetch_via_selenium(url)
+
+        if not page_content:
+            raise Exception(f"Failed to extract any content from {url}")
+
+        # Parse HTML with BeautifulSoup (reusing existing logic)
+        soup = BeautifulSoup(page_content, 'lxml')
+        
+        # Extract content
+        extracted = {
+            'url': url,
+            'title': self._extract_title(soup, driver_title),
+            'content': self._extract_text(soup),
+            'metadata': self._extract_metadata(soup),
+            'headings': self._extract_headings(soup),
+            'schema': self._extract_schema(soup),
+            'raw_html': str(soup),
+        }
+        
+        return extracted
+        
+    def _fetch_via_selenium(self, url: str):
         driver = None
         try:
-            # Validate URL
-            parsed = urlparse(url)
-            if not parsed.scheme in ['http', 'https']:
-                raise ValueError(f"Invalid URL scheme: {parsed.scheme}")
-            
-            app_logger.info(f"Fetching URL with Selenium: {url}")
             driver = self._get_driver()
-            
-            # Load page
             driver.get(url)
-            
-            # Wait briefly for JS to load content
-            time.sleep(2) 
-            
-            # Get page source
-            page_content = driver.page_source
-            
-            # Parse HTML with BeautifulSoup (reusing existing logic)
-            soup = BeautifulSoup(page_content, 'lxml')
-            
-            # Extract content
-            extracted = {
-                'url': url,
-                'title': self._extract_title(soup, driver.title),
-                'content': self._extract_text(soup),
-                'metadata': self._extract_metadata(soup),
-                'headings': self._extract_headings(soup),
-                'schema': self._extract_schema(soup),
-                'raw_html': str(soup),
-            }
-            
-            return extracted
-            
+            time.sleep(2) # Wait briefly for JS to load content
+            content = driver.page_source
+            title = driver.title
+            return content, title
         except Exception as e:
-            raise Exception(f"Failed to fetch URL {url}: {str(e)}")
+            # If Render doesn't have Chrome installed, provide a clear, non-crashing error
+            if "cannot find Chrome binary" in str(e):
+                app_logger.error("Selenium fallback failed: Chrome binary not installed on this server environment.")
+                raise Exception("Server configuration missing Chrome binary. Unable to bypass site protection.")
+            raise Exception(f"Selenium fallback failed for {url}: {str(e)}")
         finally:
             if driver:
-                driver.quit()
+                try:
+                    driver.quit()
+                except:
+                    pass
     
     def _extract_title(self, soup: BeautifulSoup, driver_title: str = "") -> str:
         """Extract the page title, falling back to driver title."""
