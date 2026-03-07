@@ -184,6 +184,75 @@ h6 {
   flex-direction: column;
 }
 
+/* Layout System */
+:root {
+  --sidebar-width-desktop: 280px;
+  --sidebar-width-mini: 72px;
+}
+
+.sidebar-container {
+  width: var(--sidebar-width-desktop);
+  background: var(--bg-secondary);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.sidebar-container.collapsed {
+  width: var(--sidebar-width-mini);
+}
+
+.main-content {
+  margin-left: var(--sidebar-width-desktop);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content.collapsed {
+  margin-left: var(--sidebar-width-mini);
+}
+
+.top-bar {
+  height: 64px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  background: var(--bg-primary);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 45;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
 /* Responsive Breakpoints */
 
 /* Large Tablet (1024px) */
@@ -221,40 +290,39 @@ h6 {
     font-size: 0.875rem;
   }
 
+  /* Responsive Main Layout Overrides */
+  .sidebar-container {
+    transform: translateX(-100%);
+    width: 280px !important;
+    /* Force full width on mobile slide-over */
+  }
+
+  .sidebar-container.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-content,
+  .main-content.collapsed {
+    margin-left: 0;
+  }
+
+  .top-bar {
+    padding: 0 1rem;
+  }
+
   /* Dashboard grid adjustments */
   .stats-grid {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr !important;
+    /* Stack vertically on phones */
   }
 
-  /* Navigation mobile menu styles */
-  .nav-sidebar {
-    position: fixed;
-    left: -280px;
-    top: 0;
-    height: 100vh;
-    z-index: 1000;
-    transition: left 0.3s ease;
-    width: 280px;
+  /* Force multi-column layouts (like Analysis grids) to stack */
+  .glass-card>div[style*="display: grid"],
+  .glass-card>div[style*="display: flex"] {
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
   }
 
-  .nav-sidebar.open {
-    left: 0;
-  }
-
-  .nav-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-  }
-
-  .nav-overlay.open {
-    display: block;
-  }
 
   /* Glass cards on mobile */
   .glass-card {

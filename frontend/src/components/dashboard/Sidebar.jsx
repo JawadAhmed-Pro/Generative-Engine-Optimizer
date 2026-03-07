@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Folder, FileText, BarChart2, Settings, LogOut, Code2, Zap, Globe, GitCompareArrows, Sparkles } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
-function Sidebar({ collapsed }) {
+function Sidebar({ collapsed, mobileOpen = false }) {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 
@@ -33,20 +33,7 @@ function Sidebar({ collapsed }) {
     ]
 
     return (
-        <aside style={{
-            width: collapsed ? '72px' : '280px',
-            background: 'var(--bg-secondary)',
-            borderRight: '1px solid rgba(255,255,255,0.05)',
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            position: 'fixed',
-            left: 0,
-            top: 0,
-            zIndex: 50,
-            transition: 'width 0.3s ease',
-            overflow: 'hidden'
-        }}>
+        <aside className={`sidebar-container ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
             {/* Logo */}
             <div style={{ padding: collapsed ? '1.5rem 1rem' : '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

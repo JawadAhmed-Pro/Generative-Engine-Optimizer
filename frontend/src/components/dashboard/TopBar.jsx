@@ -38,18 +38,7 @@ function TopBar({ onMenuToggle }) {
     const stopPropagation = (e) => e.stopPropagation()
 
     return (
-        <header style={{
-            height: '64px',
-            borderBottom: '1px solid rgba(255,255,255,0.05)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 2rem',
-            background: 'var(--bg-primary)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 40
-        }}>
+        <header className="top-bar">
             <button
                 onClick={onMenuToggle}
                 style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
