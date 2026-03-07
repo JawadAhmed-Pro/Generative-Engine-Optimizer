@@ -94,10 +94,11 @@ function OnboardingWizard({ onComplete }) {
             bottom: 0,
             background: 'linear-gradient(135deg, #0a0a12 0%, #1a1a2e 50%, #0f0f1a 100%)',
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
             zIndex: 9999,
-            padding: '2rem'
+            padding: '2rem',
+            overflowY: 'auto'
         }}>
             {/* Background decoration */}
             <div style={{
@@ -124,7 +125,8 @@ function OnboardingWizard({ onComplete }) {
             <div style={{
                 width: '100%',
                 maxWidth: '600px',
-                position: 'relative'
+                position: 'relative',
+                margin: 'auto'
             }}>
                 {/* Progress dots */}
                 <div style={{
