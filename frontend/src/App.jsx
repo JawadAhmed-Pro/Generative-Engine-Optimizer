@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import DashboardLayout from './layouts/DashboardLayout'
@@ -13,8 +14,31 @@ import ContentStrategy from './pages/ContentStrategy'
 import Settings from './pages/Settings'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
+import OnboardingWizard from './components/OnboardingWizard'
 
 function App() {
+    const [showOnboarding, setShowOnboarding] = useState(false)
+    const [checkingOnboarding, setCheckingOnboarding] = useState(true)
+
+    useEffect(() => {
+        // Check if onboarding is complete
+        const isComplete = localStorage.getItem('geo_onboarding_complete')
+        if (!isComplete) {
+            setShowOnboarding(true)
+        }
+        setCheckingOnboarding(false)
+    }, [])
+
+    const handleOnboardingComplete = () => {
+        setShowOnboarding(false)
+    }
+
+    if (checkingOnboarding) return null
+
+    if (showOnboarding) {
+        return <OnboardingWizard onComplete={handleOnboardingComplete} />
+    }
+
     return (
         <ThemeProvider>
             <ErrorBoundary>
