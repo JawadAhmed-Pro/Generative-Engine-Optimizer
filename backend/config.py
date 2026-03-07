@@ -37,7 +37,12 @@ class Settings(BaseSettings):
     LLM_WEIGHT: float = 0.6
     
     # CORS
-    CORS_ORIGINS: list = ["*"]
+    CORS_ORIGINS: list = [
+        "https://geo-tool.site", 
+        "https://www.geo-tool.site",
+        "http://localhost:3000",
+        "http://localhost:5173"
+    ]
     
     class Config:
         env_file = ".env"
