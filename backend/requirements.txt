@@ -22,8 +22,7 @@ html5lib
 selenium
 webdriver-manager
 
-# RAG Enhancement - Cross-encoder for re-ranking
-sentence-transformers
+# RAG Enhancement - Moved to Google API to save RAM
 
 # Authentication
 python-jose[cryptography]

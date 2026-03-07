@@ -1,4 +1,6 @@
 import chromadb
+from chromadb.utils import embedding_functions
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from typing import List, Dict, Any, Optional
 from config import settings
 import uuid
@@ -6,25 +8,36 @@ from logger import app_logger
 
 
 class VectorStore:
-    """Manages ChromaDB for semantic search and RAG retrieval."""
+    """Manages ChromaDB for semantic search and RAG retrieval using Google Embeddings."""
     
     def __init__(self):
+        # Initialize Google embeddings to save RAM
+        app_logger.info("Initializing Google API Embeddings for ChromaDB...")
+        self.embedding_function = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
+            api_key=settings.GEMINI_API_KEY,
+            task_type="RETRIEVAL_DOCUMENT"
+        )
+
         # Initialize ChromaDB client with persistence
         self.client = chromadb.PersistentClient(
             path=settings.CHROMA_PERSIST_DIR
         )
         
-        # Get or create collection with default embedding function
+        # Get or create collection with the lightweight Google API embedding function
         try:
             self.collection = self.client.get_collection(
-                name=settings.CHROMA_COLLECTION_NAME
+                name=settings.CHROMA_COLLECTION_NAME,
+                embedding_function=self.embedding_function
             )
+            app_logger.info("Successfully loaded existing ChromaDB collection with Google Embeddings.")
         except:
-            # Create collection with default embedding function
+            # Create collection
             self.collection = self.client.create_collection(
                 name=settings.CHROMA_COLLECTION_NAME,
+                embedding_function=self.embedding_function,
                 metadata={"description": "GEO content chunks"}
             )
+            app_logger.info("Created new ChromaDB collection with Google Embeddings.")
     
     def add_chunks(self, chunks: List[Dict[str, Any]], content_item_id: int) -> List[str]:
         """
@@ -114,21 +127,10 @@ class VectorStore:
                     'distance': results['distances'][0][i] if results.get('distances') else None
                 })
         
-        # Apply reranking if enabled and we have results
-        if use_reranking and chunks:
-            try:
-                from reranker import rerank_results
-                chunks = rerank_results(query, chunks, top_k=n_results)
-            except ImportError:
-                # Reranker not available, just return top n_results
-                chunks = chunks[:n_results]
-            except Exception as e:
-                app_logger.warning(f"Reranking failed: {e}")
-                chunks = chunks[:n_results]
-        else:
-            chunks = chunks[:n_results]
+        # Note: Local cross-encoder reranking was removed to fix Render 512MB RAM OOM crash.
+        # Gemini embeddings are high quality enough to skip the secondary pass.
         
-        return chunks
+        return chunks[:n_results]
     
     def get_chunks_by_content_item(self, content_item_id: int) -> List[Dict[str, Any]]:
         """Get all chunks for a specific content item."""
