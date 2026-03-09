@@ -7,47 +7,11 @@ import logging
 from config import settings
 from logger import app_logger
 
-# Selenium imports
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-import time
-
 class ContentFetcher:
-    """Fetches and extracts content from URLs using Headless Chrome."""
+    """Fetches and extracts content from URLs."""
     
     def __init__(self, timeout: int = 30):
         self.timeout = timeout
-        
-    def _get_driver(self):
-        """Initialize and return a headless Chrome driver."""
-        chrome_options = Options()
-        chrome_options.add_argument("--headless=new") # Modern headless mode (more stable)
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--window-size=1920,1080") # Ensure elements render
-        chrome_options.add_argument("--disable-extensions")
-        chrome_options.add_argument("--disable-software-rasterizer")
-        
-        # Anti-detection
-        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
-        
-        chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        
-        # Performance & Stability options
-        chrome_options.add_argument("--log-level=3")
-        chrome_options.add_argument("--ignore-certificate-errors")
-        chrome_options.add_argument("--ignore-ssl-errors")
-        chrome_options.page_load_strategy = 'eager'
-        
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        driver.set_page_load_timeout(60) # Increased timeout
-        return driver
 
     def fetch_url(self, url: str) -> Dict[str, Any]:
         """
@@ -81,13 +45,13 @@ class ContentFetcher:
         except requests.exceptions.HTTPError as e:
             # If we get a 403 Forbidden or 401, it's likely bot protection.
             if e.response.status_code in [403, 401, 406, 429]:
-                app_logger.warning(f"Requests blocked by {url} ({e.response.status_code}). Falling back to Selenium.")
-                page_content, driver_title = self._fetch_via_selenium(url)
+                app_logger.warning(f"Requests blocked by {url} ({e.response.status_code}). Falling back to Jina.")
+                page_content, driver_title = self._fetch_via_jina(url)
             else:
                 raise Exception(f"Failed to fetch exactly {url}: HTTP {e.response.status_code}")
         except Exception as e:
-           app_logger.warning(f"Requests connection error for {url}: {e}. Falling back to Selenium.")
-           page_content, driver_title = self._fetch_via_selenium(url)
+           app_logger.warning(f"Requests connection error for {url}: {e}. Falling back to Jina.")
+           page_content, driver_title = self._fetch_via_jina(url)
 
         if not page_content:
             raise Exception(f"Failed to extract any content from {url}")
@@ -108,27 +72,30 @@ class ContentFetcher:
         
         return extracted
         
-    def _fetch_via_selenium(self, url: str):
-        driver = None
+    def _fetch_via_jina(self, url: str):
+        """Fallback to Jina Reader API to bypass bot protections when Selenium is unavailable."""
         try:
-            driver = self._get_driver()
-            driver.get(url)
-            time.sleep(2) # Wait briefly for JS to load content
-            content = driver.page_source
-            title = driver.title
-            return content, title
+            jina_url = f"https://r.jina.ai/{url}"
+            headers = {'Accept': 'text/html'}
+            response = requests.get(jina_url, headers=headers, timeout=self.timeout)
+            response.raise_for_status()
+            content = response.text
+            # Use regex to find a title from markdown/html returned by jina if applicable
+            title_match = re.search(r'Title: (.*?)\n', content)
+            title = title_match.group(1).strip() if title_match else ""
+            
+            # Since Jina returns Markdown by default, we wrap it in basic HTML 
+            # so the existing BeautifulSoup _extract methods don't break downstream
+            html_wrapped = f"<html><head><title>{title}</title></head><body><article>{content}</article></body></html>"
+            return html_wrapped, title
+            
+        except requests.exceptions.HTTPError as e:
+            msg = "Target site has extremely strict bot protection and blocked all our scrapers."
+            app_logger.error(f"Jina fallback failed for {url}: HTTP {e.response.status_code}")
+            raise Exception(f"{msg} (Status: {e.response.status_code})")
         except Exception as e:
-            # If Render doesn't have Chrome installed, provide a clear, non-crashing error
-            if "cannot find Chrome binary" in str(e):
-                app_logger.error("Selenium fallback failed: Chrome binary not installed on this server environment.")
-                raise Exception("Server configuration missing Chrome binary. Unable to bypass site protection.")
-            raise Exception(f"Selenium fallback failed for {url}: {str(e)}")
-        finally:
-            if driver:
-                try:
-                    driver.quit()
-                except:
-                    pass
+            app_logger.error(f"Jina fallback completely failed for {url}: {str(e)}")
+            raise Exception(f"Scraper fallback failed for {url}: {str(e)}")
     
     def _extract_title(self, soup: BeautifulSoup, driver_title: str = "") -> str:
         """Extract the page title, falling back to driver title."""
