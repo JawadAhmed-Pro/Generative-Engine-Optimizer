@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     
     # ChromaDB Configuration
     CHROMA_PERSIST_DIR: str = os.getenv("CHROMA_PERSIST_DIR", "./chroma_data")
-    CHROMA_COLLECTION_NAME: str = "geo_content"
+    CHROMA_COLLECTION_NAME: str = "geo_content_v2"
     
     # Rate Limits
     MAX_REQUESTS_PER_MINUTE: int = 60
