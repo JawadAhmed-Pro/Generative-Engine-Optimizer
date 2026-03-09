@@ -20,9 +20,6 @@ alembic
 lxml
 html5lib
 
-selenium
-webdriver-manager
-
 # RAG Enhancement - Moved to Google API to save RAM
 
 # Authentication
