@@ -912,9 +912,12 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
         content_type=extracted.get('content_type', 'general')
     )
     
-    # Store probability in llm_scores temporarily so it saves to JSON DB column
-    final_scores['llm_scores']['probability_metrics'] = prob_calc
-    
+    # Format probability_metrics to match the ScoreMetric pydantic schema before saving
+    final_scores['llm_scores']['probability_metrics'] = {
+        'score': prob_calc.get('probability', 0.0),
+        'details': prob_calc,
+        'suggestions': []
+    }
     # Save results to database
     analysis_result = AnalysisResult(
         content_item_id=content_item_id,
