@@ -87,8 +87,9 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
             results.technical_readability_score) / 4
     )
 
-    // Extract new probability metrics if available
-    const probabilityMetrics = results.probability_metrics || (results.llm_scores && results.llm_scores.probability_metrics) || null;
+    // Extract new probability metrics if available, accounting for Pydantic wrapper mapping
+    const rawProb = results.probability_metrics || (results.llm_scores && results.llm_scores.probability_metrics) || null;
+    const probabilityMetrics = rawProb?.details || rawProb;
     const scoreDelta = results.score_delta;
     const prevCount = results.previous_analyses_count;
 
@@ -144,7 +145,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             Based on our research models, your content has a <strong>{probabilityMetrics.probability}%</strong> chance of being cited by AI engines as a source.
                         </p>
                         <div style={{ fontSize: '0.85rem', color: 'var(--accent)', marginTop: '0.5rem' }}>
-                            Industry Average: {probabilityMetrics.competitor_average}% | Confidence Interval: {probabilityMetrics.confidence_interval.low}% - {probabilityMetrics.confidence_interval.high}%
+                            Industry Average: {probabilityMetrics?.competitor_average || 'N/A'}% | Confidence Interval: {probabilityMetrics?.confidence_interval?.low || 'N/A'}% - {probabilityMetrics?.confidence_interval?.high || 'N/A'}%
                         </div>
                     </>
                 ) : (
