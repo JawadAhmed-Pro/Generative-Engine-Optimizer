@@ -306,7 +306,7 @@ class RuleBasedScorer:
                 suggestions.append("Add trust signals like Guarantee, Warranty, or Secure Checkout policies")
 
         else:
-            if author:
+            if metadata.get('author'):
                 score += 20
                 details['has_author'] = True
             else:
