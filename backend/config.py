@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     MAX_TOKENS_PER_REQUEST: int = 8000
     
     # Model Selection
-    GEMINI_MODEL: str = "gemini-1.5-flash"
-    GROQ_MODEL: str = "llama3-70b-8192"
+    GEMINI_MODEL: str = "gemini-2.0-flash"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
     
     # Chunking Configuration
     CHUNK_SIZE: int = 512
