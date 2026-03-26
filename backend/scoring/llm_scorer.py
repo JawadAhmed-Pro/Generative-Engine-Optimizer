@@ -264,12 +264,12 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
         response = await asyncio.to_thread(run_request)
         
         if response.status_code != 200:
-            raise Exception(f"API Error {response.status_code}: {response.text}")
+            raise Exception(f"Groq API Error {response.status_code}: {response.text}")
             
-        result = response.json()
-        content = result['choices'][0]['message']['content']
-        app_logger.debug(f"Perplexity Response (first 200 chars): {content[:200]}")
-        return self._parse_llm_response(content, metadata.get('content_type', 'general'))
+        raw_result = response.json()
+        response_text = raw_result['choices'][0]['message']['content']
+        app_logger.debug(f"Groq Response (first 200 chars): {response_text[:200]}")
+        return self._parse_llm_response(response_text, metadata.get('content_type', 'general'))
 
     async def _analyze_with_gemini(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze content using Gemini API (Async)."""
@@ -289,8 +289,9 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
             app_logger.debug(f"Gemini responded. First 200 chars: {response.text[:200]}")
             return self._parse_llm_response(response.text, metadata.get('content_type', 'general'))
         except Exception as e:
+            # Re-raise so the caller (analyze()) can log it and use the final fallback
             app_logger.error(f"Gemini API FAILED: {str(e)}")
-            return self._get_default_scores(metadata.get('content_type', 'general'))
+            raise
 
     def _create_geo_prompt(self, content: str, metadata: Dict[str, Any]) -> str:
         """Create a prompt for GEO analysis based on content type."""
