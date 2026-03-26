@@ -126,6 +126,78 @@ def health_check():
 
 
 # ========================
+# LLM Diagnostic Endpoint (Debug only)
+# ========================
+
+@app.get("/api/debug-llm")
+async def debug_llm():
+    """Test Groq and Gemini API connections directly. Use to diagnose 50/100 default score issues."""
+    import requests as req_lib
+
+    results = {
+        "groq_api_key_set": bool(settings.GROQ_API_KEY),
+        "gemini_api_key_set": bool(settings.GEMINI_API_KEY),
+        "groq_model": settings.GROQ_MODEL,
+        "gemini_model": settings.GEMINI_MODEL,
+        "groq_status": "not_tested",
+        "groq_error": None,
+        "groq_response_preview": None,
+        "gemini_status": "not_tested",
+        "gemini_error": None,
+        "gemini_response_preview": None,
+    }
+
+    test_prompt = "Score this text: 'AI is great.' Return JSON: {\"semantic_richness\": 70}"
+
+    # --- Test Groq ---
+    if settings.GROQ_API_KEY:
+        try:
+            r = req_lib.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {settings.GROQ_API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": settings.GROQ_MODEL,
+                    "response_format": {"type": "json_object"},
+                    "messages": [{"role": "user", "content": test_prompt}],
+                    "temperature": 0.1
+                },
+                timeout=20
+            )
+            if r.status_code == 200:
+                results["groq_status"] = "success"
+                results["groq_response_preview"] = r.json()["choices"][0]["message"]["content"][:200]
+            else:
+                results["groq_status"] = "http_error"
+                results["groq_error"] = f"Status {r.status_code}: {r.text[:300]}"
+        except Exception as e:
+            results["groq_status"] = "exception"
+            results["groq_error"] = str(e)
+    else:
+        results["groq_status"] = "skipped_no_key"
+
+    # --- Test Gemini ---
+    if settings.GEMINI_API_KEY:
+        try:
+            from google import genai
+            from google.genai import types
+            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            response = client.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=test_prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.1)
+            )
+            results["gemini_status"] = "success"
+            results["gemini_response_preview"] = response.text[:200]
+        except Exception as e:
+            results["gemini_status"] = "exception"
+            results["gemini_error"] = str(e)
+    else:
+        results["gemini_status"] = "skipped_no_key"
+
+    return results
+
+
+# ========================
 # Authentication Endpoints
 # ========================
 
