@@ -276,10 +276,15 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
         prompt = self._create_geo_prompt(content, metadata)
         app_logger.debug(f"Calling Gemini API...")
         try:
+            from google.genai import types
             # Standard generation using modern google-genai SDK
             response = await self.gemini_client.aio.models.generate_content(
                 model=settings.GEMINI_MODEL,
-                contents=prompt
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.1
+                )
             )
             app_logger.debug(f"Gemini responded. First 200 chars: {response.text[:200]}")
             return self._parse_llm_response(response.text, metadata.get('content_type', 'general'))
@@ -389,8 +394,9 @@ Provide response in this EXACT JSON format:
             app_logger.error(f"Failed to parse LLM response: {str(e)}")
             app_logger.error(f"Response text (first 500 chars): {response_text[:500]}")
         
-        app_logger.warning("Returning default scores due to parsing failure")
-        return self._get_default_scores(content_type)
+        # Raise an exception rather than silently returning defaults
+        # This allows the caller loop to gracefully fallback to Gemini!
+        raise ValueError("Response was not a valid parsable JSON object.")
     
     def _get_default_scores(self, content_type: str) -> Dict[str, Any]:
         """Return default scores checks."""
