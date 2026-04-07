@@ -90,27 +90,36 @@ class CitationProbabilityModel:
                 "description": "Linking to .gov/.edu/primary research increases grounding probability."
             })
 
-        # FRESHNESS / CONTENT DECAY (Critical Perplexity Factor)
+        # FRESHNESS / CONTENT DECAY (Topic-Aware calibration)
         freshness_data = rule_scores.get('freshness', {})
         has_recent_date = freshness_data.get('details', {}).get('has_update_info', False)
         
         # Check for Content Decay penalty
-        # Logic: If content is older than 180 days, apply -63% penalty for temporal engines
         if not has_recent_date:
-             # If we don't see a clear "Updated within 2025" signal, treat as legacy
-             multiplier_total *= 0.37 # Applying the -63% penalty (1.0 - 0.63)
+             # Topic-Aware Penalty Logic: 
+             # Evergreen topics (Education) don't decay as fast as News/Trends.
+             if content_type == 'education':
+                 decay_multiplier = 0.85 # Slight 15% penalty for lack of maintenance signals
+                 penalty_desc = "Foundational topics decay slowly, but lack of recent 'Updated 2025' markers still impacts trust."
+                 impact_label = "-15% penalty"
+             else:
+                 decay_multiplier = 0.37 # Full 63% penalty for general/temporal content
+                 penalty_desc = "Legacy content (>180 days) loses up to 63% of citation share in temporal AI search."
+                 impact_label = "-63% penalty"
+
+             multiplier_total *= decay_multiplier
              factors.append({
                 "factor": "Content Decay",
-                "impact": "-63% penalty",
+                "impact": impact_label,
                 "type": "negative",
-                "description": "Legacy content (>180 days) loses up to 63% of Perplexity citation share."
+                "description": penalty_desc
              })
         else:
             factors.append({
                 "factor": "Freshness Optimization",
                 "impact": "High Retention",
                 "type": "positive",
-                "description": "Recent updates (last 30-60 days) are prioritized by temporal AI engines."
+                "description": "Recent updates (2025/26) are heavily prioritized by AI search engines."
             })
 
         # 4. CONTENT LENGTH / DEPTH (Modified)
