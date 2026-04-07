@@ -332,9 +332,9 @@ Provide response in this EXACT JSON format:
 }
 """
         else:
-            # General / Educational / Blog
+            # General / Educational / Blog (2025 Research Calibration)
             metrics_prompt = """
-Evaluate the content based on 2025 Generative Engine Optimization (GEO) standards. 
+Evaluate the content based on 2025 Generative Engine Optimization (GEO) standards from Princeton, BrightEdge, and Ahrefs.
 You are an OBJECTIVE AUDITOR. Grade fairly based on industry standards.
 
 **GRADING SCALE:**
@@ -343,15 +343,15 @@ You are an OBJECTIVE AUDITOR. Grade fairly based on industry standards.
 - **70-85 (High Quality)**: Strong content, good structure, meets most intent.
 - **86-100 (Exceptional)**: Perfect structure, highly cited, novel unique data.
 
-**METRICS TO EVALUATE:**
+**METRICS TO EVALUATE (2025 Standards):**
 
-1. **Semantic Richness (Information Gain)**: Does it provide UNIQUE data, insights, or viewpoints?
-2. **User Intent Alignment (Direct Answers)**: Does it answer the main query DIRECTLY?
-3. **Structural Integrity**: Logic flow, use of H2/H3 headings.
-4. **AI-Friendly Formatting**: Use of Lists, Tables, and scannable formatting.
-5. **Content Authority (Trust Signals)**: Usage of verifiable references, citations, or authoritative language.
-6. **Internal Linkability (Topic Cluster)**: Mentions of related entities and concepts.
-7. **Readability & UX Score**: Clarity, active voice, and conciseness.
+1. **Semantic Richness (Information Gain)**: Does it provide UNIQUE information, insights, or viewpoints that cannot be found easily elsewhere? 
+2. **User Intent Alignment (Direct Answers)**: Does it use the 'Inverted Pyramid'? Is there a direct, concise answer (75-120 words) immediately following the main headings/queries?
+3. **Structural Integrity (Extraction Confidence)**: Are there lists, tables, or short paragraphs (<4 sentences) that an LLM can easily extract as tokens?
+4. **AI-Friendly Formatting**: Use of headings (H1-H3) and the presence of 'hard grounding' markers (named authors, expert credentials).
+5. **Content Authority (Grounding Confidence)**: Density of verifiable facts, statistics, and citations. 
+6. **Internal Linkability**: How well the content would connect to other topics in a RAG graph.
+7. **Readability UX**: Is it clear of narrative 'fluff' and slow build-ups?
 
 Provide response in this EXACT JSON format:
 {

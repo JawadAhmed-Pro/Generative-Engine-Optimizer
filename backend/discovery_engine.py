@@ -98,10 +98,12 @@ class PromptDiscoveryEngine:
                 contents=prompt
             )
             content = response.text.strip()
-            if content.startswith('```json'):
-                content = content[7:-3].strip()
-            elif content.startswith('```'):
-                content = content[3:-3].strip()
+            
+            # Clean if it wrapped in markdown
+            if '```json' in content:
+                content = content.split('```json')[1].split('```')[0].strip()
+            elif '```' in content:
+                content = content.split('```')[1].split('```')[0].strip()
                 
             return json.loads(content)
         except Exception as e:

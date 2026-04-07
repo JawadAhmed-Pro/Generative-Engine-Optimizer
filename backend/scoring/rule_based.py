@@ -219,10 +219,8 @@ class RuleBasedScorer:
             'score': min(score, 100),
             'details': details,
             'suggestions': suggestions[:3]
-        }
-    
-    def _analyze_authority(self, content: str, metadata: Dict[str, Any], content_type: str) -> Dict[str, Any]:
-        """Analyze authority signals (E-E-A-T)."""
+            def _analyze_authority(self, content: str, metadata: Dict[str, Any], content_type: str) -> Dict[str, Any]:
+        """Analyze authority signals (E-E-A-T) including 2025 GEO grounding."""
         score = 0
         suggestions = []
         details = {}
@@ -230,93 +228,71 @@ class RuleBasedScorer:
         word_count = len(content.split())
         details['word_count'] = word_count
         
-        # Content length
-        if word_count >= 1000:
+        # 1. Expert Mentions (NEW: 2025 Lift)
+        expert_pattern = r'"[^"]+" (?:says|claims|stated|according to) (?:Dr\.|Prof\.|Mr\.|Ms\.)? [A-Z][a-z]+ [A-Z][a-z]+(?:, [A-Z]{2,4}| PhD| CEO| Lead| Director)?'
+        credential_pattern = r'\b(PhD|M\.D\.|M\.S\.|CEO|CTO|Scientist|Professor|Head of|Director of|Founder)\b'
+        
+        expert_quotes = len(re.findall(expert_pattern, content))
+        expert_keywords = len(re.findall(credential_pattern, content))
+        
+        expert_mentions = expert_quotes + (expert_keywords // 2)
+        details['expert_mentions'] = expert_mentions
+        
+        if expert_mentions >= 2:
             score += 30
-        elif word_count >= 600:
-            score += 20
-            suggestions.append("Good start, but consider expanding to 1000+ words for better authority.")
-        else:
-            suggestions.append(f"Content is short ({word_count} words). Aim for 600-1000+ words.")
-        
-        # Check for citations/references
-        citation_patterns = [
-            r'according to',
-            r'research shows',
-            r'study found',
-            r'data\s+shows',
-            r'\d{4}\s+study',
-            r'source:',
-            r'\[\d+\]',  # Numbered citations
-        ]
-        
-        citation_count = sum(len(re.findall(pattern, content.lower())) for pattern in citation_patterns)
-        
-        if content_type == 'ecommerce':
-             score += 15 # Free points for ecommerce (citations not needed)
-             details['citations'] = 0 
-        else:
-            if citation_count >= 3:
-                score += 25
-                details['citations'] = citation_count
-            elif citation_count >= 1:
-                score += 15
-                details['citations'] = citation_count
-                suggestions.append("Add more citations and references to authoritative sources")
-            else:
-                suggestions.append("Include citations, research, and data to establish authority")
-        
-        # Check for data/statistics
-        number_pattern = r'\b\d+(?:\.\d+)?%|\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:percent|million|billion|thousand)\b'
-        stat_count = len(re.findall(number_pattern, content))
-        
-        if stat_count >= 5:
-            score += 25
-            details['statistics'] = stat_count
-        elif stat_count >= 2:
+        elif expert_mentions >= 1:
             score += 15
-            details['statistics'] = stat_count
+            suggestions.append("Add named expert quotes with credentials to boost grounding confidence.")
         else:
-            suggestions.append("Include statistics and data points to support claims")
+            suggestions.append("Add expert quotations (e.g., 'says Dr. Smith, Lead Scientist') to establish authority.")
+
+        # 2. Fact / Data Density (NEW: 2025 Lift)
+        number_pattern = r'\b\d+(?:\.\d+)?%|\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:percent|million|billion|thousand)\b|\b(19|20)\d{2}\b'
+        stat_count = len(re.findall(number_pattern, content))
+        details['statistics'] = stat_count
         
-        # Check for author/expert mentions
-        # E-Commerce Trust Signals (20 points total in theory)
+        # Fact density per 200 words
+        fact_density = stat_count / max(word_count / 200, 1)
+        details['fact_density'] = round(fact_density, 2)
+        
+        if fact_density >= 1.5:
+            score += 30
+        elif fact_density >= 0.5:
+            score += 15
+        else:
+            suggestions.append("Increase fact density (aim for 1+ verifiable data point per 200 words).")
+
+        # 3. Inline Source Citations
+        citation_patterns = [r'according to', r'source:', r'\[\d+\]', r'\(202\d\)']
+        citation_count = sum(len(re.findall(p, content.lower())) for p in citation_patterns)
+        details['citations'] = citation_count
+        
+        if citation_count >= 3:
+            score += 20
+        elif citation_count >= 1:
+             score += 10
+        
+        # 4. Content Type Specifics (Ecom Trust)
         if content_type == 'ecommerce':
-            details['is_ecommerce'] = True
-            
-            # Check for Reviews presence
-            review_words = ['review', 'rating', 'stars', 'customer rating']
-            has_reviews = any(w in content.lower() for w in review_words)
-            
-            if has_reviews:
-                score += 40
+            review_words = ['review', 'rating', 'stars', 'customer says']
+            if any(w in content.lower() for w in review_words):
+                score += 20
                 details['has_reviews'] = True
             else:
-                score -= 20
-                suggestions.append("Critical: Display customer reviews prominently on the page")
-                
-            # Check for Trust Badges/Certifications (heuristics)
-            trust_words = ['warranty', 'guarantee', 'secure checkout', 'certified', 'free shipping', 'returns']
-            trust_count = sum(1 for w in trust_words if w in content.lower())
-            
-            if trust_count >= 2:
-                score += 20
-                details['trust_signals'] = trust_count
-            else:
-                suggestions.append("Add trust signals like Guarantee, Warranty, or Secure Checkout policies")
-
+                suggestions.append("Add customer reviews to increase E-commerce trust signals.")
         else:
             if metadata.get('author'):
                 score += 20
                 details['has_author'] = True
             else:
                  suggestions.append("Add author attribution to establish expertise")
-        
+
         return {
             'score': min(score, 100),
             'details': details,
             'suggestions': suggestions[:3]
         }
+      }
     
     def _analyze_schema(self, metadata: Dict[str, Any], content_type: str) -> Dict[str, Any]:
         """Analyze structured data and schema markup."""
@@ -378,54 +354,33 @@ class RuleBasedScorer:
         }
     
     def _analyze_freshness(self, content: str) -> Dict[str, Any]:
-        """Analyze content freshness signals."""
+        """Analyze content freshness signals (2025/26 Recency)."""
         score = 0
         suggestions = []
         details = {}
         
-        current_year = datetime.now().year
-        last_year = current_year - 1
+        # Perplexity & AI Search Benchmarks prioritize 2025/2026 dates
+        recent_year_pattern = r'\b(2025|2026)\b'
+        recent_years = len(re.findall(recent_year_pattern, content))
         
-        # Check for recent years
-        year_mentions = re.findall(r'\b(20\d{2})\b', content)
-        recent_years = [int(y) for y in year_mentions if int(y) >= last_year]
+        if recent_years > 0:
+            score += 50
+            details['v2025_recency'] = True
         
-        if recent_years:
-            score += 40
-            details['recent_year_mentions'] = len(recent_years)
-        # Removed the suggestion to forcibly add recent dates if none exist, as evergreen content is valid
+        # Check for "Last Updated" metadata markers
+        update_patterns = ['last updated', 'updated:', 'modified:', '2025-', '2026-']
+        has_update_info = any(p in content.lower() for p in update_patterns)
+        details['has_update_info'] = has_update_info
         
-        # Check for temporal indicators
-        fresh_indicators = [
-            'latest', 'recent', 'current', 'updated', 'new', '2024', '2025',
-            'today', 'now', 'modern', 'contemporary'
-        ]
-        
-        fresh_count = sum(1 for indicator in fresh_indicators if indicator in content.lower())
-        
-        if fresh_count >= 5:
-            score += 40
-            details['freshness_signals'] = fresh_count
-        elif fresh_count >= 2:
-            score += 20
-            details['freshness_signals'] = fresh_count
-            suggestions.append("Add more freshness signals (latest, updated, current, etc.)")
+        if has_update_info:
+            score += 50
         else:
-            suggestions.append("Include freshness indicators to show content is up-to-date")
-        
-        # Check for "updated" or "last modified" language
-        update_patterns = ['updated:', 'last updated', 'modified:', 'revised:']
-        has_update_date = any(pattern in content.lower() for pattern in update_patterns)
-        
-        if has_update_date:
-            score += 20
-            details['has_update_info'] = True
-        # Removed suggestion to add "Last Updated" text as it's often a CMS feature, not content text
-        
+            suggestions.append("Include 'Last Updated 2025' markers to satisfy temporal AI engines like Perplexity.")
+            
         return {
             'score': min(score, 100),
             'details': details,
-            'suggestions': suggestions[:3]
+            'suggestions': suggestions[:2]
         }
     
     def _analyze_readability(self, content: str) -> Dict[str, Any]:

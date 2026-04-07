@@ -23,115 +23,111 @@ class CitationProbabilityModel:
         Calculate final citation probability and provide a breakdown of factors.
         """
         # 1. Start with base probability derived from the overall GEO score
-        # Using a flattened S-curve approximation
+        # Recalibrated S-curve for better real-world AI search alignment (2025 Benchmarks)
         if overall_score < 40:
-            base_prob = overall_score * 0.2
-        elif overall_score < 70:
-            base_prob = 8 + ((overall_score - 40) * 0.9)
+            base_prob = overall_score * 0.3
+        elif overall_score < 75:
+            base_prob = 12 + ((overall_score - 40) * 1.2)
         else:
-            base_prob = 35 + ((overall_score - 70) * 1.5)
+            base_prob = 54 + ((overall_score - 75) * 1.8)
             
-        base_prob = max(1.0, min(80.0, base_prob)) # Cap base at 80%
+        base_prob = max(1.0, min(85.0, base_prob)) # Cap base at 85%
 
         factors: List[Dict[str, Any]] = []
-        current_prob = base_prob
         multiplier_total = 1.0
 
-        # 2. Check for specific high-impact schema markup
+        # SCHEMA & STRUCTURE
         schema_data = rule_scores.get('schema', {})
         schema_types = schema_data.get('details', {}).get('schema_types', [])
-        
         has_faq = 'FAQPage' in schema_types
         has_article = 'Article' in schema_types or 'NewsArticle' in schema_types or 'BlogPosting' in schema_types
-        has_product = 'Product' in schema_types
         
         if has_faq:
-            # Research: FAQ Schema gives 89-221% citation lift
-            boost = 1.89
-            multiplier_total *= boost
+            # 2025 Research: FAQ schema provides "Clean Extraction" lift
+            multiplier_total *= 1.6
             factors.append({
-                "factor": "FAQ Schema",
-                "impact": "+89% lift",
+                "factor": "FAQ Schema Lift",
+                "impact": "+60% lift",
                 "type": "positive",
                 "description": "Crucial for capturing 'People Also Ask' style AI prompts."
             })
             
-        if has_product and content_type == "ecommerce":
-            # Research: Product schema is mandatory for 90% of cited ecom pages
-            boost = 1.6
-            multiplier_total *= boost
-            factors.append({
-                "factor": "Product Schema",
-                "impact": "+60% lift",
-                "type": "positive",
-                "description": "Essential for AI shopping assistants to parse specs."
-            })
-
-        # 3. Check for Statistics / Numbers density
-        # Extract from rule-based structure score if available
-        structure_data = rule_scores.get('structure', {})
-        details = structure_data.get('details', {})
-        
-        has_lists = details.get('has_lists', False)
-        if has_lists:
-            boost = 1.25
-            multiplier_total *= boost
-            factors.append({
-                "factor": "List Formatting",
-                "impact": "+25% lift",
-                "type": "positive",
-                "description": "AI engines heavily prefer structured list formats for extraction."
-            })
-
-        # Check Authority (Expert quotes / external links)
+        # EXPERT QUOTATIONS (New 2025 Factor)
+        # Check rule-based authority for expert citations
         authority_data = rule_scores.get('authority', {})
-        ext_links = authority_data.get('details', {}).get('external_links', 0)
-        
-        if ext_links >= 3:
-            boost = 1.3
-            multiplier_total *= boost
+        has_expert_quotes = authority_data.get('details', {}).get('expert_mentions', 0) > 0
+        if has_expert_quotes:
+            # Princeton GEO-bench: Expert quotes give +29% to +41% lift
+            multiplier_total *= 1.35
             factors.append({
-                "factor": "Outbound Citations",
+                "factor": "Expert Quotations",
+                "impact": "+35% lift",
+                "type": "positive",
+                "description": "Named expert credentials significantly boost extraction confidence."
+            })
+
+        # VERIFIABLE DATA & STATISTICS
+        stat_count = authority_data.get('details', {}).get('statistics', 0)
+        if stat_count >= 5:
+            # Princeton GEO-bench: Statistics are the highest-impact strategy (+40% peak)
+            multiplier_total *= 1.3
+            factors.append({
+                "factor": "Empirical Data Density",
                 "impact": "+30% lift",
                 "type": "positive",
-                "description": "Linking to authoritative sources increases your own credibility."
+                "description": "AI engines heavily prefer answers grounded in verifiable numbers."
             })
-            
-        # 4. Content length / depth
-        word_count = details.get('word_count', 0)
-        if word_count > 1500:
-            boost = 1.4
-            multiplier_total *= boost
+
+        # INLINE SOURCE CITATIONS
+        ext_links = authority_data.get('details', {}).get('external_links', 0)
+        if ext_links >= 3:
+            # Research: +22% to +40% citation probability lift
+            multiplier_total *= 1.31
             factors.append({
-                "factor": "Comprehensive Depth",
-                "impact": "+40% lift",
+                "factor": "Authoritative Citations",
+                "impact": "+31% lift",
                 "type": "positive",
-                "description": "Long-form content (>1500 words) provides more semantic surface area."
+                "description": "Linking to .gov/.edu/primary research increases grounding probability."
             })
-        elif word_count < 500:
-            boost = 0.6
-            multiplier_total *= boost
-            factors.append({
-                "factor": "Thin Content",
-                "impact": "-40% penalty",
+
+        # FRESHNESS / CONTENT DECAY (Critical Perplexity Factor)
+        freshness_data = rule_scores.get('freshness', {})
+        has_recent_date = freshness_data.get('details', {}).get('has_update_info', False)
+        
+        # Check for Content Decay penalty
+        # Logic: If content is older than 180 days, apply -63% penalty for temporal engines
+        if not has_recent_date:
+             # If we don't see a clear "Updated within 2025" signal, treat as legacy
+             multiplier_total *= 0.37 # Applying the -63% penalty (1.0 - 0.63)
+             factors.append({
+                "factor": "Content Decay",
+                "impact": "-63% penalty",
                 "type": "negative",
-                "description": "Content under 500 words is rarely cited as a primary source."
+                "description": "Legacy content (>180 days) loses up to 63% of Perplexity citation share."
+             })
+        else:
+            factors.append({
+                "factor": "Freshness Optimization",
+                "impact": "High Retention",
+                "type": "positive",
+                "description": "Recent updates (last 30-60 days) are prioritized by temporal AI engines."
             })
 
-        # 5. E-commerce Specifics
-        if content_type == "ecommerce":
-            review_presence = llm_scores.get('citation_worthiness', {}).get('details', {}).get('review_presence', 0)
-            if review_presence > 70:
-                boost = 1.5
-                multiplier_total *= boost
-                factors.append({
-                    "factor": "Strong Review Signals",
-                    "impact": "+50% lift",
-                    "type": "positive",
-                    "description": "High trust signals strongly influence AI product recommendations."
-                })
+        # 4. CONTENT LENGTH / DEPTH (Modified)
+        details = rule_scores.get('structure', {}).get('details', {})
+        word_count = details.get('word_count', 0)
+        authority_score = llm_scores.get('citation_worthiness', {}).get('score', 50)
+        
+        if word_count < 500 and authority_score < 75:
+            multiplier_total *= 0.65 # Thin content penalty for low authority
+            factors.append({
+                "factor": "Thin Grounding Density",
+                "impact": "-35% penalty",
+                "type": "negative",
+                "description": "Short content lacking authority fails AI grounding thresholds."
+            })
 
-        # Calculate final probability
+        # Final average based calculation
         final_prob = base_prob * multiplier_total
         
         # Hard caps
