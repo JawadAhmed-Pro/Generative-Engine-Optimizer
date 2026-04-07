@@ -219,7 +219,9 @@ class RuleBasedScorer:
             'score': min(score, 100),
             'details': details,
             'suggestions': suggestions[:3]
-            def _analyze_authority(self, content: str, metadata: Dict[str, Any], content_type: str) -> Dict[str, Any]:
+        }
+    
+    def _analyze_authority(self, content: str, metadata: Dict[str, Any], content_type: str) -> Dict[str, Any]:
         """Analyze authority signals (E-E-A-T) including 2025 GEO grounding."""
         score = 0
         suggestions = []
@@ -292,7 +294,6 @@ class RuleBasedScorer:
             'details': details,
             'suggestions': suggestions[:3]
         }
-      }
     
     def _analyze_schema(self, metadata: Dict[str, Any], content_type: str) -> Dict[str, Any]:
         """Analyze structured data and schema markup."""
