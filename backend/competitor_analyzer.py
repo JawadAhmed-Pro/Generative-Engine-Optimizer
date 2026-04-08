@@ -9,11 +9,12 @@ from datetime import datetime
 class CompetitorAnalyzer:
     """Analyze and compare content against competitors."""
 
-    def __init__(self, content_fetcher, rule_scorer, llm_scorer, aggregator):
+    def __init__(self, content_fetcher, rule_scorer, llm_scorer, aggregator, discovery_engine=None):
         self.content_fetcher = content_fetcher
         self.rule_scorer = rule_scorer
         self.llm_scorer = llm_scorer
         self.aggregator = aggregator
+        self.discovery_engine = discovery_engine
 
     async def analyze_competitor(self, url: str, content_type: str = "general") -> Dict[str, Any]:
         """
@@ -89,39 +90,80 @@ class CompetitorAnalyzer:
         self,
         user_url: str,
         competitor_urls: List[str],
+        keyword: Optional[str] = None,
+        niche: str = "general",
         content_type: str = "general"
     ) -> Dict[str, Any]:
         """
         Compare user's content against multiple competitors.
-
-        Args:
-            user_url: User's URL
-            competitor_urls: List of competitor URLs (max 5)
-            content_type: Content type for analysis
-
-        Returns:
-            Comparison results with gaps and quick wins
+        Includes semantic gap and prompt coverage analysis.
         """
         # Limit competitors
         competitor_urls = competitor_urls[:5]
 
-        # Analyze user's content
+        # 1. Standard competitive analysis
         user_result = await self.analyze_competitor(user_url, content_type)
-
-        # Analyze competitors
+        
         competitor_results = []
         for comp_url in competitor_urls:
             result = await self.analyze_competitor(comp_url, content_type)
             competitor_results.append(result)
 
+        # 2. Prompt Discovery & Coverage Gap (The "Killer Feature")
+        prompt_coverage = {}
+        if self.discovery_engine and keyword:
+            discovery = await self.discovery_engine.discover_prompts(keyword, niche)
+            prompts = discovery.get('top_prompts', [])[:10]
+            
+            # Analyze coverage for user and top competitor
+            prompt_coverage = await self._analyze_prompt_coverage(
+                user_result, 
+                competitor_results, 
+                prompts
+            )
+
         # Generate comparison insights
         comparison = self._generate_comparison(user_result, competitor_results)
+        if prompt_coverage:
+            comparison['prompt_coverage'] = prompt_coverage
 
         return {
             "user": user_result,
             "competitors": competitor_results,
             "comparison": comparison,
             "analyzed_at": datetime.utcnow().isoformat()
+        }
+
+    async def _analyze_prompt_coverage(self, user: Dict[str, Any], competitors: List[Dict[str, Any]], prompts: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze which prompts are covered by whom and where the grounding gaps are."""
+        coverage_results = []
+        
+        for p in prompts:
+            p_text = p['prompt']
+            # Simple heuristic coverage check (in real production, this would be another LLM pass)
+            user_text = str(user.get('headings', {})) + str(user.get('title', ''))
+            comp_best_text = ""
+            best_comp_url = ""
+            
+            if competitors:
+                best_comp = competitors[0]
+                comp_best_text = str(best_comp.get('headings', {})) + str(best_comp.get('title', ''))
+                best_comp_url = best_comp.get('url', '')
+
+            user_has = any(word.lower() in user_text.lower() for word in p_text.split() if len(word) > 4)
+            comp_has = any(word.lower() in comp_best_text.lower() for word in p_text.split() if len(word) > 4)
+
+            coverage_results.append({
+                "prompt": p_text,
+                "user_coverage": "High" if user_has else "None",
+                "competitor_coverage": "High" if comp_has else "None",
+                "gap": not user_has and comp_has,
+                "winning_url": best_comp_url if comp_has and not user_has else (user['url'] if user_has else "Neither")
+            })
+
+        return {
+            "top_prompts": coverage_results,
+            "citation_gap_score": sum(1 for r in coverage_results if r['gap'])
         }
 
     def _generate_comparison(

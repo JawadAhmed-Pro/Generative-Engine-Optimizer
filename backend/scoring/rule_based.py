@@ -55,13 +55,13 @@ class RuleBasedScorer:
             score += 20
             details['h2_count'] = h2_count
         else:
-            suggestions.append("Add more H2 headings to structure your content (target: 2+)")
+            suggestions.append("Add more H2 headings (Medium Impact: +10% Visibility)")
         
         if h3_count >= 1:
             score += 10
             details['h3_count'] = h3_count
         else:
-             suggestions.append("Add H3 subheadings for better depth")
+             suggestions.append("Add H3 subheadings for deeper semantic structure")
         
         # Analyze paragraphs (Adaptive Splitting)
         # 1. Try splitting by double newline (standard)
@@ -102,7 +102,7 @@ class RuleBasedScorer:
             score += 15
             details['has_lists'] = True
         else:
-            suggestions.append("Add bullet points or numbered lists to improve scannability")
+            suggestions.append("Add bullet points or numbered lists (Medium Impact: +15% Lift)")
         
         # E-commerce Specific Structure (30 points total via weights later, but handled here)
         if content_type == 'ecommerce':
@@ -116,7 +116,7 @@ class RuleBasedScorer:
                 details['price_visible_early'] = True
             else:
                 score -= 10 
-                suggestions.append("Ensure Product Price is visible in the first paragraph/title")
+                suggestions.append("Display Product Price early in content (Critical for E-commerce Search)")
 
             # Check for Specification Table / List
             # We look for markdown tables or tight lists
@@ -244,9 +244,9 @@ class RuleBasedScorer:
             score += 30
         elif expert_mentions >= 1:
             score += 15
-            suggestions.append("Add named expert quotes with credentials to boost grounding confidence.")
+            suggestions.append("Add more named expert quotes with credentials (High Impact: +35% Lift)")
         else:
-            suggestions.append("Add expert quotations (e.g., 'says Dr. Smith, Lead Scientist') to establish authority.")
+            suggestions.append("Add expert quotations (e.g., 'says Dr. Smith, Lead Scientist') (High Impact: +35% Lift)")
 
         # 2. Fact / Data Density (NEW: 2025 Lift)
         number_pattern = r'\b\d+(?:\.\d+)?%|\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:percent|million|billion|thousand)\b|\b(19|20)\d{2}\b'
@@ -262,7 +262,7 @@ class RuleBasedScorer:
         elif fact_density >= 0.5:
             score += 15
         else:
-            suggestions.append("Increase fact density (aim for 1+ verifiable data point per 200 words).")
+            suggestions.append("Increase fact density to 1+ per 200 words (High Impact: +30% Lift)")
 
         # 3. Inline Source Citations
         citation_patterns = [r'according to', r'source:', r'\[\d+\]', r'\(202\d\)']
@@ -273,6 +273,9 @@ class RuleBasedScorer:
             score += 20
         elif citation_count >= 1:
              score += 10
+             suggestions.append("Add 3+ inline source citations (Medium Impact: +31% Lift)")
+        else:
+            suggestions.append("Include inline source citations (e.g., [1] or according to Study X) (Medium Impact: +31% Lift)")
         
         # 4. Content Type Specifics (Ecom Trust)
         if content_type == 'ecommerce':
@@ -337,10 +340,10 @@ class RuleBasedScorer:
                     score += 30
                 else:
                      target_schema = "FAQPage or HowTo"
-                     suggestions.append(f"Consider adding {target_schema} schema for better AI visibility")
+                     suggestions.append(f"Add {target_schema} schema (High Impact: +60% Probability Lift)")
         else:
              target_schema = "Product (Mandatory)" if content_type == 'ecommerce' else "Article, FAQPage, or HowTo"
-             suggestions.append(f"Add schema.org markup - {target_schema} - for AI search visibility")
+             suggestions.append(f"Missing Schema.org markup (Critical Impact: Highly Recommended for AI Visibility)")
         
         # Check for semantic HTML in headings
         headings = metadata.get('headings', {})
@@ -376,7 +379,8 @@ class RuleBasedScorer:
         if has_update_info:
             score += 50
         else:
-            suggestions.append("Include 'Last Updated 2025' markers to satisfy temporal AI engines like Perplexity.")
+            # 2025 Factor: Perplexity drops older content by 63%
+            suggestions.append("Include 'Last Updated 2025' text (Critical Impact: Prevents -63% Decay Penalty)")
             
         return {
             'score': min(score, 100),

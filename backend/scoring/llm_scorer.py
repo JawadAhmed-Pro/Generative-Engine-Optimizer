@@ -367,7 +367,7 @@ Provide response in this EXACT JSON format:
 }
 """
 
-        return base_prompt + metrics_prompt + "\\n\\nEvaluate objectively. Content that is 'good but not perfect' should score in the 70s."
+        return base_prompt + metrics_prompt + "\n\nEvaluate objectively. Your 'top_suggestion' MUST include an impact prefix like 'High Impact:', 'Medium Impact:', or 'Critical Impact:' based on the 2025 GEO research weights."
     
     def _parse_llm_response(self, response_text: str, content_type: str) -> Dict[str, Any]:
         """Parse LLM response into structured scores."""

@@ -26,6 +26,8 @@ from citation_tracker import CitationTracker
 from competitor_analyzer import CompetitorAnalyzer
 from probability_model import CitationProbabilityModel
 from discovery_engine import PromptDiscoveryEngine
+from geo_optimizer import geo_optimizer
+from discovery_engine import PromptDiscoveryEngine
 from auth import (
     get_password_hash, verify_password, create_access_token,
     get_current_user, require_auth
@@ -76,10 +78,15 @@ rule_scorer = RuleBasedScorer()
 llm_scorer = LLMScorer()
 aggregator = ScoreAggregator()
 rag_pipeline = RAGPipeline()
-citation_tracker = CitationTracker()
-competitor_analyzer = CompetitorAnalyzer(content_fetcher, rule_scorer, llm_scorer, aggregator)
 probability_model = CitationProbabilityModel()
 discovery_engine = PromptDiscoveryEngine()
+competitor_analyzer = CompetitorAnalyzer(
+    content_fetcher=content_fetcher,
+    rule_scorer=rule_scorer,
+    llm_scorer=llm_scorer,
+    aggregator=aggregator,
+    discovery_engine=discovery_engine
+)
 
 
 class ExtractContentRequest(BaseModel):
@@ -755,14 +762,21 @@ async def analyze_text(request: Request, payload: AnalyzeTextRequest, db: Sessio
 
 @app.post("/api/optimize-content")
 async def optimize_content(request: OptimizeContentRequest):
-    """Generate or Rewrite content."""
+    """Generate or Rewrite content with GEO 'Action Layer'."""
     try:
-        optimized_text = await llm_scorer.optimize(
-            content=request.content,
-            mode=request.mode,
-            content_type=request.content_type
-        )
-        return {"optimized_content": optimized_text}
+        if request.mode == 'rewrite':
+            result = await geo_optimizer.rewrite_to_inverted_pyramid(request.content)
+            return result
+        elif request.mode == 'grounding':
+            result = await geo_optimizer.suggest_hard_grounding(request.content, request.content_type)
+            return result
+        else:
+            optimized_text = await llm_scorer.optimize(
+                content=request.content,
+                mode=request.mode,
+                content_type=request.content_type
+            )
+            return {"optimized_content": optimized_text}
     except Exception as e:
          raise HTTPException(status_code=500, detail=str(e))
 
@@ -1209,9 +1223,14 @@ async def compare_competitors(
 ):
     """Compare user content against competitors."""
     try:
+        # Ground comparison in keyword/niche signals
+        keyword = payload.niche if payload.niche else None
+        
         results = await competitor_analyzer.compare(
             user_url=payload.user_url,
             competitor_urls=payload.competitor_urls,
+            keyword=keyword,
+            niche=payload.niche,
             content_type=payload.content_type
         )
 
@@ -1295,19 +1314,22 @@ class PromptDiscoveryRequest(BaseModel):
 async def discover_prompts(request: PromptDiscoveryRequest):
     """Discover 'People Also Ask' and high-value AI prompts for a topic."""
     try:
-        results = await discovery_engine.discover_prompts(
-            keyword=request.keyword,
-            niche=request.niche
-        )
+        # Use generate_niche_library if keyword is generic, otherwise discover_prompts
+        if len(request.keyword.split()) <= 2:
+             results = await discovery_engine.generate_niche_library(request.keyword)
+        else:
+             results = await discovery_engine.discover_prompts(
+                keyword=request.keyword,
+                niche=request.niche
+             )
         return {
             "success": True,
             "keyword": request.keyword,
             "niche": request.niche,
-            "prompts": results
+            "data": results
         }
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        app_logger.error(f"Discovery Failed: {e}")
         raise HTTPException(status_code=500, detail=f"Prompt discovery failed: {str(e)}")
 
 if __name__ == "__main__":

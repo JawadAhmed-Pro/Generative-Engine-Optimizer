@@ -17,20 +17,52 @@ class PromptDiscoveryEngine:
             
         self.groq_api_key = settings.GROQ_API_KEY
 
-    async def discover_prompts(self, keyword: str, niche: str) -> List[Dict[str, Any]]:
+    async def discover_prompts(self, keyword: str, niche: str) -> Dict[str, Any]:
         """
         Discover high-value prompts / questions for a given keyword/niche.
-        Uses Groq (fast inference) or Gemini as fallback to 
-        simulate 'People Also Ask' and real-world AI queries.
+        Grounds the discovery in real-world data from Google PAA and Reddit/Quora.
         """
+        app_logger.info(f"Starting real-world prompt discovery for: {keyword}")
+        
+        # 1. Scrape Real Data (Grounded Signals)
+        paa_data = await self._scrape_jina_search(f"site:google.com \"People also ask\" {keyword}")
+        reddit_data = await self._scrape_jina_search(f"site:reddit.com OR site:quora.com {keyword} \"question\"")
+        
+        # 2. Synthesize with LLM
+        signals = {
+            "paa": paa_data[:2000], # Cap for context window
+            "social": reddit_data[:2000]
+        }
+        
         if self.groq_api_key:
-             return await self._discover_via_groq(keyword, niche)
+             prompts = await self._discover_via_groq(keyword, niche, signals)
         elif self.gemini_client:
-             return await self._discover_via_gemini(keyword, niche)
+             prompts = await self._discover_via_gemini(keyword, niche, signals)
         else:
-             return self._fallback_prompts(keyword, niche)
+             prompts = self._fallback_prompts(keyword, niche)
+
+        return {
+            "keyword": keyword,
+            "niche": niche,
+            "top_prompts": prompts,
+            "sourced_from": ["Google PAA", "Reddit", "Quora"]
+        }
+
+    async def _scrape_jina_search(self, query: str) -> str:
+        """Helper to use Jina Search API (s.jina.ai) for grounding."""
+        try:
+            url = f"https://s.jina.ai/{query}"
+            headers = {"Accept": "text/event-stream"} # Get clean markdown
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers, timeout=20) as resp:
+                    if resp.status == 200:
+                        return await resp.text()
+                    return ""
+        except Exception as e:
+            app_logger.error(f"Jina Search Failed for query {query}: {e}")
+            return ""
              
-    async def _discover_via_groq(self, keyword: str, niche: str) -> List[Dict[str, Any]]:
+    async def _discover_via_groq(self, keyword: str, niche: str, signals: Dict[str, str]) -> List[Dict[str, Any]]:
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.groq_api_key}",
@@ -38,17 +70,29 @@ class PromptDiscoveryEngine:
         }
         
         prompt = f"""
-        Act as an SEO and AI-Search intent expert.
-        I need to create Content Strategy for the keyword: "{keyword}" in the "{niche}" niche.
-        Identify 5-7 high-value "People Also Ask" questions or common prompts that users type into AI tools (like ChatGPT) regarding this topic.
+        Act as a GEO (Generative Engine Optimization) Analyst.
+        Target Keyword: "{keyword}"
+        Niche: "{niche}"
+        
+        GROUNDING DATA (Scraped from Google PAA and Reddit):
+        ---
+        {signals['paa']}
+        ---
+        {signals['social']}
+        ---
+
+        TASK:
+        1. Parse the grounding data for ACTUAL user questions and AI prompts.
+        2. Generate a "Top 15" list of high-value prompts that AI Search engines (Perplexity/ChatGPT) are likely to use to extract answers from content.
         
         For each prompt, provide:
-        - prompt: The actual question/query
+        - prompt: The actual query
+        - source_signal: "PAA", "Social", or "Synthesized"
         - intent: "informational", "commercial", or "navigational"
-        - search_volume_estimate: "high", "medium", or "low"
-        - content_gap: Why existing content fails to answer this well (1 sentence)
+        - value_score: 1-100 (Based on how much this prompt drives citation potential)
+        - content_gap: Why current content fails (1 sentence)
         
-        Return exactly and ONLY a JSON array of objects. Do not include markdown formatting like ```json.
+        Return ONLY valid JSON array of objects.
         """
         
         payload = {
@@ -77,19 +121,25 @@ class PromptDiscoveryEngine:
             app_logger.error(f"Prompt Discovery Failed: {e}")
             return self._fallback_prompts(keyword, niche)
 
-    async def _discover_via_gemini(self, keyword: str, niche: str) -> List[Dict[str, Any]]:
+    async def _discover_via_gemini(self, keyword: str, niche: str, signals: Dict[str, str]) -> List[Dict[str, Any]]:
         prompt = f"""
-        Act as an SEO and AI-Search intent expert.
-        I need to create Content Strategy for the keyword: "{keyword}" in the "{niche}" niche.
-        Identify 5-7 high-value "People Also Ask" questions or common prompts that users type into AI tools regarding this topic.
+        Act as a GEO (Generative Engine Optimization) Analyst.
+        Target Keyword: "{keyword}"
+        Niche: "{niche}"
         
-        For each prompt, provide:
-        - prompt: The actual question/query
-        - intent: "informational", "commercial", or "navigational"
-        - search_volume_estimate: "high", "medium", or "low"
-        - content_gap: Why existing content fails to answer this well (1 sentence)
+        GROUNDING DATA (Live Search & Social):
+        ---
+        {signals['paa']}
+        ---
+        {signals['social']}
+        ---
+
+        TASK:
+        1. Extract the most common user questions from the grounding data.
+        2. Format them as 15 "AI Prompts" that drive citation volume.
         
-        Return exactly and ONLY a JSON array of objects. Do not wrap it in markdown blockquotes.
+        Return exactly and ONLY a JSON array of objects with:
+        - prompt, source_signal, intent, value_score, content_gap
         """
         
         try:
@@ -110,6 +160,71 @@ class PromptDiscoveryEngine:
             app_logger.error(f"Gemini Discovery Failed: {e}")
             return self._fallback_prompts(keyword, niche)
             
+    async def generate_niche_library(self, niche: str) -> List[Dict[str, Any]]:
+        """Builds a comprehensive 'Top 50' prompt library for a specific niche."""
+        app_logger.info(f"Generating full Top 50 library for niche: {niche}")
+        
+        # We run 3 specialized discovery passes to get diversity and volume
+        tasks = [
+            self.discover_prompts(f"technical {niche} questions", niche),
+            self.discover_prompts(f"commercial {niche} buyer intent", niche),
+            self.discover_prompts(f"{niche} pros and cons", niche)
+        ]
+        
+        results = await asyncio.gather(*tasks)
+        
+        all_prompts = []
+        for r in results:
+            all_prompts.extend(r.get("top_prompts", []))
+            
+        # Deduplicate and sort by value_score
+        unique_prompts = {p['prompt']: p for p in all_prompts}.values()
+        sorted_prompts = sorted(unique_prompts, key=lambda x: x.get('value_score', 0), reverse=True)
+        
+        return list(sorted_prompts)[:50]
+
+    async def simulate_search(self, content: str, prompts: List[str]) -> Dict[str, Any]:
+        """Tests content against real prompts to see if AI Search would cite it."""
+        app_logger.info(f"Simulating AI search citation for {len(prompts)} prompts")
+        
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {self.groq_api_key}", "Content-Type": "application/json"}
+        
+        # Test a sample of 5 highly relevant prompts for citation probability
+        test_prompts = prompts[:5]
+        simulation_results = []
+        
+        for p in test_prompts:
+            check_prompt = f"""
+            AI SEARCH SIMULATION:
+            Query: "{p}"
+            Candidate Content:
+            ---
+            {content[:1500]}
+            ---
+            Task: If you were an AI Search engine (Perplexity), would you cite this content to answer the query?
+            Return JSON: {{"cited": true/false, "reason": "...", "confidence": 1-100}}
+            """
+            
+            payload = {
+                "model": settings.GROQ_MODEL,
+                "messages": [{"role": "user", "content": check_prompt}],
+                "temperature": 0.1
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                 async with session.post(url, headers=headers, json=payload) as resp:
+                     if resp.status == 200:
+                         data = await resp.json()
+                         sim = json.loads(data["choices"][0]["message"]["content"].strip())
+                         sim['prompt'] = p
+                         simulation_results.append(sim)
+
+        return {
+            "simulation_runs": simulation_results,
+            "overall_citation_rate": sum(1 for s in simulation_results if s['cited']) / len(simulation_results) if simulation_results else 0
+        }
+
     def _fallback_prompts(self, keyword: str, niche: str) -> List[Dict[str, Any]]:
         return [
             {

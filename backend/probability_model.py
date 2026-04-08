@@ -17,13 +17,14 @@ class CitationProbabilityModel:
         overall_score: float, 
         rule_scores: Dict[str, Any], 
         llm_scores: Dict[str, Any],
-        content_type: str = "general"
+        content_type: str = "general",
+        engine: str = "perplexity" # Default to perplexity behavior
     ) -> Dict[str, Any]:
         """
-        Calculate final citation probability and provide a breakdown of factors.
+        Calculate final citation probability based on the target AI engine's behavior.
+        Engines: 'perplexity', 'chatgpt', 'gemini'
         """
         # 1. Start with base probability derived from the overall GEO score
-        # Recalibrated S-curve for better real-world AI search alignment (2025 Benchmarks)
         if overall_score < 40:
             base_prob = overall_score * 0.3
         elif overall_score < 75:
@@ -31,125 +32,104 @@ class CitationProbabilityModel:
         else:
             base_prob = 54 + ((overall_score - 75) * 1.8)
             
-        base_prob = max(1.0, min(85.0, base_prob)) # Cap base at 85%
+        base_prob = max(1.0, min(85.0, base_prob))
 
         factors: List[Dict[str, Any]] = []
         multiplier_total = 1.0
 
-        # SCHEMA & STRUCTURE
+        # ENGINE WEIGHTING ADAPTATION (2026 CALIBRATION)
+        weights = {
+            "perplexity": {"freshness": 1.5, "grounding": 1.0, "structure": 1.0},
+            "chatgpt": {"freshness": 0.8, "grounding": 1.3, "structure": 1.4},
+            "gemini": {"freshness": 0.7, "grounding": 1.5, "structure": 1.1}
+        }
+        engine_weights = weights.get(engine, weights["perplexity"])
+
+        # SCHEMA & STRUCTURE (High priority for ChatGPT)
         schema_data = rule_scores.get('schema', {})
         schema_types = schema_data.get('details', {}).get('schema_types', [])
         has_faq = 'FAQPage' in schema_types
-        has_article = 'Article' in schema_types or 'NewsArticle' in schema_types or 'BlogPosting' in schema_types
         
         if has_faq:
-            # 2025 Research: FAQ schema provides "Clean Extraction" lift
-            multiplier_total *= 1.6
+            # ChatGPT loves FAQ schema for quick extraction
+            faq_lift = 1.6 * engine_weights["structure"]
+            multiplier_total *= faq_lift
             factors.append({
                 "factor": "FAQ Schema Lift",
-                "impact": "+60% lift",
+                "impact": f"+{int((faq_lift-1)*100)}% lift",
                 "type": "positive",
-                "description": "Crucial for capturing 'People Also Ask' style AI prompts."
+                "description": f"AI search ({engine}) uses schema for direct extractions."
             })
             
-        # EXPERT QUOTATIONS (New 2025 Factor)
-        # Check rule-based authority for expert citations
+        # EXPERT QUOTATIONS (Critical for Gemini)
         authority_data = rule_scores.get('authority', {})
         has_expert_quotes = authority_data.get('details', {}).get('expert_mentions', 0) > 0
         if has_expert_quotes:
-            # Princeton GEO-bench: Expert quotes give +29% to +41% lift
-            multiplier_total *= 1.35
+            expert_lift = 1.35 * engine_weights["grounding"]
+            multiplier_total *= expert_lift
             factors.append({
-                "factor": "Expert Quotations",
-                "impact": "+35% lift",
+                "factor": "Expert Authority",
+                "impact": f"+{int((expert_lift-1)*100)}% lift",
                 "type": "positive",
-                "description": "Named expert credentials significantly boost extraction confidence."
+                "description": "Expert citations significantly boost Gemini's extraction confidence."
             })
 
-        # VERIFIABLE DATA & STATISTICS
+        # VERIFIABLE DATA & STATISTICS (High for Grounding engines)
         stat_count = authority_data.get('details', {}).get('statistics', 0)
         if stat_count >= 5:
-            # Princeton GEO-bench: Statistics are the highest-impact strategy (+40% peak)
-            multiplier_total *= 1.3
+            stat_lift = 1.3 * engine_weights["grounding"]
+            multiplier_total *= stat_lift
             factors.append({
-                "factor": "Empirical Data Density",
-                "impact": "+30% lift",
+                "factor": "Empirical Data",
+                "impact": f"+{int((stat_lift-1)*100)}% lift",
                 "type": "positive",
-                "description": "AI engines heavily prefer answers grounded in verifiable numbers."
+                "description": "Verifiable stats are the highest-impact signal for AI search citation."
             })
 
-        # INLINE SOURCE CITATIONS
-        ext_links = authority_data.get('details', {}).get('external_links', 0)
-        if ext_links >= 3:
-            # Research: +22% to +40% citation probability lift
-            multiplier_total *= 1.31
-            factors.append({
-                "factor": "Authoritative Citations",
-                "impact": "+31% lift",
-                "type": "positive",
-                "description": "Linking to .gov/.edu/primary research increases grounding probability."
-            })
-
-        # FRESHNESS / CONTENT DECAY (Topic-Aware calibration)
+        # FRESHNESS / CONTENT DECAY (Core for Perplexity)
         freshness_data = rule_scores.get('freshness', {})
         has_recent_date = freshness_data.get('details', {}).get('has_update_info', False)
         
-        # Check for Content Decay penalty
         if not has_recent_date:
-             # Topic-Aware Penalty Logic: 
-             # Evergreen topics (Education) don't decay as fast as News/Trends.
              if content_type == 'education':
-                 decay_multiplier = 0.85 # Slight 15% penalty for lack of maintenance signals
-                 penalty_desc = "Foundational topics decay slowly, but lack of recent 'Updated 2025' markers still impacts trust."
+                 decay_multiplier = 0.85 
                  impact_label = "-15% penalty"
+                 desc = "Foundation facts persist, but lack of update still hurts trust."
              else:
-                 decay_multiplier = 0.37 # Full 63% penalty for general/temporal content
-                 penalty_desc = "Legacy content (>180 days) loses up to 63% of citation share in temporal AI search."
-                 impact_label = "-63% penalty"
+                 # Apply engine weighting to decay
+                 decay_val = 0.63 * engine_weights["freshness"]
+                 decay_multiplier = max(0.1, 1.0 - decay_val)
+                 impact_label = f"-{int(decay_val*100)}% penalty"
+                 desc = f"{engine.title()} heavily deprioritizes legacy content (>180 days)."
 
              multiplier_total *= decay_multiplier
              factors.append({
                 "factor": "Content Decay",
                 "impact": impact_label,
                 "type": "negative",
-                "description": penalty_desc
+                "description": desc
              })
         else:
             factors.append({
                 "factor": "Freshness Optimization",
                 "impact": "High Retention",
                 "type": "positive",
-                "description": "Recent updates (2025/26) are heavily prioritized by AI search engines."
-            })
-
-        # 4. CONTENT LENGTH / DEPTH (Modified)
-        details = rule_scores.get('structure', {}).get('details', {})
-        word_count = details.get('word_count', 0)
-        authority_score = llm_scores.get('citation_worthiness', {}).get('score', 50)
-        
-        if word_count < 500 and authority_score < 75:
-            multiplier_total *= 0.65 # Thin content penalty for low authority
-            factors.append({
-                "factor": "Thin Grounding Density",
-                "impact": "-35% penalty",
-                "type": "negative",
-                "description": "Short content lacking authority fails AI grounding thresholds."
+                "description": "Recent 2025/26 updates are prioritized."
             })
 
         # Final average based calculation
         final_prob = base_prob * multiplier_total
-        
-        # Hard caps
         final_prob = max(1.0, min(99.0, final_prob))
         
         # Generate competitor average for comparison
-        competitor_avg = max(15.0, final_prob * 0.6) # Simplified baseline
+        competitor_avg = max(15.0, final_prob * 0.6)
 
         return {
             "probability": round(final_prob, 1),
             "base_probability": round(base_prob, 1),
             "multiplier": round(multiplier_total, 2),
             "factors": factors,
+            "engine": engine,
             "competitor_average": round(competitor_avg, 1),
             "confidence_interval": {
                 "low": max(1, round(final_prob * 0.85, 1)),
