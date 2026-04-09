@@ -35,29 +35,29 @@ function App() {
 
     if (checkingOnboarding) return null
 
-    if (showOnboarding) {
-        return <OnboardingWizard onComplete={handleOnboardingComplete} />
-    }
-
     return (
         <ThemeProvider>
             <ErrorBoundary>
                 <ProtectedRoute>
-                    <Routes>
-                        <Route element={<DashboardLayout />}>
-                            <Route index element={<DashboardHome />} />
-                            <Route path="dashboard" element={<DashboardHome />} />
-                            <Route path="optimization" element={<ContentOptimization />} />
-                            <Route path="ai-simulator" element={<AISimulator />} />
-                            <Route path="projects" element={<Projects />} />
-                            <Route path="projects/:id" element={<ProjectDetail />} />
-                            <Route path="visibility" element={<VisibilityAnalysis />} />
-                            <Route path="citations" element={<CitationTracking />} />
-                            <Route path="competitors" element={<CompetitorAnalysis />} />
-                            <Route path="strategy" element={<ContentStrategy />} />
-                            <Route path="settings" element={<Settings />} />
-                        </Route>
-                    </Routes>
+                    {showOnboarding ? (
+                        <OnboardingWizard onComplete={handleOnboardingComplete} />
+                    ) : (
+                        <Routes>
+                            <Route element={<DashboardLayout />}>
+                                <Route index element={<DashboardHome />} />
+                                <Route path="dashboard" element={<DashboardHome />} />
+                                <Route path="optimization" element={<ContentOptimization />} />
+                                <Route path="ai-simulator" element={<AISimulator />} />
+                                <Route path="projects" element={<Projects />} />
+                                <Route path="projects/:id" element={<ProjectDetail />} />
+                                <Route path="visibility" element={<VisibilityAnalysis />} />
+                                <Route path="citations" element={<CitationTracking />} />
+                                <Route path="competitors" element={<CompetitorAnalysis />} />
+                                <Route path="strategy" element={<ContentStrategy />} />
+                                <Route path="settings" element={<Settings />} />
+                            </Route>
+                        </Routes>
+                    )}
                 </ProtectedRoute>
             </ErrorBoundary>
         </ThemeProvider>
