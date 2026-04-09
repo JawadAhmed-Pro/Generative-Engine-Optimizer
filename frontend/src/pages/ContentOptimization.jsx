@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { PenTool, Lightbulb, Zap, Sparkles, Download, Copy, Check, Folder, Plus, X, Code2, Link as LinkIcon } from 'lucide-react'
+import { PenTool, Lightbulb, Zap, Sparkles, Download, Copy, Check, Folder, Plus, X, Code2, Info, Link as LinkIcon } from 'lucide-react'
 import axios from 'axios'
 import ResultsPanel from '../components/ResultsPanel'
 import ReactMarkdown from 'react-markdown'
@@ -464,6 +464,7 @@ function ContentOptimization() {
                         )}
 
                         <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                            <textarea
                                 ref={contentRef}
                                 value={content}
                                 onChange={(e) => updateOptimization({ content: e.target.value })}
@@ -522,7 +523,7 @@ function ContentOptimization() {
                             color: 'var(--text-secondary)',
                             marginBottom: '1rem'
                         }}>
-                            <InfoIcon /> Paste the full text you want to improve. Markdown is supported.
+                            <Info size={14} /> Paste the full text you want to improve. Markdown is supported.
                         </div>
 
                         {/* Project Selector */}
