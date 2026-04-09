@@ -122,6 +122,12 @@ function ContentOptimization() {
     useEffect(() => {
         fetchHistory()
         fetchProjects()
+
+        // If we arrived with a pre-populated prompt (from Strategy), 
+        // focus the editor or show a hint
+        if (content && activeTab === 'generate' && !analysisResults) {
+            contentRef.current?.scrollIntoView({ behavior: 'smooth' })
+        }
     }, [])
 
     const fetchHistory = async () => {
@@ -458,7 +464,7 @@ function ContentOptimization() {
                         )}
 
                         <div style={{ position: 'relative', marginBottom: '1rem' }}>
-                            <textarea
+                                ref={contentRef}
                                 value={content}
                                 onChange={(e) => updateOptimization({ content: e.target.value })}
                                 placeholder="Paste your existing draft here. We will restructure it, enhance E-E-A-T signals, and optimize for query intent..."
@@ -472,9 +478,31 @@ function ContentOptimization() {
                                     color: 'var(--text-primary)',
                                     fontFamily: 'Inter, sans-serif',
                                     resize: 'vertical',
-                                    outline: 'none'
+                                    outline: 'none',
+                                    boxShadow: (content && activeTab === 'generate' && !analysisResults) ? '0 0 0 2px var(--accent-primary)' : 'none',
+                                    transition: 'box-shadow 0.3s ease'
                                 }}
                             />
+                            {content && activeTab === 'generate' && !analysisResults && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(100%, -50%)',
+                                    background: 'var(--accent-primary)',
+                                    color: 'white',
+                                    padding: '0.75rem 1rem',
+                                    borderRadius: '8px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '600',
+                                    pointerEvents: 'none',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                                    zIndex: 10,
+                                    width: 'max-content'
+                                }} className="hide-mobile">
+                                    ✨ Prompt Loaded! Ready to Generate?
+                                </div>
+                            )}
                             <div style={{
                                 position: 'absolute',
                                 bottom: '1rem',

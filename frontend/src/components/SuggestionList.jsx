@@ -1,4 +1,47 @@
-function SuggestionList({ suggestions }) {
+import { useState } from 'react'
+import axios from 'axios'
+import { Sparkles, Check, Loader2, ClipboardCheck } from 'lucide-react'
+import { useAnalysisState } from '../context/AnalysisContext'
+
+function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
+    const [fixingIndex, setFixingIndex] = useState(null)
+    const [fixedResults, setFixedResults] = useState({}) // { index: 'fixed content' }
+    const [appliedIndices, setAppliedIndices] = useState(new Set())
+    const { updateOptimization } = useAnalysisState()
+
+    const handleAutoFix = async (suggestion, index) => {
+        if (!contentItemId) {
+            alert('Cannot auto-fix without a saved content context.')
+            return
+        }
+        
+        setFixingIndex(index)
+        try {
+            const response = await axios.post('/api/auto-fix', {
+                content_item_id: contentItemId,
+                suggestion: suggestion.text
+            })
+            
+            setFixedResults(prev => ({
+                ...prev,
+                [index]: response.data.optimized_content
+            }))
+        } catch (err) {
+            alert('Auto-fix failed: ' + (err.response?.data?.detail || err.message))
+        } finally {
+            setFixingIndex(null)
+        }
+    }
+
+    const handleApplyFix = (index) => {
+        const optimized = fixedResults[index]
+        if (!optimized) return
+
+        updateOptimization({ content: optimized })
+        setAppliedIndices(prev => new Set([...prev, index]))
+        
+        // Optional: Scroll to editor or show success toast
+    }
     const getPriorityColor = (priority) => {
         switch (priority) {
             case 'HIGH': return 'var(--error)'
@@ -56,14 +99,77 @@ function SuggestionList({ suggestions }) {
                                     marginBottom: '0.75rem',
                                     borderLeft: `3px solid ${getPriorityColor(priority)}`
                                 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                        <div style={{ flex: 1 }}>
-                                            <p style={{ marginBottom: '0.25rem' }}>{suggestion.text}</p>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                                        <div style={{ flex: 1, minWidth: '200px' }}>
+                                            <p style={{ marginBottom: '0.5rem', fontWeight: '500' }}>{suggestion.text}</p>
                                             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                                                 {suggestion.category} • {suggestion.source}
                                             </span>
                                         </div>
+                                        
+                                        {!fixedResults[index] ? (
+                                            <button 
+                                                onClick={() => handleAutoFix(suggestion, index)}
+                                                disabled={fixingIndex === index}
+                                                className="btn btn-outline"
+                                                style={{ 
+                                                    padding: '0.4rem 0.75rem', 
+                                                    fontSize: '0.8rem', 
+                                                    gap: '0.4rem',
+                                                    borderColor: 'var(--accent-primary)',
+                                                    color: 'var(--text-primary)'
+                                                }}
+                                            >
+                                                {fixingIndex === index ? (
+                                                    <Loader2 size={14} className="spin" />
+                                                ) : (
+                                                    <Sparkles size={14} color="var(--accent-primary)" />
+                                                )}
+                                                {fixingIndex === index ? 'Fixing...' : '✨ Auto-Fix'}
+                                            </button>
+                                        ) : (
+                                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                {context === 'text' && !appliedIndices.has(index) && (
+                                                    <button 
+                                                        onClick={() => handleApplyFix(index)}
+                                                        className="btn btn-primary"
+                                                        style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem' }}
+                                                    >
+                                                        <ClipboardCheck size={14} /> Apply to Editor
+                                                    </button>
+                                                )}
+                                                <div style={{ 
+                                                    color: 'var(--success)', 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '0.4rem',
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: '600',
+                                                    padding: '0.4rem'
+                                                }}>
+                                                    <Check size={16} /> {appliedIndices.has(index) ? 'Applied' : 'Fixed'}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
+
+                                    {/* Display Fixed Content */}
+                                    {fixedResults[index] && (
+                                        <div style={{
+                                            marginTop: '1rem',
+                                            padding: '1rem',
+                                            background: 'rgba(16, 185, 129, 0.1)',
+                                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                                            borderRadius: '6px',
+                                            fontSize: '0.9rem',
+                                            whiteSpace: 'pre-wrap'
+                                        }}>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--success)', marginBottom: '0.5rem', fontWeight: '600', textTransform: 'uppercase' }}>
+                                                Suggested Replacement
+                                            </div>
+                                            {fixedResults[index]}
+                                        </div>
+                                    )}
                                 </li>
                             ))}
                         </ul>

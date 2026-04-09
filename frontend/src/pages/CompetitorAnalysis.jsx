@@ -40,6 +40,26 @@ function CompetitorAnalysis() {
         setCompetitorUrls(updated)
     }
 
+    const pollJobStatus = async (jobId) => {
+        try {
+            const res = await axios.get(`/api/jobs/${jobId}`);
+            if (res.data.status === 'completed') {
+                setResults(res.data.result);
+                setLoading(false);
+                fetchHistory();
+            } else if (res.data.status === 'failed') {
+                setError(res.data.error || 'Job failed');
+                setLoading(false);
+            } else {
+                // Pending or running, poll again in 2 seconds
+                setTimeout(() => pollJobStatus(jobId), 2000);
+            }
+        } catch (err) {
+            setError('Failed to fetch job status');
+            setLoading(false);
+        }
+    };
+
     const handleCompare = async () => {
         if (!userUrl.trim()) return
         const validCompetitors = competitorUrls.filter(u => u.trim())
@@ -55,11 +75,16 @@ function CompetitorAnalysis() {
                 competitor_urls: validCompetitors,
                 content_type: contentType
             })
-            setResults(response.data)
-            fetchHistory()
+            if (response.data.job_id) {
+                pollJobStatus(response.data.job_id);
+            } else {
+                // Fallback for direct responses
+                setResults(response.data);
+                setLoading(false);
+                fetchHistory();
+            }
         } catch (err) {
             setError(err.response?.data?.detail || 'Competitor analysis failed')
-        } finally {
             setLoading(false)
         }
     }

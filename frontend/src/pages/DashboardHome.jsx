@@ -84,7 +84,13 @@ function DashboardHome() {
                         {/* Stat 1 */}
                         <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>AVG. GEO SCORE</div>
+                                <div 
+                                    className="tooltip" 
+                                    data-tooltip="The statistical probability that ChatGPT, Gemini, or Perplexity will cite your link as a source for this topic."
+                                    style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)', letterSpacing: '0.05em', marginBottom: '0.5rem', cursor: 'help', display: 'inline-block' }}
+                                >
+                                    AVG. GEO SCORE <span style={{ color: 'var(--accent-primary)', opacity: 0.8 }}>ⓘ</span>
+                                </div>
                                 <div style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '0.25rem' }}>{stats.avg_score.toFixed(1)}</div>
                                 <div style={{ fontSize: '0.875rem', color: getScoreColor(stats.avg_score) }}>{getScoreLabel(stats.avg_score)}</div>
                             </div>

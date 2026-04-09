@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     # Database Configuration
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/geo_agent")
     
+    @property
+    def async_database_url(self) -> str:
+        if self.DATABASE_URL.startswith("postgresql://"):
+            return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif self.DATABASE_URL.startswith("sqlite"):
+            return self.DATABASE_URL.replace("sqlite://", "sqlite+aiosqlite://", 1)
+        return self.DATABASE_URL    
     # ChromaDB Configuration
     CHROMA_PERSIST_DIR: str = os.getenv("CHROMA_PERSIST_DIR", "./chroma_data")
     CHROMA_COLLECTION_NAME: str = "geo_content_v2"

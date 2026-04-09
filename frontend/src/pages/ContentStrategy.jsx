@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Sparkles, Search, BookOpen, BarChart2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Sparkles, Search, BookOpen, BarChart2, Edit3 } from 'lucide-react';
 import axios from 'axios';
+import { useAnalysisState } from '../context/AnalysisContext';
 
 export default function ContentStrategy() {
     const [keyword, setKeyword] = useState('');
@@ -8,6 +10,44 @@ export default function ContentStrategy() {
     const [prompts, setPrompts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    
+    const navigate = useNavigate();
+    const { updateOptimization } = useAnalysisState();
+
+    const handleWriteContent = (promptText, nicheValue) => {
+        // Map niche to content type
+        let cType = 'general';
+        if (nicheValue === 'ecommerce') cType = 'ecommerce';
+        else if (nicheValue === 'education') cType = 'educational';
+        
+        // Populate global state and jump to optimization tab to "generate pipeline"
+        updateOptimization({
+            content: promptText,
+            activeTab: 'generate',
+            contentType: cType,
+            analysisResults: null,
+            optimizedContent: ''
+        });
+        navigate('/optimize');
+    };
+
+    const pollJobStatus = async (jobId) => {
+        try {
+            const res = await axios.get(`/api/jobs/${jobId}`);
+            if (res.data.status === 'completed') {
+                setPrompts(res.data.result.prompts || []);
+                setIsLoading(false);
+            } else if (res.data.status === 'failed') {
+                setError(res.data.error || 'Job failed');
+                setIsLoading(false);
+            } else {
+                setTimeout(() => pollJobStatus(jobId), 2000);
+            }
+        } catch (err) {
+            setError('Failed to fetch job status');
+            setIsLoading(false);
+        }
+    };
 
     const handleDiscover = async (e) => {
         e.preventDefault();
@@ -18,10 +58,14 @@ export default function ContentStrategy() {
 
         try {
             const response = await axios.post('/api/discover-prompts', { keyword, niche });
-            setPrompts(response.data.prompts || []);
+            if (response.data.job_id) {
+                pollJobStatus(response.data.job_id);
+            } else {
+                setPrompts(response.data.prompts || response.data.data?.top_prompts || []);
+                setIsLoading(false);
+            }
         } catch (err) {
             setError(err.response?.data?.detail || err.message || 'Failed to discover prompts');
-        } finally {
             setIsLoading(false);
         }
     };
@@ -182,8 +226,12 @@ export default function ContentStrategy() {
                                             </div>
 
                                             <div>
-                                                <button className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}>
-                                                    Write Content
+                                                <button 
+                                                    onClick={() => handleWriteContent(item.prompt, niche)}
+                                                    className="btn btn-secondary" 
+                                                    style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                                >
+                                                    <Edit3 size={16} /> Write Content
                                                 </button>
                                             </div>
                                         </div>

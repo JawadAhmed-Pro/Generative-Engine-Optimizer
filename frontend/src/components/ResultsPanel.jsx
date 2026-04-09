@@ -279,9 +279,12 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
             )}
 
             {/* Suggestions */}
-            {/* Suggestions */}
             {results.suggestions && results.suggestions.length > 0 && (
-                <SuggestionList suggestions={results.suggestions} />
+                <SuggestionList 
+                    suggestions={results.suggestions} 
+                    contentItemId={results.content_item_id} 
+                    context={context}
+                />
             )}
         </div>
     )

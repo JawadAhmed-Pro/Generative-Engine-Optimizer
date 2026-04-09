@@ -13,8 +13,17 @@ function MetricCard({ title, score, description }) {
 
     return (
         <div className="glass-card">
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.1rem' }}>{title}</h3>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', gap: '0.5rem' }}>
+                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.1rem', margin: 0 }}>{title}</h3>
+                {description && (
+                   <span 
+                        className="tooltip" 
+                        data-tooltip={description} 
+                        style={{ cursor: 'help', color: 'var(--accent-primary)', fontSize: '0.9rem', opacity: 0.8 }}
+                    >
+                        ⓘ
+                    </span>
+                )}
             </div>
 
             <div className={`score-badge ${getScoreClass(score)}`} style={{ marginBottom: '1rem' }}>

@@ -69,8 +69,38 @@ class GEOOptimizer:
         Return JSON:
         {{
             "suggestions": [
-                {{"text": "Suggested stat/quote", "placement": "Where to add it", "impact": "High/Med"}}
-            ]
+        }}
+        """
+        return await self._call_llm(prompt)
+
+    async def auto_fix(self, content: str, suggestion: str) -> Dict[str, Any]:
+        """
+        Automatically fixes a specific paragraph or text block based on a provided suggestion.
+        """
+        app_logger.info(f"Agent: Auto-fixing content based on suggestion: {suggestion}")
+        
+        prompt = f"""
+        Act as a GEO (Generative Engine Optimization) Content Optimizer.
+        
+        GOAL: Apply the following specific suggestion to the provided content to maximize its AI citation probability.
+        
+        RULE:
+        1. Maintain the original tone and context.
+        2. ONLY change the content to directly address the suggestion. Do not rewrite everything if it is not needed.
+        3. If the suggestion asks for an expert quote or statistic, simulate a hyper-realistic placeholder (e.g. "[Insert Statistic from [Source]]" or create a highly plausible but clearly marked placeholder).
+        
+        SUGGESTION TO APPLY:
+        "{suggestion}"
+        
+        CONTENT TO FIX:
+        ---
+        {content[:3000]}
+        ---
+        
+        Return exactly:
+        {{
+            "optimized_content": "...",
+            "changes_made": ["change 1", "change 2"]
         }}
         """
         return await self._call_llm(prompt)

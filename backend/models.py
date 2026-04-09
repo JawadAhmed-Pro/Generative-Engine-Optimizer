@@ -136,6 +136,22 @@ class CompetitorComparison(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class AnalysisJob(Base):
+    """Store background job status."""
+    __tablename__ = "analysis_jobs"
+    
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Added for RLS
+    job_type = Column(String, index=True) # e.g. "competitor_compare", "prompt_discovery"
+    status = Column(String, default="pending") # "pending", "running", "completed", "failed"
+
+    progress = Column(Integer, default=0)
+    result = Column(JSON, nullable=True)
+    error_message = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+
 # Pydantic Request/Response Models
 class ProjectCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)

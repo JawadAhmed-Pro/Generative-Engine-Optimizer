@@ -7,7 +7,12 @@ import time
 from datetime import datetime
 
 from config import settings
-from database import get_db, init_db
+from database import get_db, init_db, get_tenant_session, get_async_db
+
+from jobs import job_manager
+from sqlalchemy import select
+from models import AnalysisJob
+
 from models import (
     ProjectCreate, ProjectResponse, AnalyzeURLRequest, AnalyzeTextRequest,
     AnalysisResponse, InsightRequest, InsightResponse, Project, ContentItem, AnalysisResult, Insight,
@@ -318,7 +323,7 @@ def get_stats(db: Session = Depends(get_db)):
 def get_history(
     type: str = None, 
     limit: int = 10, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Get recent content items with their scores."""
@@ -367,7 +372,7 @@ def get_history(
 
 @app.delete("/api/history")
 def clear_history(
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Clear all analysis history for the current user."""
@@ -391,7 +396,7 @@ def clear_history(
 @app.post("/api/projects", response_model=ProjectResponse)
 def create_project(
     project: ProjectCreate, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Create a new project attached to user."""
@@ -408,7 +413,7 @@ def create_project(
 
 @app.get("/api/projects", response_model=list[ProjectResponse])
 def list_projects(
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """List all projects for user."""
@@ -422,7 +427,7 @@ def list_projects(
 @app.get("/api/projects/{project_id}", response_model=ProjectResponse)
 def get_project(
     project_id: int, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Get a specific project."""
@@ -435,7 +440,7 @@ def get_project(
 @app.delete("/api/projects/{project_id}")
 def delete_project(
     project_id: int, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Delete a project."""
@@ -462,7 +467,7 @@ def delete_all_projects(db: Session = Depends(get_db)):
 @app.get("/api/projects/{project_id}/items")
 def get_project_items(
     project_id: int, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Get all content items for a project with their scores."""
@@ -504,7 +509,7 @@ def get_project_items(
 @app.get("/api/analysis/{item_id}")
 def get_analysis_by_item(
     item_id: int, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Get full analysis results for a content item."""
@@ -1116,7 +1121,7 @@ def factory_reset(db: Session = Depends(get_db)):
 async def track_citations(
     request: Request,
     payload: CitationTrackRequest, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Track domain citations across AI platforms."""
@@ -1165,7 +1170,7 @@ async def track_citations(
 def get_citation_history(
     domain: str = None, 
     limit: int = 10, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Get citation tracking history for current user."""
@@ -1196,7 +1201,7 @@ def get_citation_history(
 @app.get("/api/citation-track/{tracking_id}")
 def get_citation_detail(
     tracking_id: int, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Get detailed citation tracking results."""
@@ -1213,54 +1218,87 @@ def get_citation_detail(
 # Competitor Analysis
 # ========================
 
+async def _run_competitor_comparison(user_url, competitor_urls, keyword, niche, content_type, user_id):
+    from database import AsyncSessionLocal
+    results = await competitor_analyzer.compare(
+        user_url=user_url,
+        competitor_urls=competitor_urls,
+        keyword=keyword,
+        niche=niche,
+        content_type=content_type
+    )
+
+    async with AsyncSessionLocal() as db:
+        comparison = CompetitorComparison(
+            user_id=user_id,
+            user_url=user_url,
+            competitor_urls=competitor_urls,
+            content_type=content_type,
+            user_overall_score=results["user"]["scores"]["overall"],
+            competitor_avg_score=results["comparison"].get("competitor_avg_overall", 0),
+            comparison_results=results
+        )
+        db.add(comparison)
+        await db.commit()
+        await db.refresh(comparison)
+        results["comparison_id"] = comparison.id
+        
+    return results
+
+
 @app.post("/api/competitor-compare")
 @limiter.limit("5/minute")
 async def compare_competitors(
     request: Request,
     payload: CompetitorCompareRequest, 
-    db: Session = Depends(get_db),
     current_user: dict = Depends(require_auth)
 ):
-    """Compare user content against competitors."""
+    """Dispatch competitor comparison to background job."""
+    from database import AsyncSessionLocal
+    
+    keyword = payload.niche if payload.niche else None
     try:
-        # Ground comparison in keyword/niche signals
-        keyword = payload.niche if payload.niche else None
-        
-        results = await competitor_analyzer.compare(
+        job_id = await job_manager.submit_job(
+            AsyncSessionLocal,
+            "competitor_compare",
+            current_user["id"],
+            _run_competitor_comparison,
             user_url=payload.user_url,
             competitor_urls=payload.competitor_urls,
             keyword=keyword,
             niche=payload.niche,
             content_type=payload.content_type
         )
-
-        # Save to database
-        comparison = CompetitorComparison(
-            user_id=current_user["id"],
-            user_url=payload.user_url,
-            competitor_urls=payload.competitor_urls,
-            content_type=payload.content_type,
-            user_overall_score=results["user"]["scores"]["overall"],
-            competitor_avg_score=results["comparison"].get("competitor_avg_overall", 0),
-            comparison_results=results
-        )
-        db.add(comparison)
-        db.commit()
-        db.refresh(comparison)
-
-        results["comparison_id"] = comparison.id
-        return results
-
+        return {"status": "pending", "job_id": job_id, "message": "Competitor analysis started"}
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Competitor analysis failed: {str(e)}")
+        app_logger.error(f"Job dispatch failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/jobs/{job_id}")
+async def get_job_status(job_id: str):
+    """Poll for background job status."""
+    from database import AsyncSessionLocal
+    
+    async with AsyncSessionLocal() as db:
+        job = (await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))).scalars().first()
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        
+        return {
+            "job_id": job.id,
+            "status": job.status,
+            "progress": job.progress,
+            "result": job.result,
+            "error": job.error_message,
+            "completed_at": job.completed_at
+        }
 
 
 @app.get("/api/competitor-history")
 def get_competitor_history(
     limit: int = 10, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Get competitor comparison history."""
@@ -1289,7 +1327,7 @@ def get_competitor_history(
 @app.get("/api/competitor-compare/{comparison_id}")
 def get_comparison_detail(
     comparison_id: int, 
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Get detailed comparison results."""
@@ -1306,28 +1344,70 @@ def get_comparison_detail(
 # Content Strategy / Discovery
 # ========================
 
+class AutoFixRequest(BaseModel):
+    content_item_id: int
+    suggestion: str
+
+@app.post("/api/auto-fix")
+async def auto_fix_content(
+    request: AutoFixRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Applies a 'One-Click Fix' to content using LLM."""
+    try:
+        # Get content item
+        content_item = db.query(ContentItem).filter(ContentItem.id == request.content_item_id).first()
+        if not content_item:
+            raise HTTPException(status_code=404, detail="Content not found")
+            
+        from geo_optimizer import geo_optimizer
+        result = await geo_optimizer.auto_fix(content_item.content, request.suggestion)
+        
+        # Save insight or just return
+        return result
+    except Exception as e:
+        app_logger.error(f"Auto Fix Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 class PromptDiscoveryRequest(BaseModel):
     keyword: str
     niche: Optional[str] = "general"
 
+async def _run_discover_prompts(keyword, niche):
+    if len(keyword.split()) <= 2:
+         results = await discovery_engine.generate_niche_library(keyword)
+    else:
+         results = await discovery_engine.discover_prompts(
+            keyword=keyword,
+            niche=niche
+         )
+    return {
+        "success": True,
+        "keyword": keyword,
+        "niche": niche,
+        "data": results,
+        "prompts": results.get("top_prompts", [])
+    }
+
 @app.post("/api/discover-prompts")
-async def discover_prompts(request: PromptDiscoveryRequest):
-    """Discover 'People Also Ask' and high-value AI prompts for a topic."""
+async def discover_prompts(
+    request: PromptDiscoveryRequest,
+    current_user: dict = Depends(require_auth)
+):
+    """Discover 'People Also Ask' and high-value AI prompts for a topic using Background Jobs."""
+    from database import AsyncSessionLocal
     try:
-        # Use generate_niche_library if keyword is generic, otherwise discover_prompts
-        if len(request.keyword.split()) <= 2:
-             results = await discovery_engine.generate_niche_library(request.keyword)
-        else:
-             results = await discovery_engine.discover_prompts(
-                keyword=request.keyword,
-                niche=request.niche
-             )
-        return {
-            "success": True,
-            "keyword": request.keyword,
-            "niche": request.niche,
-            "data": results
-        }
+        job_id = await job_manager.submit_job(
+            AsyncSessionLocal,
+            "prompt_discovery",
+            current_user["id"],
+            _run_discover_prompts,
+            keyword=request.keyword,
+            niche=request.niche
+        )
+        return {"status": "pending", "job_id": job_id, "message": "Discovery started"}
     except Exception as e:
         app_logger.error(f"Discovery Failed: {e}")
         raise HTTPException(status_code=500, detail=f"Prompt discovery failed: {str(e)}")
