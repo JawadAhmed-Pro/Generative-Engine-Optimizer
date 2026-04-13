@@ -31,3 +31,7 @@ passlib[bcrypt]
 # Security (Rate Limiting, Sanitization)
 slowapi
 bleach
+
+# Execution Engine Dependencies
+duckduckgo-search
+httpx
