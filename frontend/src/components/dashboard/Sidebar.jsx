@@ -1,10 +1,9 @@
-import { LayoutDashboard, Folder, FileText, BarChart2, Settings, LogOut, Code2, Zap, Globe, GitCompareArrows, Sparkles, PanelLeftClose, PanelLeftOpen, Sun, Moon } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, Folder, FileText, BarChart2, Settings, LogOut, Code2, Zap, Globe, GitCompareArrows, Sparkles, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { useTheme } from '../../context/ThemeContext'
 
 function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
     const { user, logout } = useAuth()
-    const { theme, toggleTheme, isDark } = useTheme()
     const navigate = useNavigate()
 
     const handleLogout = () => {
@@ -35,58 +34,88 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
 
     return (
         <aside className={`sidebar-container ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
-            {/* Subtle Texture/Grain */}
-            <div className="noise-overlay" style={{ opacity: isDark ? 0.02 : 0.01 }}></div>
+            {/* Animated Background Layer */}
+            <div className="sidebar-aurora">
+                <div className="sidebar-blob sidebar-blob-1"></div>
+                <div className="sidebar-blob sidebar-blob-2"></div>
+                <div className="noise-overlay" style={{ opacity: 0.03 }}></div>
+            </div>
 
-            {/* Header & Logo Section */}
+            {/* Logo & Toggle */}
             <div style={{
-                padding: collapsed ? '1.25rem 0.5rem' : '1.5rem 1.25rem',
-                borderBottom: isDark ? '1px solid rgba(255,255,255,0.03)' : '1px solid rgba(0,0,0,0.05)',
+                padding: collapsed ? '1rem 0.5rem' : '1.25rem 1rem',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem'
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.5rem',
+                position: 'relative'
             }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div 
-                        onClick={() => navigate('/app')}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
-                    >
-                        <img src="/no_bg_logo.png" alt="GEO" style={{ width: '28px', height: '28px', opacity: isDark ? 0.8 : 1 }} />
-                        {!collapsed && (
-                             <div style={{ fontSize: '0.85rem', fontWeight: '900', color: isDark ? 'white' : '#0F172A', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                                GEO Engine
-                             </div>
-                        )}
-                    </div>
-                    <button onClick={onToggle} style={{ color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer' }}>
-                        {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-                    </button>
-                </div>
-                
+                {/* Header Glow */}
                 {!collapsed && (
-                    <button 
-                        onClick={toggleTheme}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '0.6rem 0.75rem',
-                            borderRadius: '8px',
-                            background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-                            border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)',
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.75rem',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            {isDark ? <Moon size={14} /> : <Sun size={14} />}
-                            {isDark ? 'Obsidian Mode' : 'Pearl Mode'}
-                        </div>
-                        <span style={{ fontSize: '0.65rem', opacity: 0.5 }}>Alt+T</span>
-                    </button>
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '-1px',
+                        left: '0',
+                        right: '0',
+                        height: '1px',
+                        background: 'var(--accent-gradient)',
+                        opacity: 0.2
+                    }}></div>
                 )}
+                <div 
+                    onClick={() => navigate('/app/settings')}
+                    style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.75rem',
+                        cursor: 'pointer'
+                    }}
+                    title="Open Settings"
+                >
+                    {!collapsed && (
+                        <>
+                            <img
+                                src="/no_bg_logo.png"
+                                alt="Logo"
+                                style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    objectFit: 'contain',
+                                    borderRadius: '50%'
+                                }}
+                            />
+                            <div>
+                                <h1 style={{ fontSize: '1rem', fontWeight: '700', lineHeight: '1.2', whiteSpace: 'nowrap' }}>Generative Engine</h1>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Optimizer</div>
+                            </div>
+                        </>
+                    )}
+                </div>
+                <button
+                    onClick={onToggle}
+                    title={collapsed ? "Expand" : "Collapse"}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        padding: '0.6rem',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease',
+                        background: 'rgba(255,255,255,0.05)',
+                        marginLeft: collapsed ? 'auto' : '0',
+                        marginRight: collapsed ? 'auto' : '0'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+                </button>
             </div>
 
             {/* Navigation */}
@@ -104,31 +133,26 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                                     alignItems: 'center',
                                     justifyContent: collapsed ? 'center' : 'flex-start',
                                     gap: '0.75rem',
-                                    padding: '0.75rem 1.25rem',
-                                    borderRadius: '0',
-                                    color: isActive 
-                                        ? (isDark ? 'white' : '#0F172A') 
-                                        : 'var(--text-secondary)',
-                                    background: isActive 
-                                        ? (isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') 
-                                        : 'transparent',
+                                    padding: '0.75rem 1rem',
+                                    borderRadius: '0', // Square active indicators
+                                    color: isActive ? '#00d2ff' : 'rgba(255,255,255,0.4)',
+                                    background: isActive ? 'linear-gradient(to right, rgba(0, 210, 255, 0.08), transparent)' : 'transparent',
                                     textDecoration: 'none',
                                     fontSize: '0.85rem',
                                     fontWeight: isActive ? '700' : '500',
-                                    transition: 'all 0.2s ease',
+                                    transition: 'all 0.3s ease',
                                     position: 'relative',
-                                    borderLeft: isActive 
-                                        ? `2px solid ${isDark ? '#94A3B8' : '#0F172A'}` 
-                                        : '2px solid transparent'
+                                    borderLeft: isActive ? '2px solid #00d2ff' : '2px solid transparent'
                                 })}
                             >
                                 <div style={{ 
                                     color: 'inherit',
-                                    opacity: isActive ? 1 : 0.6
+                                    filter: 'drop-shadow(0 0 8px currentColor)',
+                                    opacity: 1
                                 }}>
                                     {item.icon}
                                 </div>
-                                {!collapsed && <span style={{ letterSpacing: '0.01em' }}>{item.label}</span>}
+                                {!collapsed && <span style={{ transition: 'all 0.3s ease', letterSpacing: '0.01em' }}>{item.label}</span>}
                             </NavLink>
                         </li>
                     ))}
@@ -149,29 +173,28 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                     title="Profile Settings"
                 >
                     <div style={{
-                        width: '36px',
-                        height: '36px',
-                        minWidth: '36px',
-                        background: isDark ? 'var(--accent-gradient)' : '#0F172A',
-                        borderRadius: '6px',
+                        width: '40px',
+                        height: '40px',
+                        minWidth: '40px',
+                        background: 'var(--accent-secondary)',
+                        borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: isDark ? '#0F172A' : 'white',
-                        fontWeight: '800',
-                        fontSize: '0.75rem',
-                        boxShadow: isDark ? 'none' : '0 2px 4px rgba(0,0,0,0.1)'
+                        color: 'white',
+                        fontWeight: '600',
+                        fontSize: '0.85rem'
                     }}>
                         {getInitials()}
                     </div>
                     {!collapsed && (
                         <>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '0.85rem', fontWeight: '800', color: isDark ? 'white' : '#0F172A', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    Premium <Sparkles size={12} color={isDark ? '#94A3B8' : '#B59410'} fill={isDark ? '#94A3B8' : '#B59410'} />
+                                <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'white', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    Premium <Sparkles size={12} color="#FFD700" fill="#FFD700" />
                                 </div>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                    Executive
+                                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
+                                    Member
                                 </div>
                             </div>
                             <button
