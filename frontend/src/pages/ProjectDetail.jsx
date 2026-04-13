@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, FileText, Link as LinkIcon, Calendar, TrendingUp, Trash2, Filter, ArrowUpDown, Search, ExternalLink, Eye, PenTool, Zap } from 'lucide-react'
 import axios from 'axios'
@@ -109,13 +109,10 @@ function ProjectDetail() {
     return (
         <div className="animate-fade-in">
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', marginTop: '0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Link to="/app/projects" style={{ color: 'var(--text-secondary)' }}>
-                        <ArrowLeft size={24} />
-                    </Link>
                     <div>
-                        <h1 style={{ fontSize: '2rem', fontWeight: '700' }}>{project?.name}</h1>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.25rem', letterSpacing: '-0.03em' }}>{project?.name}</h1>
                         <p style={{ color: 'var(--text-secondary)' }}>{project?.description || 'No description'}</p>
                     </div>
                 </div>
@@ -138,7 +135,7 @@ function ProjectDetail() {
             </div>
 
             {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div className="glass-card" style={{ padding: '1.25rem', textAlign: 'center' }}>
                     <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--accent-primary)' }}>
                         {items.length}
@@ -217,7 +214,7 @@ function ProjectDetail() {
                 </div>
 
                 {filteredItems.length === 0 ? (
-                    <div style={{ padding: '4rem', textAlign: 'center' }}>
+                    <div style={{ padding: '2.5rem', textAlign: 'center' }}>
                         <div style={{
                             width: '60px',
                             height: '60px',

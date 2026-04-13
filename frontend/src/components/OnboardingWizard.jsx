@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ArrowRight, ArrowLeft, Check, Sparkles, Target, FileText, ShoppingCart, GraduationCap, BarChart2, Zap, PenTool } from 'lucide-react'
+import React, { useState } from 'react'
+import { ArrowRight, ArrowLeft, Check, Sparkles, Target, FileText, ShoppingCart, BookOpen, Globe, BarChart2, Zap, PenTool } from 'lucide-react'
 
 const STEPS = [
     {
@@ -28,9 +28,9 @@ const STEPS = [
         type: 'select',
         key: 'geo_default_domain',
         options: [
-            { value: 'educational', label: 'Educational', icon: <GraduationCap size={24} />, desc: 'Courses, tutorials, academic' },
+            { value: 'education', label: 'Education', icon: <BookOpen size={24} />, desc: 'Courses, tutorials, academic' },
             { value: 'ecommerce', label: 'E-commerce', icon: <ShoppingCart size={24} />, desc: 'Products, reviews, shopping' },
-            { value: 'general', label: 'Blog / General', icon: <FileText size={24} />, desc: 'Articles, news, general content' }
+            { value: 'general', label: 'General / Blog', icon: <Globe size={24} />, desc: 'Articles, news, general content' }
         ]
     },
     {
@@ -86,13 +86,13 @@ function OnboardingWizard({ onComplete }) {
     }
 
     return (
-        <div style={{
+        <div className="aurora-container" style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'linear-gradient(135deg, #0a0a12 0%, #1a1a2e 50%, #0f0f1a 100%)',
+            background: 'var(--bg-secondary)',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'center',
@@ -100,6 +100,10 @@ function OnboardingWizard({ onComplete }) {
             padding: '2rem',
             overflowY: 'auto'
         }}>
+            {/* Animated Aurora Blobs */}
+            <div className="aurora-blob aurora-blob-1" style={{ opacity: 0.15 }}></div>
+            <div className="aurora-blob aurora-blob-2" style={{ opacity: 0.1 }}></div>
+            <div className="aurora-blob aurora-blob-3" style={{ opacity: 0.15 }}></div>
             {/* Background decoration */}
             <div style={{
                 position: 'absolute',
@@ -151,8 +155,11 @@ function OnboardingWizard({ onComplete }) {
 
                 {/* Content card */}
                 <div className="glass-card animate-fade-in" style={{
-                    padding: '3rem',
-                    textAlign: 'center'
+                    padding: '3.5rem 2.5rem',
+                    textAlign: 'center',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
                 }} key={currentStep}>
                     {/* Welcome step */}
                     {step.type === 'intro' && (
@@ -185,34 +192,41 @@ function OnboardingWizard({ onComplete }) {
                                     <button
                                         key={option.value}
                                         onClick={() => handleSelect(step.key, option.value)}
+                                        aria-pressed={answers[step.key] === option.value}
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '1rem',
                                             padding: '1.25rem',
                                             background: answers[step.key] === option.value
-                                                ? 'rgba(59, 130, 246, 0.2)'
-                                                : 'rgba(255,255,255,0.05)',
+                                                ? 'rgba(59, 130, 246, 0.1)'
+                                                : 'rgba(255,255,255,0.03)',
                                             border: answers[step.key] === option.value
-                                                ? '2px solid var(--accent-primary)'
-                                                : '2px solid transparent',
-                                            borderRadius: '12px',
+                                                ? '1px solid var(--accent-primary)'
+                                                : '1px solid rgba(255,255,255,0.05)',
+                                            boxShadow: answers[step.key] === option.value
+                                                ? '0 0 20px rgba(59, 130, 246, 0.15)'
+                                                : 'none',
+                                            borderRadius: '16px',
                                             cursor: 'pointer',
                                             textAlign: 'left',
-                                            transition: 'all 0.2s ease',
+                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                             color: 'var(--text-primary)'
                                         }}
                                     >
-                                        <div style={{
-                                            width: '50px',
-                                            height: '50px',
-                                            background: 'rgba(255,255,255,0.1)',
-                                            borderRadius: '10px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: answers[step.key] === option.value ? 'var(--accent-primary)' : 'var(--text-secondary)'
-                                        }}>
+                                        <div
+                                            aria-hidden="true"
+                                            style={{
+                                                width: '50px',
+                                                height: '50px',
+                                                background: 'rgba(255,255,255,0.1)',
+                                                borderRadius: '10px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: answers[step.key] === option.value ? 'var(--accent-primary)' : 'var(--text-secondary)'
+                                            }}
+                                        >
                                             {option.icon}
                                         </div>
                                         <div style={{ flex: 1 }}>

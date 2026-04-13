@@ -84,7 +84,7 @@ function RAGInsights({ contentItemId, initialInsights = [] }) {
         <div className="glass-card" style={{ marginTop: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                 <Sparkles className="text-p" size={24} style={{ color: 'var(--primary)' }} />
-                <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.5rem', margin: 0 }}>
+                <h2 style={{ fontFamily: 'inherit', fontSize: '1.5rem', margin: 0 }}>
                     AI Strategic Insights
                 </h2>
             </div>

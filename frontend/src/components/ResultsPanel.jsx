@@ -1,3 +1,4 @@
+import { CheckCircle, AlertTriangle, XCircle, Sparkles, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import MetricCard from './MetricCard'
 import SuggestionList from './SuggestionList'
 import ExportButton from './ExportButton'
@@ -132,7 +133,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
         <div>
             {/* Probability Score Header */}
             <div className="glass-card" style={{ marginBottom: '2rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-                <h2 style={{ marginBottom: '1rem', fontFamily: 'Outfit, sans-serif' }}>
+                <h2 style={{ marginBottom: '1rem', fontFamily: 'inherit' }}>
                     Citation Probability
                 </h2>
 
@@ -153,10 +154,10 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                         <div className={`score-badge ${getScoreClass(overallScore)}`} style={{ fontSize: '3rem', padding: '1.5rem', display: 'inline-block' }}>
                             {overallScore}/100
                         </div>
-                        <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>
-                            {overallScore >= 75 ? '✅ Excellent optimization for AI search!'
-                                : overallScore >= 50 ? ' ⚠️ Good start, but room for improvement'
-                                    : '❌ Needs significant optimization'}
+                        <p style={{ marginTop: '1rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                            {overallScore >= 75 ? <><CheckCircle size={18} color="var(--success)" /> Excellent optimization for AI search!</>
+                                : overallScore >= 50 ? <><AlertTriangle size={18} color="var(--warning)" /> Good start, but room for improvement</>
+                                    : <><XCircle size={18} color="var(--error)" /> Needs significant optimization</>}
                         </p>
                     </>
                 )}
@@ -206,7 +207,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
             {probabilityMetrics && probabilityMetrics.factors && probabilityMetrics.factors.length > 0 && (
                 <div style={{ marginBottom: '2rem' }}>
                     <h3 style={{ marginBottom: '1rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ color: 'var(--accent)' }}>✨</span> What's Driving Your Probability?
+                        <Sparkles size={18} color="var(--accent-primary)" /> What's Driving Your Probability?
                     </h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                         {probabilityMetrics.factors.map((factor, i) => (
@@ -280,9 +281,9 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
 
             {/* Suggestions */}
             {results.suggestions && results.suggestions.length > 0 && (
-                <SuggestionList 
-                    suggestions={results.suggestions} 
-                    contentItemId={results.content_item_id} 
+                <SuggestionList
+                    suggestions={results.suggestions}
+                    contentItemId={results.content_item_id}
                     context={context}
                 />
             )}

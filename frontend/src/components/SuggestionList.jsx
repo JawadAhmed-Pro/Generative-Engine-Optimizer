@@ -14,14 +14,14 @@ function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
             alert('Cannot auto-fix without a saved content context.')
             return
         }
-        
+
         setFixingIndex(index)
         try {
             const response = await axios.post('/api/auto-fix', {
                 content_item_id: contentItemId,
                 suggestion: suggestion.text
             })
-            
+
             setFixedResults(prev => ({
                 ...prev,
                 [index]: response.data.optimized_content
@@ -39,7 +39,7 @@ function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
 
         updateOptimization({ content: optimized })
         setAppliedIndices(prev => new Set([...prev, index]))
-        
+
         // Optional: Scroll to editor or show success toast
     }
     const getPriorityColor = (priority) => {
@@ -53,10 +53,10 @@ function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
 
     const getPriorityIcon = (priority) => {
         switch (priority) {
-            case 'HIGH': return '🔴'
-            case 'MEDIUM': return '🟡'
-            case 'LOW': return '🟢'
-            default: return '⚪'
+            case 'HIGH': return <Circle size={12} fill="currentColor" strokeWidth={0} />
+            case 'MEDIUM': return <Circle size={12} fill="currentColor" strokeWidth={0} />
+            case 'LOW': return <Circle size={12} fill="currentColor" strokeWidth={0} />
+            default: return <Circle size={12} fill="currentColor" strokeWidth={0} />
         }
     }
 
@@ -69,8 +69,8 @@ function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
 
     return (
         <div className="glass-card">
-            <h2 style={{ marginBottom: '1.5rem', fontFamily: 'Outfit, sans-serif' }}>
-                💡 Optimization Suggestions
+            <h2 style={{ marginBottom: '1.5rem', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Lightbulb size={24} color="var(--warning)" /> Optimization Suggestions
             </h2>
 
             {['HIGH', 'MEDIUM', 'LOW'].map(priority => {
@@ -106,15 +106,15 @@ function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
                                                 {suggestion.category} • {suggestion.source}
                                             </span>
                                         </div>
-                                        
+
                                         {!fixedResults[index] ? (
-                                            <button 
+                                            <button
                                                 onClick={() => handleAutoFix(suggestion, index)}
                                                 disabled={fixingIndex === index}
                                                 className="btn btn-outline"
-                                                style={{ 
-                                                    padding: '0.4rem 0.75rem', 
-                                                    fontSize: '0.8rem', 
+                                                style={{
+                                                    padding: '0.4rem 0.75rem',
+                                                    fontSize: '0.8rem',
                                                     gap: '0.4rem',
                                                     borderColor: 'var(--accent-primary)',
                                                     color: 'var(--text-primary)'
@@ -130,7 +130,7 @@ function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
                                         ) : (
                                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                                 {context === 'text' && !appliedIndices.has(index) && (
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleApplyFix(index)}
                                                         className="btn btn-primary"
                                                         style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', gap: '0.4rem' }}
@@ -138,10 +138,10 @@ function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
                                                         <ClipboardCheck size={14} /> Apply to Editor
                                                     </button>
                                                 )}
-                                                <div style={{ 
-                                                    color: 'var(--success)', 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
+                                                <div style={{
+                                                    color: 'var(--success)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
                                                     gap: '0.4rem',
                                                     fontSize: '0.85rem',
                                                     fontWeight: '600',

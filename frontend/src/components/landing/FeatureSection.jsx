@@ -1,105 +1,121 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, CheckCircle, TrendingUp, Users, FileText, Zap } from 'lucide-react'
+import { ArrowRight, CheckCircle, TrendingUp, Users, FileText, Zap, Search, Bot, Sparkles } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 function FeatureSection() {
     return (
-        <section id="how-it-works" className="section" style={{ background: 'var(--bg-secondary)', paddingTop: '6rem', paddingBottom: '6rem' }}>
+        <section id="how-it-works" className="section" style={{ 
+            background: 'rgba(8, 8, 10, 0.6)', 
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            position: 'relative', 
+            zIndex: 1, 
+            paddingTop: '6rem', 
+            paddingBottom: '6rem' 
+        }}>
             <div className="container">
                 {/* Section Header */}
-                <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+                <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
                     <span style={{
                         background: 'rgba(59, 130, 246, 0.1)',
                         border: '1px solid rgba(59, 130, 246, 0.2)',
-                        color: '#60a5fa',
-                        padding: '0.4rem 1rem',
+                        color: 'var(--accent-primary)',
+                        padding: '0.6rem 1.25rem',
                         borderRadius: 'var(--radius-full)',
                         fontSize: '0.8rem',
-                        fontWeight: '600',
+                        fontWeight: '700',
                         display: 'inline-block',
-                        marginBottom: '1.5rem'
+                        marginBottom: '2rem',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase'
                     }}>
-                        HOW IT WORKS
+                        PREMIUM WORKFLOW
                     </span>
-                    <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: '700', marginBottom: '1rem' }}>
-                        From URL to Optimization <br />
-                        <span style={{
-                            background: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent'
-                        }}>in 30 seconds</span>
+                    <h2 style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', fontWeight: '800', marginBottom: '2rem', letterSpacing: '-0.04em', color: 'var(--text-primary)' }}>
+                        From Insight to Authority <br />
+                        <span className="text-gradient">in three seamless steps</span>
                     </h2>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }}>
+                <div className="section-group" style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1.2fr 1fr',
+                    gap: '5rem',
+                    alignItems: 'center',
+                    borderBottom: 'none'
+                }}>
 
                     {/* Left - Steps */}
                     <div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
                             {/* Step 1 */}
-                            <div style={{ display: 'flex', gap: '1.5rem' }}>
+                            <div style={{ display: 'flex', gap: '2rem' }}>
                                 <div style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                                    borderRadius: '50%',
+                                    width: '56px',
+                                    height: '56px',
+                                    background: 'var(--accent-primary)',
+                                    borderRadius: '16px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    fontWeight: '700',
-                                    fontSize: '1.1rem',
+                                    fontWeight: '800',
+                                    fontSize: '1.25rem',
                                     flexShrink: 0,
-                                    boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)'
+                                    boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
+                                    color: 'white'
                                 }}>1</div>
                                 <div>
-                                    <h3 style={{ fontSize: '1.3rem', fontWeight: '600', marginBottom: '0.5rem' }}>Paste Your URL or Content</h3>
-                                    <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                                        Enter any webpage URL or paste your text content. We support all formats.
+                                    <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--text-primary)' }}>Asset Ingestion</h3>
+                                    <p style={{ color: 'var(--text-secondary)', lineHeight: '1.7', fontSize: '1.05rem' }}>
+                                        Paste any URL or raw content. Our engine instantly maps the semantic structure and intent of your assets.
                                     </p>
                                 </div>
                             </div>
 
                             {/* Step 2 */}
-                            <div style={{ display: 'flex', gap: '1.5rem' }}>
+                            <div style={{ display: 'flex', gap: '2rem' }}>
                                 <div style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-                                    borderRadius: '50%',
+                                    width: '56px',
+                                    height: '56px',
+                                    background: 'var(--accent-secondary)',
+                                    borderRadius: '16px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    fontWeight: '700',
-                                    fontSize: '1.1rem',
+                                    fontWeight: '800',
+                                    fontSize: '1.25rem',
                                     flexShrink: 0,
-                                    boxShadow: '0 10px 30px rgba(139, 92, 246, 0.3)'
+                                    boxShadow: '0 10px 30px rgba(139, 92, 246, 0.3)',
+                                    color: 'white'
                                 }}>2</div>
                                 <div>
-                                    <h3 style={{ fontSize: '1.3rem', fontWeight: '600', marginBottom: '0.5rem' }}>Get Your GEO Score</h3>
-                                    <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                                        Our AI analyzes 4 key metrics: visibility, citation potential, semantic depth, and readability.
+                                    <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--text-primary)' }}>Visibility Quantization</h3>
+                                    <p style={{ color: 'var(--text-secondary)', lineHeight: '1.7', fontSize: '1.05rem' }}>
+                                        We analyze 4 proprietary GEO metrics to reveal exactly how ChatGPT, Gemini, and Google view your authority.
                                     </p>
                                 </div>
                             </div>
 
                             {/* Step 3 */}
-                            <div style={{ display: 'flex', gap: '1.5rem' }}>
+                            <div style={{ display: 'flex', gap: '2rem' }}>
                                 <div style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    background: 'linear-gradient(135deg, #10b981, #059669)',
-                                    borderRadius: '50%',
+                                    width: '56px',
+                                    height: '56px',
+                                    background: 'var(--success)',
+                                    borderRadius: '16px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    fontWeight: '700',
-                                    fontSize: '1.1rem',
+                                    fontWeight: '800',
+                                    fontSize: '1.25rem',
                                     flexShrink: 0,
-                                    boxShadow: '0 10px 30px rgba(16, 185, 129, 0.3)'
+                                    boxShadow: '0 10px 30px rgba(16, 185, 129, 0.3)',
+                                    color: 'white'
                                 }}>3</div>
                                 <div>
-                                    <h3 style={{ fontSize: '1.3rem', fontWeight: '600', marginBottom: '0.5rem' }}>Optimize & Win Citations</h3>
-                                    <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                                        One-click rewrite transforms your content into AI-friendly text that gets cited.
+                                    <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--text-primary)' }}>AI-First Transformation</h3>
+                                    <p style={{ color: 'var(--text-secondary)', lineHeight: '1.7', fontSize: '1.05rem' }}>
+                                        Execute the "One-Click Rewrite" to restructure your content for maximum citation probability across all engines.
                                     </p>
                                 </div>
                             </div>
@@ -109,58 +125,48 @@ function FeatureSection() {
                             to="/app"
                             className="btn btn-primary"
                             style={{
-                                marginTop: '2.5rem',
-                                padding: '1rem 2rem',
-                                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                                boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)'
+                                marginTop: '3.5rem',
+                                padding: '1.25rem 2.5rem',
+                                fontSize: '1.1rem'
                             }}
                         >
-                            Try It Free <ArrowRight size={18} />
+                            Claim Your Free Analysis <ArrowRight size={20} />
                         </Link>
                     </div>
 
-                    {/* Right - Stats */}
+                    {/* Right - Stats Grid */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                        <div className="glass-card" style={{
-                            padding: '2rem',
-                            textAlign: 'center',
-                            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.02) 100%)',
-                            border: '1px solid rgba(59, 130, 246, 0.2)'
-                        }}>
-                            <TrendingUp size={32} color="#3b82f6" style={{ marginBottom: '1rem' }} />
-                            <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>87%</div>
-                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Avg. Score Improvement</div>
-                        </div>
-                        <div className="glass-card" style={{
-                            padding: '2rem',
-                            textAlign: 'center',
-                            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.02) 100%)',
-                            border: '1px solid rgba(139, 92, 246, 0.2)'
-                        }}>
-                            <Users size={32} color="#8b5cf6" style={{ marginBottom: '1rem' }} />
-                            <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>2.5K+</div>
-                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Active Users</div>
-                        </div>
-                        <div className="glass-card" style={{
-                            padding: '2rem',
-                            textAlign: 'center',
-                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.02) 100%)',
-                            border: '1px solid rgba(16, 185, 129, 0.2)'
-                        }}>
-                            <FileText size={32} color="#10b981" style={{ marginBottom: '1rem' }} />
-                            <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>50K+</div>
-                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>URLs Analyzed</div>
-                        </div>
-                        <div className="glass-card" style={{
-                            padding: '2rem',
-                            textAlign: 'center',
-                            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.02) 100%)',
-                            border: '1px solid rgba(245, 158, 11, 0.2)'
-                        }}>
-                            <Zap size={32} color="#f59e0b" style={{ marginBottom: '1rem' }} />
-                            <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>&lt;30s</div>
-                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Analysis Time</div>
-                        </div>
+                        {[
+                            { icon: <TrendingUp size={36} color="var(--accent-primary)" />, val: "87%", label: "Visibility Lift", color: "var(--accent-primary)" },
+                            { icon: <Users size={36} color="var(--accent-secondary)" />, val: "2.5k+", label: "Top Strategists", color: "var(--accent-secondary)" },
+                            { icon: <Search size={36} color="var(--success)" />, val: "50k+", label: "URLs Indexed", color: "var(--success)" },
+                            { icon: <Zap size={36} color="var(--warning)" />, val: "<30s", label: "Insight Latency", color: "var(--warning)" }
+                        ].map((stat, i) => (
+                            <motion.div
+                                key={i}
+                                whileHover={{
+                                    transform: 'translateY(-5px)',
+                                    boxShadow: `0 35px 60px -12px rgba(0,0,0,0.2), 0 0 40px -5px ${stat.color}55`,
+                                }}
+                                className="depth-card"
+                                style={{
+                                    padding: '2.5rem 1.5rem',
+                                    textAlign: 'center',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
+                                    borderColor: stat.color,
+                                    boxShadow: `0 0 15px -2px ${stat.color}66, 0 25px 50px -12px rgba(0,0,0,0.15), 0 0 30px -5px ${stat.color}33`,
+                                    background: `var(--bg-tertiary)`
+                                }}
+                            >
+                                <div style={{ marginBottom: '1.25rem' }}>{stat.icon}</div>
+                                <div style={{ fontSize: '2.75rem', fontWeight: '800', marginBottom: '0.5rem', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>{stat.val}</div>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500' }}>{stat.label}</div>
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, User, UserPlus, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, UserPlus, AlertCircle, Eye, EyeOff, Sparkles, Search, Zap, FileText, Globe, BarChart2 } from 'lucide-react';
 import '../styles/auth.css';
 
 function Register() {
@@ -14,7 +14,16 @@ function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const { register, isAuthenticated } = useAuth();
+    
+    const suiteModules = [
+        { name: 'Visibility', icon: <Search size={14} />, color: 'var(--accent-primary)' },
+        { name: 'Optimizer', icon: <Zap size={14} />, color: 'var(--accent-secondary)' },
+        { name: 'Simulator', icon: <FileText size={14} />, color: 'var(--success)' },
+        { name: 'Citation', icon: <Globe size={14} />, color: 'var(--warning)' },
+        { name: 'Analysis', icon: <BarChart2 size={14} />, color: 'var(--accent-primary)' }
+    ];
+
+    const { register, isAuthenticated, warmup } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -25,17 +34,22 @@ function Register() {
         }
     }, [isAuthenticated, navigate]);
 
+    // Pre-emptive warmup on mount
+    useEffect(() => {
+        warmup();
+    }, [warmup]);
+
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
-        // Validate passwords match
         if (password !== confirmPassword) {
             setError('Passwords do not match');
             return;
         }
 
-        // Validate password length
         if (password.length < 6) {
             setError('Password must be at least 6 characters');
             return;
@@ -47,7 +61,6 @@ function Register() {
             const result = await register(email, password, name);
 
             if (result.success) {
-                // Redirect back to the page they were trying to access or to the app dashboard
                 const destination = location.state?.from?.pathname || '/app';
                 navigate(destination);
             } else {
@@ -62,22 +75,66 @@ function Register() {
 
     return (
         <div className="auth-container">
-            <div className="auth-card">
+            {/* Top Atmospheric Half-Circles */}
+            <div className="half-circle" style={{
+                background: 'radial-gradient(ellipse at center, var(--accent-primary), transparent 70%)',
+                width: '100vw',
+                opacity: 0.15
+            }}></div>
+            <div className="half-circle-accent"></div>
+            <div className="half-circle" style={{
+                top: '-20vh',
+                background: 'radial-gradient(ellipse at center, var(--accent-secondary), transparent 70%)',
+                width: '120vw',
+                opacity: 0.1,
+                animationDelay: '-5s'
+            }}></div>
+
+            {/* Organic Background Shapes */}
+            <div className="organic-shape shape-1" style={{
+                top: '-5%',
+                left: '-5%',
+                animationDelay: '0s'
+            }}></div>
+            <div className="organic-shape shape-2" style={{
+                bottom: '0%',
+                right: '-5%',
+                animationDelay: '-5s'
+            }}></div>
+            <div className="organic-shape shape-3" style={{
+                top: '25%',
+                right: '10%',
+                opacity: 0.1,
+                animationDelay: '-10s'
+            }}></div>
+            <div className="organic-shape shape-1" style={{
+                bottom: '10%',
+                left: '10%',
+                width: '30vw',
+                height: '30vw',
+                opacity: 0.05,
+                animationDelay: '-15s',
+                filter: 'blur(120px)'
+            }}></div>
+            <div className="aurora-container">
+                <div className="aurora-blob aurora-blob-1"></div>
+                <div className="aurora-blob aurora-blob-2"></div>
+                <div className="aurora-blob aurora-blob-3"></div>
+            </div>
+            <div className="auth-card animate-fade-in">
                 <div className="auth-header">
                     <div className="auth-logo">
                         <img
-                            src="/logo.jpg"
+                            src="/no_bg_logo.png"
                             alt="Logo"
-                            style={{
-                                width: '64px',
-                                height: '64px',
-                                objectFit: 'contain',
-                                borderRadius: '16px'
-                            }}
+                            style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'contain', marginBottom: '0.5rem' }}
                         />
-                        <h1 style={{ marginBottom: 0 }}>Create Account</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                            <Sparkles size={18} color="var(--accent-secondary)" />
+                            <h1 style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.03em' }}>Create Account</h1>
+                        </div>
                     </div>
-                    <p>Get started with AI-powered content optimization</p>
+                    <p>Join world-class content creators optimizing for AI search</p>
                 </div>
 
                 {error && (
@@ -89,7 +146,7 @@ function Register() {
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
-                        <label htmlFor="name">Name (Optional)</label>
+                        <label htmlFor="name">Full Name</label>
                         <div className="input-wrapper">
                             <User size={18} className="input-icon" />
                             <input
@@ -97,14 +154,14 @@ function Register() {
                                 id="name"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="John Doe"
+                                placeholder="Your full name"
                                 autoComplete="name"
                             />
                         </div>
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="email">Email</label>
+                        <label htmlFor="email">Work Email</label>
                         <div className="input-wrapper">
                             <Mail size={18} className="input-icon" />
                             <input
@@ -112,7 +169,7 @@ function Register() {
                                 id="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
+                                placeholder="name@company.com"
                                 required
                                 autoComplete="email"
                             />
@@ -120,7 +177,7 @@ function Register() {
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="password">Password</label>
+                        <label htmlFor="password">Create Password</label>
                         <div className="input-wrapper">
                             <Lock size={18} className="input-icon" />
                             <input
@@ -128,7 +185,7 @@ function Register() {
                                 id="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
+                                placeholder="At least 6 characters"
                                 required
                                 minLength={6}
                                 autoComplete="new-password"
@@ -139,10 +196,10 @@ function Register() {
                                 className="password-toggle"
                                 style={{
                                     position: 'absolute',
-                                    right: '1rem',
+                                    right: '1.25rem',
                                     background: 'none',
                                     border: 'none',
-                                    color: '#71717a',
+                                    color: 'var(--text-tertiary)',
                                     cursor: 'pointer',
                                     padding: 0,
                                     display: 'flex',
@@ -163,7 +220,7 @@ function Register() {
                                 id="confirmPassword"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                placeholder="••••••••"
+                                placeholder="Confirm your password"
                                 required
                                 autoComplete="new-password"
                             />
@@ -173,10 +230,10 @@ function Register() {
                                 className="password-toggle"
                                 style={{
                                     position: 'absolute',
-                                    right: '1rem',
+                                    right: '1.25rem',
                                     background: 'none',
                                     border: 'none',
-                                    color: '#71717a',
+                                    color: 'var(--text-tertiary)',
                                     cursor: 'pointer',
                                     padding: 0,
                                     display: 'flex',
@@ -192,21 +249,37 @@ function Register() {
                         type="submit"
                         className="auth-button"
                         disabled={loading}
+                        style={{ marginTop: '0.5rem' }}
                     >
                         {loading ? (
-                            <span className="loading-spinner"></span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div className="loading-spinner"></div>
+                                <span style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+                                    Creating account...
+                                </span>
+                            </div>
                         ) : (
                             <>
-                                <UserPlus size={18} />
-                                <span>Create Account</span>
+                                <UserPlus size={20} />
+                                <span>Get Started with GEO</span>
                             </>
                         )}
                     </button>
                 </form>
 
                 <div className="auth-footer">
-                    <p>Already have an account? <Link to="/login">Sign in</Link></p>
+                    <p>Already have an account? <Link to="/login">Sign in to GEO</Link></p>
                 </div>
+            </div>
+
+            {/* Suite Footer */}
+            <div className="suite-footer animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                {suiteModules.map((module, idx) => (
+                    <div key={idx} className="suite-item">
+                        <i style={{ background: module.color }}></i>
+                        {module.name}
+                    </div>
+                ))}
             </div>
         </div>
     );

@@ -274,6 +274,8 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
                 style={{ gap: '0.5rem', fontSize: '0.875rem' }}
                 disabled={exporting}
                 aria-label="Export analysis report"
+                aria-haspopup="true"
+                aria-expanded={showOptions}
             >
                 {exporting ? (
                     <Loader2 size={16} className="spin" />

@@ -14,7 +14,13 @@ function AnalysisModal({ itemId, onClose }) {
         if (itemId) {
             fetchAnalysis()
         }
-    }, [itemId])
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') onClose()
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [itemId, onClose])
 
     const fetchAnalysis = async () => {
         try {
@@ -96,6 +102,9 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
         }} onClick={onClose}>
             <div
                 className="glass-card animate-fade-in"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="modal-title"
                 style={{
                     width: '100%',
                     maxWidth: '900px',
@@ -108,7 +117,7 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                     <div style={{ flex: 1 }}>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>
+                        <h2 id="modal-title" style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>
                             {loading ? 'Loading...' : data?.title || 'Analysis Details'}
                         </h2>
                         {data?.url && (
@@ -128,6 +137,7 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                                 <button
                                     onClick={handleCopyResults}
                                     title="Copy to clipboard"
+                                    aria-label="Copy results to clipboard"
                                     style={{
                                         background: 'rgba(255,255,255,0.1)',
                                         border: 'none',
@@ -140,11 +150,12 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                                         justifyContent: 'center'
                                     }}
                                 >
-                                    {copied ? <Check size={18} color="var(--success)" /> : <Copy size={18} />}
+                                    {copied ? <Check size={18} color="var(--success)" aria-hidden="true" /> : <Copy size={18} aria-hidden="true" />}
                                 </button>
                                 <button
                                     onClick={handleExportJSON}
                                     title="Download JSON"
+                                    aria-label="Download analysis as JSON"
                                     style={{
                                         background: 'rgba(255,255,255,0.1)',
                                         border: 'none',
@@ -157,15 +168,16 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                                         justifyContent: 'center'
                                     }}
                                 >
-                                    <Download size={18} />
+                                    <Download size={18} aria-hidden="true" />
                                 </button>
                             </>
                         )}
                         <button
                             onClick={onClose}
+                            aria-label="Close modal"
                             style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.5rem' }}
                         >
-                            <X size={24} />
+                            <X size={24} aria-hidden="true" />
                         </button>
                     </div>
                 </div>

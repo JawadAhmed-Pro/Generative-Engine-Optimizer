@@ -3,6 +3,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import axios from 'axios'
 
+// Simple client-side cache to persist dashboard data between navigation
+const trendCache = new Map();
+
 function TrendChart({ projectId = null, limit = 10 }) {
     const [data, setData] = useState([])
     const [loading, setLoading] = useState(true)
@@ -10,16 +13,25 @@ function TrendChart({ projectId = null, limit = 10 }) {
 
     useEffect(() => {
         fetchTrendData()
-    }, [projectId])
+    }, [projectId, limit])
 
     const fetchTrendData = async () => {
-        try {
-            setLoading(true)
-            // Get history data
-            const endpoint = projectId
-                ? `/api/projects/${projectId}/items`
-                : `/api/history?limit=${limit}`
+        const endpoint = projectId
+            ? `/api/projects/${projectId}/items`
+            : `/api/history?limit=${limit}`
 
+        // Check cache first
+        if (trendCache.has(endpoint)) {
+            setData(trendCache.get(endpoint))
+            setLoading(false)
+            // Still fetch in background to refresh (stale-while-revalidate)
+        }
+
+        try {
+            if (!trendCache.has(endpoint)) {
+                setLoading(true)
+            }
+            
             const response = await axios.get(endpoint)
             const items = response.data.items || response.data
 
@@ -36,10 +48,13 @@ function TrendChart({ projectId = null, limit = 10 }) {
                     title: item.title?.substring(0, 30) || `Analysis ${index + 1}`
                 }))
 
+            trendCache.set(endpoint, chartData)
             setData(chartData)
         } catch (err) {
             console.error('Failed to fetch trend data:', err)
-            setError('Failed to load trend data')
+            if (!trendCache.has(endpoint)) {
+                setError('Failed to load trend data')
+            }
         } finally {
             setLoading(false)
         }

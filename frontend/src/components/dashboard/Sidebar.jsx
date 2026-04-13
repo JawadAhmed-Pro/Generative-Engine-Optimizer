@@ -1,8 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Folder, FileText, BarChart2, Settings, LogOut, Code2, Zap, Globe, GitCompareArrows, Sparkles } from 'lucide-react'
+import { LayoutDashboard, Folder, FileText, BarChart2, Settings, LogOut, Code2, Zap, Globe, GitCompareArrows, Sparkles, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
-function Sidebar({ collapsed, mobileOpen = false }) {
+function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 
@@ -34,36 +34,93 @@ function Sidebar({ collapsed, mobileOpen = false }) {
 
     return (
         <aside className={`sidebar-container ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
-            {/* Logo */}
-            <div style={{ padding: collapsed ? '1.5rem 1rem' : '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <img
-                        src="/logo.jpg"
-                        alt="Logo"
-                        style={{
-                            width: '32px',
-                            height: '32px',
-                            objectFit: 'contain',
-                            borderRadius: '8px'
-                        }}
-                    />
+            {/* Animated Background Layer */}
+            <div className="sidebar-aurora">
+                <div className="sidebar-blob sidebar-blob-1"></div>
+                <div className="sidebar-blob sidebar-blob-2"></div>
+                <div className="noise-overlay" style={{ opacity: 0.03 }}></div>
+            </div>
+
+            {/* Logo & Toggle */}
+            <div style={{
+                padding: collapsed ? '1rem 0.5rem' : '1.25rem 1rem',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.5rem',
+                position: 'relative'
+            }}>
+                {/* Header Glow */}
+                {!collapsed && (
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '-1px',
+                        left: '0',
+                        right: '0',
+                        height: '1px',
+                        background: 'var(--accent-gradient)',
+                        opacity: 0.2
+                    }}></div>
+                )}
+                <div 
+                    onClick={() => navigate('/app/settings')}
+                    style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.75rem',
+                        cursor: 'pointer'
+                    }}
+                    title="Open Settings"
+                >
                     {!collapsed && (
-                        <div>
-                            <h1 style={{ fontSize: '1rem', fontWeight: '700', lineHeight: '1.2', whiteSpace: 'nowrap' }}>Generative Engine</h1>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Optimizer</div>
-                        </div>
+                        <>
+                            <img
+                                src="/no_bg_logo.png"
+                                alt="Logo"
+                                style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    objectFit: 'contain',
+                                    borderRadius: '50%'
+                                }}
+                            />
+                            <div>
+                                <h1 style={{ fontSize: '1rem', fontWeight: '700', lineHeight: '1.2', whiteSpace: 'nowrap' }}>Generative Engine</h1>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Optimizer</div>
+                            </div>
+                        </>
                     )}
                 </div>
+                <button
+                    onClick={onToggle}
+                    title={collapsed ? "Expand" : "Collapse"}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        padding: '0.6rem',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease',
+                        background: 'rgba(255,255,255,0.05)',
+                        marginLeft: collapsed ? 'auto' : '0',
+                        marginRight: collapsed ? 'auto' : '0'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+                </button>
             </div>
 
             {/* Navigation */}
-            <nav style={{ flex: 1, padding: collapsed ? '1.5rem 0.5rem' : '1.5rem 1rem', overflowY: 'auto', overflowX: 'hidden' }}>
-                {!collapsed && (
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: '600', marginBottom: '0.75rem', paddingLeft: '0.75rem' }}>
-                        MAIN MENU
-                    </div>
-                )}
-                <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <nav style={{ flex: 1, padding: collapsed ? '0.5rem' : '0.75rem 0.75rem', overflowY: 'auto', overflowX: 'hidden' }}>
+                <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     {navItems.map((item) => (
                         <li key={item.path}>
                             <NavLink
@@ -97,7 +154,17 @@ function Sidebar({ collapsed, mobileOpen = false }) {
 
             {/* User Profile */}
             <div style={{ padding: collapsed ? '1rem 0.5rem' : '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: '0.75rem' }}>
+                <div 
+                    onClick={() => navigate('/app/settings')}
+                    style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: collapsed ? 'center' : 'flex-start', 
+                        gap: '0.75rem',
+                        cursor: 'pointer'
+                    }}
+                    title="Profile Settings"
+                >
                     <div style={{
                         width: '40px',
                         height: '40px',
@@ -124,8 +191,12 @@ function Sidebar({ collapsed, mobileOpen = false }) {
                                 </div>
                             </div>
                             <button
-                                onClick={handleLogout}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLogout();
+                                }}
                                 title="Logout"
+                                aria-label="Logout"
                                 style={{
                                     color: 'var(--text-secondary)',
                                     background: 'none',

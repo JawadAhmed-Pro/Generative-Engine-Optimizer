@@ -1,3 +1,5 @@
+import { ArrowUpRight, ArrowRight, ArrowDownRight } from 'lucide-react'
+
 function MetricCard({ title, score, description }) {
     const getScoreClass = (score) => {
         if (score >= 75) return 'score-high'
@@ -11,38 +13,63 @@ function MetricCard({ title, score, description }) {
         return 'var(--error)'
     }
 
+    const getIcon = () => {
+        if (score >= 75) return <ArrowUpRight size={18} />
+        if (score >= 50) return <ArrowRight size={18} />
+        return <ArrowDownRight size={18} />
+    }
+
     return (
-        <div className="glass-card">
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', gap: '0.5rem' }}>
-                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.1rem', margin: 0 }}>{title}</h3>
-                {description && (
-                   <span 
-                        className="tooltip" 
-                        data-tooltip={description} 
-                        style={{ cursor: 'help', color: 'var(--accent-primary)', fontSize: '0.9rem', opacity: 0.8 }}
-                    >
-                        ⓘ
+        <div className="glass-card" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            borderTop: `1px solid ${getProgressColor(score)}33`,
+            height: '100%'
+        }}>
+            <div>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.25rem', gap: '0.75rem', justifyContent: 'space-between' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-primary)' }}>{title}</h3>
+                    <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        background: `${getProgressColor(score)}15`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: getProgressColor(score)
+                    }}>
+                        {getIcon()}
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+                        {Math.round(score)}
                     </span>
-                )}
+                    <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '500' }}>/ 100</span>
+                </div>
             </div>
 
-            <div className={`score-badge ${getScoreClass(score)}`} style={{ marginBottom: '1rem' }}>
-                {Math.round(score)}/100
-            </div>
+            <div>
+                <div className="progress-bar" style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', marginBottom: '1rem' }}>
+                    <div
+                        className="progress-fill"
+                        style={{
+                            height: '100%',
+                            width: `${score}%`,
+                            background: getProgressColor(score),
+                            boxShadow: `0 0 10px ${getProgressColor(score)}44`,
+                            transition: 'width 1s ease-out'
+                        }}
+                    ></div>
+                </div>
 
-            <div className="progress-bar">
-                <div
-                    className="progress-fill"
-                    style={{
-                        width: `${score}%`,
-                        background: getProgressColor(score)
-                    }}
-                ></div>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+                    {description}
+                </p>
             </div>
-
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.75rem' }}>
-                {description}
-            </p>
         </div>
     )
 }

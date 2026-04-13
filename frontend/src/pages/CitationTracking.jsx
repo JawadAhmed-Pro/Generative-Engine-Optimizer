@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react'
-import { Globe, Search, TrendingUp, RefreshCw, ChevronDown, ChevronUp, ExternalLink, Clock } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Globe, Search, TrendingUp, RefreshCw, ChevronDown, ChevronUp, ExternalLink, Clock, Sparkles, Target, Tag, BookOpen, ShoppingCart, Info, Folder, FileText, Heart, Activity } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
 
 function CitationTracking() {
     const [domain, setDomain] = useState('')
     const [brandName, setBrandName] = useState('')
-    const [niche, setNiche] = useState('technology')
+    const [niche, setNiche] = useState('general')
     const [customPrompts, setCustomPrompts] = useState('')
     const [loading, setLoading] = useState(false)
     const [results, setResults] = useState(null)
@@ -13,6 +14,36 @@ function CitationTracking() {
     const [historyLoading, setHistoryLoading] = useState(true)
     const [expandedPlatform, setExpandedPlatform] = useState(null)
     const [error, setError] = useState(null)
+
+    const nicheConfigs = {
+        general: {
+            label: 'General / Blog',
+            icon: <Globe size={16} />,
+            primaryIcon: <Globe size={18} color="var(--accent-primary)" />,
+            domainPlaceholder: 'e.g. example.com',
+            brandPlaceholder: 'e.g. MyBrand',
+            promptPlaceholder: 'Enter strategic queries to test citation frequency (one per line)...',
+            description: 'Track broad authority and brand citations across major AI knowledge platforms.'
+        },
+        ecommerce: {
+            label: 'E-commerce',
+            icon: <ShoppingCart size={16} />,
+            primaryIcon: <ShoppingCart size={18} color="var(--success)" />,
+            domainPlaceholder: 'e.g. mystore.com',
+            brandPlaceholder: 'e.g. LuxeBrand',
+            promptPlaceholder: 'Enter product comparison or purchase intent queries...',
+            description: 'Analyze product referral probability and shopping assistant citations.'
+        },
+        education: {
+            label: 'Education',
+            icon: <BookOpen size={16} />,
+            primaryIcon: <BookOpen size={18} color="var(--accent-secondary)" />,
+            domainPlaceholder: 'e.g. university.edu',
+            brandPlaceholder: 'e.g. EduLearn',
+            promptPlaceholder: 'Enter academic or informational research queries...',
+            description: 'Audit academic authority and educational resource citations in training sets.'
+        }
+    }
 
     useEffect(() => {
         fetchHistory()
@@ -63,6 +94,7 @@ function CitationTracking() {
             setResults(response.data)
             setDomain(response.data.domain || '')
             setBrandName(response.data.brand_name || '')
+            if (response.data.niche) setNiche(response.data.niche)
         } catch (err) {
             setError('Failed to load historical result')
         } finally {
@@ -82,307 +114,277 @@ function CitationTracking() {
         return '😐'
     }
 
+    const currentConfig = nicheConfigs[niche] || nicheConfigs.technology
+
     return (
-        <div className="animate-fade-in">
-            <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '0.5rem' }}>
-                🔍 Citation Tracking
-            </h1>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
-                Track where your content appears across AI platforms — ChatGPT, Gemini, Perplexity
-            </p>
-
-            {/* Input Section */}
-            <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1.5rem' }}>Track Your Domain</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                    <div>
-                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                            Domain *
-                        </label>
-                        <input
-                            type="text"
-                            value={domain}
-                            onChange={(e) => setDomain(e.target.value)}
-                            placeholder="example.com"
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem 1rem',
-                                background: 'var(--bg-primary)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: 'var(--radius-md)',
-                                color: 'white',
-                                fontSize: '0.95rem',
-                                outline: 'none'
-                            }}
-                        />
+        <div className="animate-fade-in" style={{ paddingBottom: '4rem' }}>
+            {/* Header */}
+            
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: '0', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <Sparkles size={24} color="var(--accent-primary)" />
+                        <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+                            GEO Perception Layer
+                        </span>
                     </div>
-                    <div>
-                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                            Brand Name (optional)
-                        </label>
-                        <input
-                            type="text"
-                            value={brandName}
-                            onChange={(e) => setBrandName(e.target.value)}
-                            placeholder="Your Brand"
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem 1rem',
-                                background: 'var(--bg-primary)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: 'var(--radius-md)',
-                                color: 'white',
-                                fontSize: '0.95rem',
-                                outline: 'none'
-                            }}
-                        />
-                    </div>
+                    <h1 style={{ fontSize: '2.5rem', fontWeight: '900', letterSpacing: '-0.04em', margin: 0 }}>
+                        Citation Tracking
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginTop: '0.4rem', whiteSpace: 'nowrap' }}>
+                        Scan AI knowledge bases to track citation frequency and authority mentions across major LLMs.
+                    </p>
                 </div>
+            </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <div>
-                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                            Niche / Industry
-                        </label>
-                        <select
-                            value={niche}
-                            onChange={(e) => setNiche(e.target.value)}
+            {/* Segmented Niche Selector - Matches Visibility Analysis Style */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
+                <div style={{ 
+                    display: 'inline-flex', 
+                    background: 'rgba(255,255,255,0.03)', 
+                    padding: '4px', 
+                    borderRadius: '12px', 
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    gap: '4px',
+                    overflowX: 'auto',
+                    maxWidth: '100%',
+                    scrollbarWidth: 'none'
+                }}>
+                    {Object.entries(nicheConfigs).map(([id, config]) => (
+                        <button
+                            key={id}
+                            onClick={() => setNiche(id)}
                             style={{
-                                width: '100%',
-                                padding: '0.75rem 1rem',
-                                background: 'var(--bg-primary)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: 'var(--radius-md)',
-                                color: 'white',
-                                fontSize: '0.95rem',
-                                outline: 'none'
+                                padding: '0.75rem 1.25rem',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: niche === id ? 'var(--accent-primary)' : 'transparent',
+                                color: niche === id ? 'white' : 'var(--text-secondary)',
+                                fontWeight: '600',
+                                fontSize: '0.85rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.6rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                whiteSpace: 'nowrap'
                             }}
                         >
-                            <option value="technology">Technology</option>
-                            <option value="ecommerce">E-Commerce</option>
-                            <option value="education">Education</option>
-                            <option value="health">Health & Wellness</option>
-                            <option value="finance">Finance</option>
-                            <option value="marketing">Marketing</option>
-                            <option value="saas">SaaS</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block' }}>
-                            Custom Prompts (one per line, optional)
-                        </label>
-                        <textarea
-                            value={customPrompts}
-                            onChange={(e) => setCustomPrompts(e.target.value)}
-                            placeholder="What are the best tools for...&#10;Compare top platforms for..."
-                            rows={2}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem 1rem',
-                                background: 'var(--bg-primary)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: 'var(--radius-md)',
-                                color: 'white',
-                                fontSize: '0.95rem',
-                                outline: 'none',
-                                resize: 'vertical'
-                            }}
-                        />
-                    </div>
-                </div>
-
-                <button
-                    onClick={handleTrack}
-                    disabled={loading || !domain.trim()}
-                    className="btn btn-primary"
-                    style={{ padding: '0.85rem 2rem', fontSize: '1rem' }}
-                >
-                    {loading ? (
-                        <><RefreshCw size={18} className="spin" style={{ marginRight: '0.5rem' }} /> Tracking... (this takes ~1 min)</>
-                    ) : (
-                        <><Search size={18} style={{ marginRight: '0.5rem' }} /> Track Citations</>
-                    )}
-                </button>
-
-                {error && (
-                    <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 'var(--radius-md)', color: '#ef4444' }}>
-                        {error}
-                    </div>
-                )}
-            </div>
-
-            {/* Results */}
-            {results && (
-                <div className="animate-fade-in">
-                    {/* Summary Cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                        <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>CITATION RATE</div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: getCitationColor(results.summary?.overall_citation_rate || 0) }}>
-                                {results.summary?.overall_citation_rate || 0}%
-                            </div>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>across all platforms</div>
-                        </div>
-                        <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>TOTAL CITATIONS</div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: 'var(--accent-primary)' }}>
-                                {results.summary?.total_citations || 0}
-                            </div>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>mentions found</div>
-                        </div>
-                        <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>PLATFORMS CHECKED</div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: '700' }}>
-                                {results.summary?.platforms_checked || 0}
-                            </div>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>AI platforms</div>
-                        </div>
-                        <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>PROMPTS TESTED</div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: '700' }}>
-                                {results.summary?.prompts_tested || 0}
-                            </div>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>queries tested</div>
-                        </div>
-                    </div>
-
-                    {/* Platform Results */}
-                    {results.platforms && Object.entries(results.platforms).map(([key, platform]) => (
-                        <div key={key} className="glass-card" style={{ padding: '1.5rem', marginBottom: '1rem' }}>
-                            <div
-                                onClick={() => setExpandedPlatform(expandedPlatform === key ? null : key)}
-                                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <span style={{ fontSize: '1.5rem' }}>
-                                        {key === 'perplexity' ? '🔍' : key === 'gemini' ? '✨' : '🤖'}
-                                    </span>
-                                    <div>
-                                        <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>{platform.name}</h3>
-                                        <span style={{ fontSize: '0.85rem', color: platform.status === 'error' ? '#ef4444' : 'var(--text-secondary)' }}>
-                                            {platform.status === 'error' ? `Error: ${platform.error}` : `${platform.total_mentions || 0} citations in ${platform.total_prompts || 0} prompts`}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <div style={{
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: '2rem',
-                                        background: getCitationColor(platform.citation_rate || 0) + '20',
-                                        color: getCitationColor(platform.citation_rate || 0),
-                                        fontWeight: '700',
-                                        fontSize: '0.95rem'
-                                    }}>
-                                        {platform.citation_rate || 0}%
-                                    </div>
-                                    {expandedPlatform === key ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                </div>
-                            </div>
-
-                            {expandedPlatform === key && platform.citations && (
-                                <div style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-                                    {platform.citations.map((citation, idx) => (
-                                        <div key={idx} style={{
-                                            padding: '1rem',
-                                            background: 'var(--bg-primary)',
-                                            borderRadius: 'var(--radius-md)',
-                                            marginBottom: '0.75rem',
-                                            borderLeft: `3px solid ${citation.cited ? '#10b981' : '#6b7280'}`
-                                        }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                                                <div style={{ fontWeight: '600', fontSize: '0.95rem', flex: 1 }}>
-                                                    "{citation.prompt}"
-                                                </div>
-                                                <span style={{
-                                                    padding: '0.25rem 0.75rem',
-                                                    borderRadius: '1rem',
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: '600',
-                                                    background: citation.cited ? 'rgba(16,185,129,0.15)' : 'rgba(107,114,128,0.15)',
-                                                    color: citation.cited ? '#10b981' : '#9ca3af',
-                                                    whiteSpace: 'nowrap',
-                                                    marginLeft: '0.5rem'
-                                                }}>
-                                                    {citation.cited ? `✓ Cited ${getSentimentEmoji(citation.sentiment)}` : '✗ Not Cited'}
-                                                </span>
-                                            </div>
-                                            {citation.context && citation.context.length > 0 && (
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                                                    <strong>Context:</strong> "...{citation.context[0]}..."
-                                                </div>
-                                            )}
-                                            {citation.response_snippet && (
-                                                <details style={{ marginTop: '0.5rem' }}>
-                                                    <summary style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', cursor: 'pointer' }}>
-                                                        View AI Response
-                                                    </summary>
-                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', padding: '0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', whiteSpace: 'pre-wrap' }}>
-                                                        {citation.response_snippet}
-                                                    </div>
-                                                </details>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                            {config.icon} {config.label}
+                        </button>
                     ))}
                 </div>
-            )}
+            </div>
 
-            {/* History */}
-            <div className="glass-card" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Clock size={20} /> Tracking History
-                </h3>
-                {historyLoading ? (
-                    <div style={{ color: 'var(--text-secondary)' }}>Loading...</div>
-                ) : history.length === 0 ? (
-                    <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>
-                        No tracking history yet. Run your first citation check above!
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+                {/* Left Column - Inputs */}
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div className="depth-card" style={{ padding: '2rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', background: 'var(--accent-gradient)' }} />
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+                                        {currentConfig.primaryIcon}
+                                        <span style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>TRACKING DOMAIN</span>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={domain}
+                                        onChange={(e) => setDomain(e.target.value)}
+                                        placeholder={currentConfig.domainPlaceholder}
+                                        style={{ width: '100%', padding: '0.85rem 1.1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white', fontSize: '1rem', outline: 'none' }}
+                                        className="focus-ring"
+                                    />
+                                </div>
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+                                        <Tag size={16} color="var(--accent-secondary)" />
+                                        <span style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>BRAND IDENTITY</span>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={brandName}
+                                        onChange={(e) => setBrandName(e.target.value)}
+                                        placeholder={currentConfig.brandPlaceholder}
+                                        style={{ width: '100%', padding: '0.85rem 1.1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white', fontSize: '1rem', outline: 'none' }}
+                                        className="focus-ring"
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+                                    <FileText size={16} color="var(--accent-primary)" />
+                                    <span style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>CUSTOM PROMPTS (OPTIONAL)</span>
+                                </div>
+                                <textarea
+                                    value={customPrompts}
+                                    onChange={(e) => setCustomPrompts(e.target.value)}
+                                    placeholder={currentConfig.promptPlaceholder}
+                                    rows={3}
+                                    style={{ width: '100%', padding: '0.85rem 1.1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white', fontSize: '1rem', outline: 'none', resize: 'none' }}
+                                    className="focus-ring"
+                                />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-tertiary)', fontSize: '0.75rem', marginTop: '0.75rem' }}>
+                                    <Info size={14} />
+                                    <span>Specialized for {currentConfig.label} category analysis.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleTrack}
+                        disabled={loading || !domain.trim()}
+                        className="btn btn-primary"
+                        style={{ width: '100%', padding: '1.25rem', background: 'var(--accent-gradient)', border: 'none', fontSize: '1.1rem', fontWeight: '700', gap: '0.75rem', boxShadow: '0 4px 20px rgba(59, 130, 246, 0.2)', marginTop: 'auto' }}
+                    >
+                        {loading ? (
+                            <><RefreshCw size={22} className="spin" /> Initializing Scan...</>
+                        ) : (
+                            <><Search size={22} /> Execute {currentConfig.label} Citation Scan</>
+                        )}
+                    </button>
+
+                    {error && (
+                        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', color: '#ef4444', fontSize: '0.9rem' }}>
+                            <Info size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} /> {error}
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Column - Sidebar */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div className="depth-card" style={{ padding: '0', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>SCAN HISTORY</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: '700' }}>{history.length}</span>
+                        </div>
+                        {historyLoading ? (
+                            <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.85rem', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading history...</div>
+                        ) : history.length === 0 ? (
+                            <div style={{ padding: '4.5rem 2rem', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.85rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <Clock size={24} style={{ opacity: 0.2, marginBottom: '1rem', margin: '0 auto' }} />
+                                <p>No history found.</p>
+                            </div>
+                        ) : (
+                            <div style={{ flex: 1, overflowY: 'auto', maxHeight: '550px' }}>
+                                {history.map(item => (
+                                    <div key={item.id} onClick={() => loadHistoricalResult(item.id)} style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s ease', borderLeft: '2px solid var(--accent-primary)' }} className="history-item-hover">
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.4rem', color: 'var(--text-primary)', wordBreak: 'break-all', lineHeight: '1.4' }}>{item.domain}</div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <span style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.niche}</span>
+                                                    <span style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)' }}>•</span>
+                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{new Date(item.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                                <div style={{ fontSize: '0.7rem', fontWeight: '700', padding: '0.15rem 0.5rem', borderRadius: '4px', background: getCitationColor(item.citation_rate) + '15', color: getCitationColor(item.citation_rate), border: `1px solid ${getCitationColor(item.citation_rate)}20` }}>{item.citation_rate}%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Results Area - Full Width Following Top Grid */}
+            <div style={{ marginTop: '1.5rem' }}>
+                {results ? (
+                    <div className="animate-fade-in">
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+                            {[
+                                { label: 'CITATION RATE', value: `${results.summary?.overall_citation_rate || 0}%`, sub: 'Across platforms', color: getCitationColor(results.summary?.overall_citation_rate || 0) },
+                                { label: 'TOTAL MENTIONS', value: results.summary?.total_citations || 0, sub: 'Direct citations', color: 'var(--accent-primary)' },
+                                { label: 'PROMPTS TESTED', value: results.summary?.prompts_tested || 0, sub: 'Strategic queries', color: 'white' }
+                            ].map((stat, i) => (
+                                <div key={i} className="glass-card" style={{ padding: '1.5rem', textAlign: 'left', position: 'relative', overflow: 'hidden' }}>
+                                    <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-tertiary)', letterSpacing: '0.1em', marginBottom: '1rem' }}>{stat.label}</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: '900', color: stat.color, marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>{stat.value}</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>{stat.sub}</div>
+                                    <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', opacity: 0.03 }}>
+                                        <TrendingUp size={80} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {results.platforms && Object.entries(results.platforms).map(([key, platform]) => (
+                                <div key={key} className="depth-card" style={{ padding: '0', overflow: 'hidden', border: platform.status === 'error' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                    <div onClick={() => setExpandedPlatform(expandedPlatform === key ? null : key)} style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: expandedPlatform === key ? 'rgba(255, 255, 255, 0.02)' : 'transparent', transition: 'background 0.2s' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>{key === 'perplexity' ? '🔍' : key === 'gemini' ? '✨' : '🤖'}</div>
+                                            <div>
+                                                <h3 style={{ fontSize: '1.05rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>{platform.name}</h3>
+                                                <div style={{ fontSize: '0.8rem', color: platform.status === 'error' ? 'var(--error)' : 'var(--text-secondary)', marginTop: '0.2rem' }}>{platform.status === 'error' ? platform.error : `${platform.total_mentions || 0} citations detected`}</div>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                            <div style={{ padding: '0.3rem 0.8rem', borderRadius: '6px', background: getCitationColor(platform.citation_rate || 0) + '15', color: getCitationColor(platform.citation_rate || 0), fontWeight: '800', fontSize: '0.85rem', border: `1px solid ${getCitationColor(platform.citation_rate || 0)}20` }}>{platform.citation_rate || 0}%</div>
+                                            {expandedPlatform === key ? <ChevronUp size={18} color="var(--text-tertiary)" /> : <ChevronDown size={18} color="var(--text-tertiary)" />}
+                                        </div>
+                                    </div>
+                                    <AnimatePresence>
+                                        {expandedPlatform === key && platform.citations && (
+                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+                                                <div style={{ padding: '0 1.5rem 1.5rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                                    {platform.citations.map((citation, idx) => (
+                                                        <div key={idx} style={{ padding: '1.25rem', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', borderLeft: `4px solid ${citation.cited ? 'var(--success)' : 'rgba(255,255,255,0.1)'}`, position: 'relative', overflow: 'hidden' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                                                <div style={{ fontWeight: '700', fontSize: '0.95rem', flex: 1, color: 'var(--text-primary)', lineHeight: '1.6' }}>
+                                                                    <span style={{ color: 'var(--accent-primary)', marginRight: '0.25rem' }}>Q:</span> "{citation.prompt}"
+                                                                </div>
+                                                                <div style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', background: citation.cited ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)', color: citation.cited ? 'var(--success)' : 'var(--text-tertiary)', marginLeft: '1.5rem', whiteSpace: 'nowrap', border: citation.cited ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.1)' }}>
+                                                                    {citation.cited ? `Found Reference ${getSentimentEmoji(citation.sentiment)}` : 'Reference Missing'}
+                                                                </div>
+                                                            </div>
+                                                            {citation.context && citation.context.length > 0 && (
+                                                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.75rem', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', fontStyle: 'italic', border: '1px solid rgba(255,255,255,0.05)', lineHeight: '1.6' }}>
+                                                                    <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>AI CITATION CONTEXT:</div>
+                                                                    "...{citation.context[0]}..."
+                                                                </div>
+                                                            )}
+                                                            <div style={{ position: 'absolute', right: 0, bottom: 0, opacity: 0.05, padding: '0.5rem' }}>
+                                                                {citation.cited ? <Sparkles size={40} /> : <Target size={40} />}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                                    <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600' }}>DOMAIN</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600' }}>NICHE</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600' }}>CITATIONS</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600' }}>RATE</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600' }}>DATE</th>
-                                    <th style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600' }}>ACTION</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {history.map((item) => (
-                                    <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <td style={{ padding: '0.75rem', fontWeight: '500' }}>{item.domain}</td>
-                                        <td style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}>{item.niche}</td>
-                                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.total_citations}</td>
-                                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                                            <span style={{ color: getCitationColor(item.citation_rate), fontWeight: '600' }}>
-                                                {item.citation_rate}%
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '0.75rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                            {new Date(item.created_at).toLocaleDateString()}
-                                        </td>
-                                        <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                                            <button
-                                                onClick={() => loadHistoricalResult(item.id)}
-                                                style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', fontSize: '0.85rem' }}
-                                            >
-                                                View
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="glass-card animate-fade-in" style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.01)', minHeight: '400px', marginBottom: '2rem' }}>
+                        <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(59, 130, 246, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                            <div style={{ transform: 'scale(1.2)' }}>{currentConfig.primaryIcon}</div>
+                        </div>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Ready for {currentConfig.label} Citation Scan</h3>
+                        <p style={{ color: 'var(--text-secondary)', maxWidth: '450px', margin: '0 auto', fontSize: '1.05rem', lineHeight: '1.6' }}>
+                            {currentConfig.description} Enter your details above to begin the intelligence audit.
+                        </p>
                     </div>
                 )}
             </div>
+
+            <style>{`
+                .history-item-hover:hover {
+                    background: rgba(255,255,255,0.03) !important;
+                    transform: translateX(4px);
+                }
+                .focus-ring:focus {
+                    border-color: var(--accent-primary) !important;
+                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+                }
+            `}</style>
         </div>
     )
 }

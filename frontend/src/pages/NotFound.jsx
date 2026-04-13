@@ -3,16 +3,20 @@ import { Home, ArrowLeft, Search, AlertTriangle } from 'lucide-react'
 
 function NotFound() {
     return (
-        <div style={{
+        <div className="aurora-container" style={{
             minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'linear-gradient(135deg, #0a0a12 0%, #1a1a2e 50%, #0f0f1a 100%)',
+            background: 'var(--bg-primary)',
             padding: '2rem',
             position: 'relative',
             overflow: 'hidden'
         }}>
+            {/* Animated Aurora Blobs */}
+            <div className="aurora-blob aurora-blob-1" style={{ opacity: 0.15 }}></div>
+            <div className="aurora-blob aurora-blob-2" style={{ opacity: 0.1 }}></div>
+            <div className="aurora-blob aurora-blob-3" style={{ opacity: 0.15 }}></div>
             {/* Background decoration */}
             <div style={{
                 position: 'absolute',

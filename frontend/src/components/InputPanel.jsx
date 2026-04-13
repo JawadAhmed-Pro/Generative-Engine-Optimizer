@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
+import { Link as LinkIcon, FileText, Zap } from 'lucide-react'
 
 function InputPanel({ onAnalysisStart, onAnalysisComplete, onError, disabled }) {
     const [activeTab, setActiveTab] = useState('url')
@@ -39,28 +40,30 @@ function InputPanel({ onAnalysisStart, onAnalysisComplete, onError, disabled }) 
 
     return (
         <div className="glass-card" style={{ marginBottom: '2rem' }}>
-            <h2 style={{ marginBottom: '1.5rem', fontFamily: 'Outfit, sans-serif' }}>
+            <h2 style={{ marginBottom: '1.5rem' }}>
                 Analyze Your Content
             </h2>
 
-            <div className="tabs">
+            <div className="tabs" style={{ display: 'flex', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '0.4rem', borderRadius: '12px' }}>
                 <button
                     className={`tab ${activeTab === 'url' ? 'active' : ''}`}
                     onClick={() => setActiveTab('url')}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem' }}
                 >
-                    🔗 URL
+                    <LinkIcon size={16} /> URL
                 </button>
                 <button
                     className={`tab ${activeTab === 'text' ? 'active' : ''}`}
                     onClick={() => setActiveTab('text')}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem' }}
                 >
-                    📝 Direct Text
+                    <FileText size={16} /> Direct Text
                 </button>
             </div>
 
             {activeTab === 'url' ? (
-                <div style={{ marginTop: '1.5rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                <div style={{ marginTop: '2rem' }}>
+                    <label style={{ display: 'block', marginBottom: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500' }}>
                         Enter URL to analyze
                     </label>
                     <input
@@ -73,8 +76,8 @@ function InputPanel({ onAnalysisStart, onAnalysisComplete, onError, disabled }) 
                     />
                 </div>
             ) : (
-                <div style={{ marginTop: '1.5rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                <div style={{ marginTop: '2rem' }}>
+                    <label style={{ display: 'block', marginBottom: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500' }}>
                         Paste your content
                     </label>
                     <textarea
@@ -91,12 +94,12 @@ function InputPanel({ onAnalysisStart, onAnalysisComplete, onError, disabled }) 
                 className="btn btn-primary"
                 onClick={handleAnalyze}
                 disabled={disabled}
-                style={{ marginTop: '1.5rem', width: '100%' }}
+                style={{ marginTop: '2rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem' }}
             >
-                {disabled ? 'Analyzing...' : '🚀 Analyze Content'}
+                {disabled ? 'Analyzing...' : <><Zap size={18} /> Analyze Content</>}
             </button>
 
-            <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+            <p style={{ marginTop: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center', opacity: 0.8 }}>
                 Analysis includes: AI Visibility • Citation Worthiness • Semantic Coverage • Readability
             </p>
         </div>
