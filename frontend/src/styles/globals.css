@@ -1,29 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
 :root {
-  /* Core Colors - Luxury Cyber Palette */
-  --bg-primary: #020408;
-  --bg-secondary: #060b19;
-  --bg-tertiary: #0a0e1c;
+  /* 1:1 Design Tokens - Cyber-Glass Palette */
+  --bg-primary: #070709;
+  --bg-secondary: #0D0D11;
+  --bg-tertiary: #141418;
 
-  /* Neon Accents */
-  --accent-primary: #00d2ff;
-  --accent-secondary: #7000ff;
-  --accent-tertiary: #00ffaa;
+  /* Accent Science */
+  --accent-primary: #42D4FF;   /* Precise Neon Blue */
+  --accent-secondary: #9333EA;  /* Precise Purple */
+  --accent-gold: #C5A059;       /* Branding Gold */
+  --accent-success: #4ADE80;    /* Status Green */
 
-  --accent-gradient: linear-gradient(135deg, #00d2ff 0%, #7000ff 100%);
-  --accent-glow: 0 0 30px rgba(0, 210, 255, 0.35);
-  --border-glow: linear-gradient(135deg, rgba(0, 210, 255, 0.4), rgba(112, 0, 255, 0.4));
-  --card-glow-color: rgba(0, 210, 255, 0.25);
+  --accent-gradient: linear-gradient(135deg, #42D4FF 0%, #9333EA 100%);
+  --accent-glow: 0 0 30px rgba(66, 212, 255, 0.25);
+  --border-glow: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+  
+  /* Typography Tokens */
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-tertiary: rgba(255, 255, 255, 0.4);
 
-  /* Text - High-end Contrast */
-  --text-primary: #ffffff;
-  --text-secondary: #94a3b8;
-  --text-tertiary: #64748b;
-
-  /* Spacing & Radius */
-  --radius-lg: 1.5rem;
-  --spacing-xl: 4rem;
+  /* Radius & Spacing */
+  --radius-lg: 14px;
+  --spacing-xl: 3.5rem;
 }
 
 * {

@@ -75,60 +75,50 @@ function DashboardHome() {
             </div>
 
             <div className="section-group" style={{ paddingTop: 0 }}>
-                {/* Hero / Welcome Card */}
+                {/* 1:1 Hero Card */}
                 <div className="depth-card" style={{
-                    background: 'rgba(15, 23, 42, 0.4)',
-                    backdropFilter: 'blur(30px)',
-                    padding: '3rem 2.5rem',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: '24px',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem'
+                    background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.7), rgba(10, 10, 15, 0.4))',
+                    backdropFilter: 'blur(40px)',
+                    padding: '3.5rem 3rem',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: '16px',
+                    position: 'relative'
                 }}>
-                    {/* Abstract Blue/Purple Glow Background */}
-                    <div style={{ position: 'absolute', top: '-50%', right: '-10%', width: '60%', height: '200%', background: 'radial-gradient(circle, rgba(0, 210, 255, 0.1) 0%, rgba(112, 0, 255, 0.05) 50%, transparent 100%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
-                    
-                    <h2 style={{ fontSize: '2.25rem', fontWeight: '900', margin: 0, letterSpacing: '-0.03em' }}>
-                        Welcome back, <span style={{ background: 'linear-gradient(to right, #00d2ff, #7000ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Premium Member.</span>
+                    <h2 style={{ fontSize: '2.5rem', fontWeight: '900', margin: 0, letterSpacing: '-0.03em' }}>
+                        Welcome back, <span style={{ color: 'var(--accent-gold)' }}>Premium Member.</span>
                     </h2>
-                    <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.6)', maxWidth: '600px', lineHeight: '1.6', margin: 0 }}>
+                    <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', maxWidth: '600px', margin: '0.75rem 0 2rem 0', fontWeight: '500' }}>
                         Your premium SEO and GEO optimization platform. Achieve dominance with advanced AI.
                     </p>
 
-                    <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1.5rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
                         <Link to="/app/optimization" className="btn" style={{ 
-                            background: 'rgba(59, 130, 246, 0.2)', 
-                            border: '1px solid rgba(59, 130, 246, 0.3)',
-                            color: '#60a5fa', 
-                            padding: '1rem 2rem',
-                            borderRadius: '12px',
+                            background: 'rgba(66, 212, 255, 0.15)', 
+                            border: '1px solid rgba(66, 212, 255, 0.3)',
+                            color: 'var(--accent-primary)', 
+                            padding: '0.85rem 2rem',
+                            borderRadius: '8px',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.75rem',
                             fontWeight: '700',
-                            transition: 'all 0.3s ease',
-                            boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)'
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(59, 130, 246, 0.2)'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.1)'; }}
-                        >
-                            <Plus size={20} /> New Optimization
+                            boxShadow: 'inset 0 0 15px rgba(66, 212, 255, 0.1)'
+                        }}>
+                            <Plus size={18} /> New Optimization
                         </Link>
                         <Link to="/app/visibility" className="btn" style={{ 
                             background: 'rgba(255, 255, 255, 0.03)', 
-                            border: '1px solid rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.08)',
                             color: 'white', 
-                            padding: '1rem 2rem',
-                            borderRadius: '12px',
+                            padding: '0.85rem 2rem',
+                            borderRadius: '8px',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.75rem',
-                            fontWeight: '700'
+                            fontWeight: '700',
+                            backdropFilter: 'blur(10px)'
                         }}>
-                            <Search size={20} /> New Visibility Analysis
+                            <Search size={18} /> New Visibility Analysis
                         </Link>
                     </div>
                 </div>
@@ -212,41 +202,57 @@ function DashboardHome() {
                 </div>
             </section>
 
-            {/* Quick Actions Section */}
+            {/* 1:1 Recommended Actions Section */}
             <section className="section-group">
-                <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-                    <Plus size={20} color="#00d2ff" />
-                    <h2 style={{ fontSize: '1.1rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255,255,255,0.7)' }}>Recommended Actions</h2>
+                <div className="section-header" style={{ marginBottom: '1.5rem', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <Plus size={18} color="var(--accent-primary)" />
+                        <h2 style={{ fontSize: '1.1rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended Actions</h2>
+                    </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
                     
-                    <Link to="/app/visibility" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.5rem', alignItems: 'center', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '18px', background: 'rgba(15,23,42,0.3)', transition: 'all 0.3s ease' }}>
-                        <div style={{ width: '60px', height: '60px', background: 'rgba(0, 210, 255, 0.1)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px', boxShadow: '0 0 20px rgba(0, 210, 255, 0.1)', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
-                            <img src="https://img.icons8.com/isometric/50/00D2FF/shield.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Authority" />
+                    {/* Action 1: Analyze Authority */}
+                    <Link to="/app/visibility" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.25rem', alignItems: 'center', padding: '1.75rem', background: 'rgba(20, 20, 25, 0.5)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                        <div style={{ width: '56px', height: '56px', background: 'linear-gradient(135deg, rgba(66, 212, 255, 0.1), rgba(147, 51, 234, 0.1))', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img src="https://img.icons8.com/isometric/50/42D4FF/shield.png" style={{ width: '32px', height: '32px' }} alt="Shield" />
                         </div>
                         <div>
-                            <div style={{ fontWeight: '800', fontSize: '1.2rem', marginBottom: '0.25rem', color: 'white' }}>Analyze Authority</div>
-                            <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>Check AI engines trust your current domain.</div>
+                            <div style={{ fontWeight: '900', fontSize: '1.15rem', color: 'white', marginBottom: '0.2rem' }}>Analyze Authority</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Check AI engines trust your current domain.</div>
                         </div>
                     </Link>
 
-                    <Link to="/app/optimization" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.5rem', alignItems: 'center', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '18px', background: 'rgba(15,23,42,0.3)', transition: 'all 0.3s ease' }}>
-                        <div style={{ width: '60px', height: '60px', background: 'rgba(112, 0, 255, 0.1)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px', boxShadow: '0 0 20px rgba(112, 0, 255, 0.1)', border: '1px solid rgba(112, 0, 255, 0.15)' }}>
-                            <img src="https://img.icons8.com/isometric/50/7000FF/rocket.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Optimize" />
+                    {/* Action 2: Optimize Content */}
+                    <Link to="/app/optimization" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.25rem', alignItems: 'center', padding: '1.75rem', background: 'rgba(20, 20, 25, 0.5)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                        <div style={{ width: '56px', height: '56px', background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(66, 212, 255, 0.1))', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img src="https://img.icons8.com/isometric/50/9333EA/edit.png" style={{ width: '32px', height: '32px' }} alt="Pencil" />
                         </div>
                         <div>
-                            <div style={{ fontWeight: '800', fontSize: '1.2rem', marginBottom: '0.25rem', color: 'white' }}>Optimize Content</div>
-                            <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>Rewrite articles for maximum citation probability.</div>
+                            <div style={{ fontWeight: '900', fontSize: '1.15rem', color: 'white', marginBottom: '0.2rem' }}>Optimize Content</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Rewrite articles for maximum citation probability.</div>
                         </div>
                     </Link>
 
-                    <Link to="/app/ai-simulator" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.5rem', alignItems: 'center', padding: '1.5rem', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '18px', background: 'rgba(15,23,42,0.3)', transition: 'all 0.3s ease' }}>
-                        <div style={{ width: '60px', height: '60px', background: 'rgba(0, 210, 255, 0.1)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px', boxShadow: '0 0 20px rgba(0, 210, 255, 0.1)', border: '1px solid rgba(0, 210, 255, 0.15)' }}>
-                            <img src="https://img.icons8.com/isometric/50/00D2FF/bot.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Simulator" />
+                    {/* Action 3: AI Simulator */}
+                    <Link to="/app/ai-simulator" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.25rem', alignItems: 'center', padding: '1.75rem', background: 'rgba(20, 20, 25, 0.5)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                        <div style={{ width: '56px', height: '56px', background: 'rgba(66, 212, 255, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img src="https://img.icons8.com/isometric/50/42D4FF/bot.png" style={{ width: '34px', height: '34px' }} alt="Bot" />
                         </div>
                         <div>
-                            <div style={{ fontWeight: '800', fontSize: '1.2rem', marginBottom: '0.25rem', color: 'white' }}>AI Simulator</div>
-                            <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', lineHeight: '1.4' }}>Simulate Perplexity or Gemini search results.</div>
+                            <div style={{ fontWeight: '900', fontSize: '1.15rem', color: 'white', marginBottom: '0.2rem' }}>AI Simulator</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Simulate Perplexity or Gemini search results.</div>
+                        </div>
+                    </Link>
+
+                    {/* Action 4: Citation Tracking */}
+                    <Link to="/app/citations" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.25rem', alignItems: 'center', padding: '1.75rem', background: 'rgba(20, 20, 25, 0.5)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                        <div style={{ width: '56px', height: '56px', background: 'rgba(147, 51, 234, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img src="https://img.icons8.com/isometric/50/9333EA/workflow.png" style={{ width: '32px', height: '32px' }} alt="Network" />
+                        </div>
+                        <div>
+                            <div style={{ fontWeight: '900', fontSize: '1.15rem', color: 'white', marginBottom: '0.2rem' }}>Citation Tracking</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Check simulations on network networks.</div>
                         </div>
                     </Link>
                 </div>
