@@ -75,117 +75,125 @@ function DashboardHome() {
             </div>
 
             <div className="section-group" style={{ paddingTop: 0 }}>
-                {/* 1:1 Hero Card */}
-                <div className="depth-card" style={{
-                    background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.7), rgba(10, 10, 15, 0.4))',
-                    backdropFilter: 'blur(40px)',
-                    padding: '3.5rem 3rem',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                    borderRadius: '16px',
-                    position: 'relative'
+                <div className="glass-card" style={{
+                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
+                    padding: '2.5rem 2rem',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                    position: 'relative',
+                    overflow: 'hidden'
                 }}>
-                    <h2 style={{ fontSize: '2.5rem', fontWeight: '900', margin: 0, letterSpacing: '-0.03em' }}>
-                        Welcome back, <span style={{ color: 'var(--accent-gold)' }}>Premium Member.</span>
-                    </h2>
-                    <p style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', maxWidth: '600px', margin: '0.75rem 0 2rem 0', fontWeight: '500' }}>
-                        Your premium SEO and GEO optimization platform. Achieve dominance with advanced AI.
-                    </p>
+                    {/* Interior Glow */}
+                    <div style={{
+                        position: 'absolute',
+                        top: '-20%',
+                        right: '-10%',
+                        width: '40%',
+                        height: '140%',
+                        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+                        filter: 'blur(40px)',
+                        pointerEvents: 'none'
+                    }}></div>
 
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <Link to="/app/optimization" className="btn" style={{ 
-                            background: 'rgba(66, 212, 255, 0.15)', 
-                            border: '1px solid rgba(66, 212, 255, 0.3)',
-                            color: 'var(--accent-primary)', 
-                            padding: '0.85rem 2rem',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            fontWeight: '700',
-                            boxShadow: 'inset 0 0 15px rgba(66, 212, 255, 0.1)'
-                        }}>
-                            <Plus size={18} /> New Optimization
-                        </Link>
-                        <Link to="/app/visibility" className="btn" style={{ 
-                            background: 'rgba(255, 255, 255, 0.03)', 
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            color: 'white', 
-                            padding: '0.85rem 2rem',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            fontWeight: '700',
-                            backdropFilter: 'blur(10px)'
-                        }}>
-                            <Search size={18} /> New Visibility Analysis
-                        </Link>
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                        <h2 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.75rem', letterSpacing: '-0.03em' }}>
+                            Welcome back, <span className="text-gradient">{user?.name || 'Creator'}</span>.
+                        </h2>
+                        <p style={{ color: 'var(--text-secondary)', maxWidth: '650px', marginBottom: '1.5rem', fontSize: '1.1rem', lineHeight: '1.6' }}>
+                            Your SEO is now AI-Driven. Track your authority, optimize for citation probability, and outpace the competition on the next generation of search engines.
+                        </p>
+                        <div style={{ display: 'flex', gap: '1.25rem' }}>
+                            <Link to="/app/optimization" className="btn btn-primary" style={{ padding: '0.875rem 2rem' }}>
+                                <Plus size={20} /> New Optimization
+                            </Link>
+                            <Link to="/app/visibility" className="btn btn-outline" style={{ padding: '0.875rem 2rem' }}>
+                                <Search size={20} /> New Visibility Analysis
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Performance Overview Section */}
             <section className="section-group">
-                <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-                    <BarChart2 size={24} color="#00d2ff" />
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255,255,255,0.7)' }}>Performance Overview</h2>
+                <div className="section-header">
+                    <BarChart2 size={24} color="var(--accent-primary)" />
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>Performance Overview</h2>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                     {loading ? (
                         <>
-                            <div className="skeleton skeleton-card" style={{ height: '180px' }}></div>
-                            <div className="skeleton skeleton-card" style={{ height: '180px' }}></div>
-                            <div className="skeleton skeleton-card" style={{ height: '180px' }}></div>
+                            <div className="skeleton skeleton-card" style={{ height: '160px' }}></div>
+                            <div className="skeleton skeleton-card" style={{ height: '160px' }}></div>
+                            <div className="skeleton skeleton-card" style={{ height: '160px' }}></div>
+                            <div className="skeleton skeleton-card" style={{ height: '160px' }}></div>
                         </>
                     ) : (
                         <>
-                            {/* Stat Card 1 - GEO Score with Sparkline */}
-                            <div className="depth-card" style={{ padding: '2rem', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', position: 'relative' }}>
-                                <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    AVG. GEO SCORE <Info size={14} />
+                            {/* Stat Card 1 */}
+                            <div className="depth-card">
+                                <div
+                                    className="tooltip"
+                                    data-tooltip="The statistical probability that ChatGPT, Gemini, or Perplexity will cite your link."
+                                    style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', cursor: 'help', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                >
+                                    AVG. GEO SCORE <Info size={14} color="var(--accent-primary)" />
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                    <div>
-                                        <div style={{ fontSize: '3rem', fontWeight: '900', letterSpacing: '-0.02em' }}>{stats.avg_score.toFixed(1)}</div>
-                                        <div style={{ color: '#10b981', fontWeight: '800', fontSize: '0.9rem', marginTop: '0.5rem' }}>{getScoreLabel(stats.avg_score)}</div>
-                                    </div>
-                                    {/* Mock Sparkline Graph */}
-                                    <div style={{ width: '100px', height: '40px', background: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'40\' viewBox=\'0 0 100 40\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 30L20 25L40 32L60 15L80 20L100 5\' stroke=\'%2300D2FF\' stroke-width=\'2\'/%3E%3C/svg%3E") no-repeat center', opacity: 0.6 }} />
+                                <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+                                    {stats.avg_score.toFixed(1)}
+                                </div>
+                                <div style={{
+                                    fontSize: '0.8rem',
+                                    fontWeight: '600',
+                                    color: getScoreColor(stats.avg_score),
+                                    background: `${getScoreColor(stats.avg_score)}15`,
+                                    padding: '0.25rem 0.75rem',
+                                    borderRadius: '100px',
+                                    display: 'inline-block'
+                                }}>
+                                    {getScoreLabel(stats.avg_score)}
                                 </div>
                             </div>
 
-                            {/* Stat Card 2 - Content Optimized with Circle Progress */}
-                            <div className="depth-card" style={{ padding: '2rem', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', background: 'rgba(255,255,255,0.02)' }}>
-                                <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1.5rem' }}>
+                            {/* Stat Card 2 */}
+                            <div className="depth-card">
+                                <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
                                     CONTENT OPTIMIZED
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div>
-                                        <div style={{ fontSize: '3rem', fontWeight: '900' }}>{stats.content_optimized}</div>
-                                        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>High-visibility articles</div>
-                                    </div>
-                                    <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '6px solid rgba(255,255,255,0.05)', borderTopColor: '#00d2ff', transform: 'rotate(45deg)' }} />
+                                <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>
+                                    {stats.content_optimized}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                    High-visibility articles
                                 </div>
                             </div>
 
-                            {/* Stat Card 3 - URLs Analyzed with Mini Bars */}
-                            <div className="depth-card" style={{ padding: '2rem', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '20px', background: 'rgba(255,255,255,0.02)' }}>
-                                <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1.5rem' }}>
+                            {/* Stat Card 3 */}
+                            <div className="depth-card">
+                                <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
                                     URLS ANALYZED
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                    <div>
-                                        <div style={{ fontSize: '3rem', fontWeight: '900' }}>{stats.urls_analyzed}+</div>
-                                        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>Active Assessments</div>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '4px', height: '40px', alignItems: 'flex-end' }}>
-                                        {[20, 40, 30, 60, 45, 70, 55].map((h, i) => (
-                                            <div key={i} style={{ width: '6px', height: `${h}%`, background: h > 50 ? '#00d2ff' : 'rgba(255,255,255,0.2)', borderRadius: '10px' }} />
-                                        ))}
-                                    </div>
+                                <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>
+                                    {stats.urls_analyzed}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                    GEO assessments
                                 </div>
                             </div>
+
+                            {/* Stat Card 4 */}
+                            <Link to="/app/projects" style={{ textDecoration: 'none' }} className="depth-card">
+                                <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                                    ACTIVE PROJECTS
+                                </div>
+                                <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+                                    {stats.total_projects}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', fontWeight: '600' }}>
+                                    Manage workspaces →
+                                </div>
+                            </Link>
                         </>
                     )}
                 </div>
@@ -202,57 +210,67 @@ function DashboardHome() {
                 </div>
             </section>
 
-            {/* 1:1 Recommended Actions Section */}
+            {/* Quick Actions Section */}
             <section className="section-group">
-                <div className="section-header" style={{ marginBottom: '1.5rem', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <Plus size={18} color="var(--accent-primary)" />
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended Actions</h2>
-                    </div>
+                <div className="section-header">
+                    <Plus size={24} color="var(--accent-primary)" />
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>Recommended Actions</h2>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
-                    
-                    {/* Action 1: Analyze Authority */}
-                    <Link to="/app/visibility" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.25rem', alignItems: 'center', padding: '1.75rem', background: 'rgba(20, 20, 25, 0.5)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                        <div style={{ width: '56px', height: '56px', background: 'linear-gradient(135deg, rgba(66, 212, 255, 0.1), rgba(147, 51, 234, 0.1))', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src="https://img.icons8.com/isometric/50/42D4FF/shield.png" style={{ width: '32px', height: '32px' }} alt="Shield" />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                    <Link to="/app/visibility" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                        <div style={{
+                            width: '64px',
+                            height: '64px',
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            borderRadius: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--accent-primary)'
+                        }}>
+                            <Search size={32} />
                         </div>
                         <div>
-                            <div style={{ fontWeight: '900', fontSize: '1.15rem', color: 'white', marginBottom: '0.2rem' }}>Analyze Authority</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Check AI engines trust your current domain.</div>
+                            <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.25rem', color: 'var(--text-primary)' }}>Analyze Authority</div>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Check if AI engines trust your current domain.</div>
                         </div>
                     </Link>
 
-                    {/* Action 2: Optimize Content */}
-                    <Link to="/app/optimization" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.25rem', alignItems: 'center', padding: '1.75rem', background: 'rgba(20, 20, 25, 0.5)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                        <div style={{ width: '56px', height: '56px', background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(66, 212, 255, 0.1))', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src="https://img.icons8.com/isometric/50/9333EA/edit.png" style={{ width: '32px', height: '32px' }} alt="Pencil" />
+                    <Link to="/app/optimization" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                        <div style={{
+                            width: '64px',
+                            height: '64px',
+                            background: 'rgba(139, 92, 246, 0.1)',
+                            borderRadius: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--accent-secondary)'
+                        }}>
+                            <Zap size={32} />
                         </div>
                         <div>
-                            <div style={{ fontWeight: '900', fontSize: '1.15rem', color: 'white', marginBottom: '0.2rem' }}>Optimize Content</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Rewrite articles for maximum citation probability.</div>
+                            <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.25rem', color: 'var(--text-primary)' }}>Optimize Content</div>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Rewrite articles for maximum citation probability.</div>
                         </div>
                     </Link>
 
-                    {/* Action 3: AI Simulator */}
-                    <Link to="/app/ai-simulator" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.25rem', alignItems: 'center', padding: '1.75rem', background: 'rgba(20, 20, 25, 0.5)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                        <div style={{ width: '56px', height: '56px', background: 'rgba(66, 212, 255, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src="https://img.icons8.com/isometric/50/42D4FF/bot.png" style={{ width: '34px', height: '34px' }} alt="Bot" />
+                    <Link to="/app/ai-simulator" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                        <div style={{
+                            width: '64px',
+                            height: '64px',
+                            background: 'rgba(16, 185, 129, 0.1)',
+                            borderRadius: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--success)'
+                        }}>
+                            <FileText size={32} />
                         </div>
                         <div>
-                            <div style={{ fontWeight: '900', fontSize: '1.15rem', color: 'white', marginBottom: '0.2rem' }}>AI Simulator</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Simulate Perplexity or Gemini search results.</div>
-                        </div>
-                    </Link>
-
-                    {/* Action 4: Citation Tracking */}
-                    <Link to="/app/citations" className="depth-card" style={{ textDecoration: 'none', display: 'flex', gap: '1.25rem', alignItems: 'center', padding: '1.75rem', background: 'rgba(20, 20, 25, 0.5)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                        <div style={{ width: '56px', height: '56px', background: 'rgba(147, 51, 234, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src="https://img.icons8.com/isometric/50/9333EA/workflow.png" style={{ width: '32px', height: '32px' }} alt="Network" />
-                        </div>
-                        <div>
-                            <div style={{ fontWeight: '900', fontSize: '1.15rem', color: 'white', marginBottom: '0.2rem' }}>Citation Tracking</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Check simulations on network networks.</div>
+                            <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.25rem', color: 'var(--text-primary)' }}>AI Simulator</div>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Simulate Perplexity or Gemini search results.</div>
                         </div>
                     </Link>
                 </div>

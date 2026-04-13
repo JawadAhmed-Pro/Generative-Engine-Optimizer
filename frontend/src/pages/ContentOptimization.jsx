@@ -16,7 +16,7 @@ const TableWithCopy = ({ children }) => {
         if (!tableRef.current) return
         try {
             const canvas = await html2canvas(tableRef.current, {
-                backgroundColor: '#0c0c0e', // Anthracite background for table image export
+                backgroundColor: '#1e293b', // Dark background for table
                 scale: 2, // High resolution
                 logging: false,
                 useCORS: true
@@ -393,7 +393,7 @@ function ContentOptimization() {
                         borderRadius: '100px',
                         fontSize: '0.9rem',
                         fontWeight: '600',
-                        boxShadow: activeTab === 'rewrite' ? '0 8px 20px rgba(66, 212, 255, 0.3)' : 'none'
+                        boxShadow: activeTab === 'rewrite' ? '0 8px 20px rgba(59, 130, 246, 0.3)' : 'none'
                     }}
                 >
                     <PenTool size={18} /> Rewrite Content
@@ -407,7 +407,7 @@ function ContentOptimization() {
                         borderRadius: '100px',
                         fontSize: '0.9rem',
                         fontWeight: '600',
-                        boxShadow: activeTab === 'generate' ? '0 8px 20px rgba(66, 212, 255, 0.3)' : 'none'
+                        boxShadow: activeTab === 'generate' ? '0 8px 20px rgba(59, 130, 246, 0.3)' : 'none'
                     }}
                 >
                     <Lightbulb size={18} /> Generate from Idea
@@ -421,7 +421,7 @@ function ContentOptimization() {
                         borderRadius: '100px',
                         fontSize: '0.9rem',
                         fontWeight: '600',
-                        boxShadow: activeTab === 'schema' ? '0 8px 20px rgba(66, 212, 255, 0.3)' : 'none'
+                        boxShadow: activeTab === 'schema' ? '0 8px 20px rgba(59, 130, 246, 0.3)' : 'none'
                     }}
                 >
                     <Code2 size={18} /> Generate Schema
@@ -485,8 +485,8 @@ function ContentOptimization() {
                             <div className="glass-card animate-fade-in" style={{
                                 padding: '1rem',
                                 marginBottom: '1.5rem',
-                                background: 'rgba(66, 212, 255, 0.08)',
-                                border: '1px solid rgba(66, 212, 255, 0.2)',
+                                background: 'rgba(59, 130, 246, 0.08)',
+                                border: '1px solid rgba(59, 130, 246, 0.2)',
                                 borderRadius: '12px'
                             }}>
                                 <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -559,7 +559,7 @@ function ContentOptimization() {
                                     fontSize: '0.9rem',
                                     fontWeight: '700',
                                     pointerEvents: 'none',
-                                    boxShadow: '0 10px 30px rgba(66, 212, 255, 0.4)',
+                                    boxShadow: '0 10px 30px rgba(59, 130, 246, 0.4)',
                                     zIndex: 10,
                                     width: 'max-content',
                                     animation: 'pulse 2s infinite'
@@ -693,9 +693,9 @@ function ContentOptimization() {
                             <div style={{
                                 marginBottom: '1.5rem',
                                 padding: '1.25rem',
-                                background: 'rgba(66, 212, 255, 0.05)',
+                                background: 'rgba(59, 130, 246, 0.05)',
                                 borderRadius: '12px',
-                                border: '1px solid rgba(66, 212, 255, 0.15)',
+                                border: '1px solid rgba(59, 130, 246, 0.15)',
                                 backdropFilter: 'blur(10px)'
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
@@ -724,7 +724,7 @@ function ContentOptimization() {
                                                     fontSize: '0.9rem',
                                                     cursor: 'pointer',
                                                     fontWeight: '600',
-                                                    boxShadow: selectedKeyword === keywords.primary_keyword ? '0 4px 12px rgba(66, 212, 255, 0.3)' : 'none',
+                                                    boxShadow: selectedKeyword === keywords.primary_keyword ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none',
                                                     transition: 'all 0.2s ease'
                                                 }}
                                             >
@@ -997,7 +997,7 @@ function ContentOptimization() {
                                 <div>
                                     <h3 style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>Generated Schema Object</h3>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <div style={{ padding: '0.2rem 0.6rem', background: 'rgba(66, 212, 255, 0.1)', color: 'var(--accent-primary)', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                                        <div style={{ padding: '0.2rem 0.6rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-primary)', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase' }}>
                                             {schemaResult.schema_type}
                                         </div>
                                         <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Ready for deployment</span>
@@ -1349,10 +1349,10 @@ function ContentOptimization() {
 
                         {/* Recent Performance Stat */}
                         <div style={{
-                            background: 'rgba(66, 212, 255, 0.05)',
+                            background: 'rgba(59, 130, 246, 0.05)',
                             padding: '1rem',
                             borderRadius: '12px',
-                            border: '1px solid rgba(66, 212, 255, 0.1)',
+                            border: '1px solid rgba(59, 130, 246, 0.1)',
                             marginBottom: '1.5rem'
                         }}>
                             <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem', fontWeight: '700' }}>

@@ -59,7 +59,7 @@ function ToastContainer({ toasts, onRemove }) {
             case 'success': return { bg: 'rgba(16, 185, 129, 0.15)', border: '#10b981', icon: '#10b981' }
             case 'error': return { bg: 'rgba(239, 68, 68, 0.15)', border: '#ef4444', icon: '#ef4444' }
             case 'warning': return { bg: 'rgba(245, 158, 11, 0.15)', border: '#f59e0b', icon: '#f59e0b' }
-            default: return { bg: 'rgba(66, 212, 255, 0.15)', border: 'var(--accent-primary)', icon: 'var(--accent-primary)' }
+            default: return { bg: 'rgba(59, 130, 246, 0.15)', border: '#3b82f6', icon: '#3b82f6' }
         }
     }
 

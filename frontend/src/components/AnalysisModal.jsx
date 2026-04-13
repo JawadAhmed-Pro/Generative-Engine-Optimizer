@@ -258,7 +258,7 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                     {data.analysis.recommendations.map((rec, idx) => (
                                         <div key={idx} style={{
-                                            background: 'rgba(66, 212, 255, 0.1)',
+                                            background: 'rgba(59, 130, 246, 0.1)',
                                             padding: '0.75rem 1rem',
                                             borderRadius: '6px',
                                             fontSize: '0.875rem',

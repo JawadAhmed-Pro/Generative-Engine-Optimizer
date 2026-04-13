@@ -161,7 +161,7 @@ function TopBar({ onMenuToggle, isMobile }) {
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            background: item.type === 'citation' ? 'rgba(66, 212, 255, 0.1)' : 'rgba(167, 139, 250, 0.1)',
+                                            background: item.type === 'citation' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(167, 139, 250, 0.1)',
                                             color: item.type === 'citation' ? 'var(--accent-primary)' : 'var(--accent-secondary)'
                                         }}>
                                             {item.type === 'citation' ? <TrendingUp size={16} /> : <FileText size={16} />}

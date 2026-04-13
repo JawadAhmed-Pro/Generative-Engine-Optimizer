@@ -7,15 +7,56 @@ const API_BASE = import.meta.env.VITE_API_URL || 'https://api.geo-tool.site';
 const NETWORK_TIMEOUT = 30000; // Increased to 30s to handle backend cold-starts/Render spin-up
 
 export function AuthProvider({ children }) {
-    // UI AUDIT BYPASS: Constant mock user
-    const mockUser = { id: 1, email: 'audit_user@example.com', name: 'Audit User' };
-    const [user, setUser] = useState(mockUser);
-    const [token, setToken] = useState('audit_token');
-    const [loading, setLoading] = useState(false);
+    const [user, setUser] = useState(null);
+    const [token, setToken] = useState(localStorage.getItem('geo_token'));
+    const [loading, setLoading] = useState(true);
 
-    // checkAuth disabled for UI Audit
+    // Check token on mount
     useEffect(() => {
-        setLoading(false);
+        const checkAuth = async () => {
+            const savedToken = localStorage.getItem('geo_token');
+            if (!savedToken) {
+                setLoading(false);
+                return;
+            }
+
+            // Implement a timeout for the auth check so the UI doesn't hang
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), NETWORK_TIMEOUT);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${savedToken}`
+                    },
+                    signal: controller.signal
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    setUser(userData);
+                    setToken(savedToken);
+                } else {
+                    // Token invalid, clear it
+                    localStorage.removeItem('geo_token');
+                    setToken(null);
+                    setUser(null);
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.warn('Auth check timed out');
+                } else {
+                    console.error('Auth check failed:', error);
+                }
+                // Don't clear token on network failure, just let them stay logged out for now
+                // but we DO need to stop loading
+            } finally {
+                clearTimeout(timeoutId);
+                setLoading(false);
+            }
+        };
+
+        checkAuth();
     }, []);
 
     const login = async (email, password) => {
@@ -115,7 +156,7 @@ export function AuthProvider({ children }) {
         user,
         token,
         loading,
-        isAuthenticated: true, // Always return true for UI Audit
+        isAuthenticated: !!user,
         login,
         register,
         logout,

@@ -285,7 +285,7 @@ function CompetitorAnalysis() {
                             onClick={handleCompare}
                             disabled={loading || !userUrl.trim() || competitorUrls.filter(u => u.trim()).length === 0}
                             className="btn btn-primary"
-                            style={{ padding: '1.1rem 2.5rem', fontSize: '1.1rem', fontWeight: '700', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(66, 212, 255, 0.4)', background: 'var(--accent-gradient)' }}
+                            style={{ padding: '1.1rem 2.5rem', fontSize: '1.1rem', fontWeight: '700', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.4)', background: 'var(--accent-gradient)' }}
                         >
                             {loading ? (
                                 <><RefreshCw size={22} className="spin" /> Synchronizing Intelligence...</>
@@ -368,7 +368,7 @@ function CompetitorAnalysis() {
                                     </thead>
                                     <tbody>
                                         {/* User Row */}
-                                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'rgba(66, 212, 255, 0.08)' }}>
+                                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'rgba(59, 130, 246, 0.08)' }}>
                                             <td style={{ padding: '1.5rem 2rem' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                                     <div style={{ width: '32px', height: '32px', background: 'var(--accent-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -533,7 +533,7 @@ function CompetitorAnalysis() {
                     </motion.div>
                 ) : !loading && (
                     <div className="glass-card animate-fade-in" style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.01)', minHeight: '400px', marginBottom: '2rem' }}>
-                        <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(66, 212, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', border: '1px solid rgba(66, 212, 255, 0.1)' }}>
+                        <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(59, 130, 246, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
                             <BarChart2 size={32} color="var(--accent-primary)" style={{ opacity: 0.5 }} />
                         </div>
                         <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Ready for Competitive Audit</h3>
@@ -578,7 +578,7 @@ function CompetitorAnalysis() {
                                         <td style={{ padding: '1rem', textAlign: 'center' }}>
                                             <button
                                                 onClick={() => loadHistoricalResult(item.id)}
-                                                style={{ background: 'rgba(66, 212, 255, 0.1)', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '6px', fontWeight: '700' }}
+                                                style={{ background: 'rgba(59, 130, 246, 0.1)', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '6px', fontWeight: '700' }}
                                             >
                                                 RE-AUDIT
                                             </button>
@@ -594,7 +594,7 @@ function CompetitorAnalysis() {
             <style>{`
                 .focus-ring:focus {
                     border-color: var(--accent-primary) !important;
-                    box-shadow: 0 0 0 2px rgba(66, 212, 255, 0.15);
+                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
                     background: rgba(0,0,0,0.4) !important;
                 }
                 .table-row-hover:hover {

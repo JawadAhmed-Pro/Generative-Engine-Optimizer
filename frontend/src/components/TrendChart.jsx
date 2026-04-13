@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { TrendingUp, TrendingDown, Minus, ChevronDown } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import axios from 'axios'
 
 // Simple client-side cache to persist dashboard data between navigation
@@ -132,26 +132,12 @@ function TrendChart({ projectId = null, limit = 10 }) {
         <div className="glass-card" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '900', marginBottom: '0.25rem' }}>
-                        Optimization Trends
+                    <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.25rem' }}>
+                        Score Trend
                     </h3>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button style={{ 
-                        background: 'rgba(255,255,255,0.05)', 
-                        border: '1px solid rgba(255,255,255,0.1)', 
-                        padding: '0.4rem 0.75rem', 
-                        borderRadius: '6px', 
-                        fontSize: '0.75rem', 
-                        fontWeight: '700', 
-                        color: 'var(--text-secondary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                    }}>
-                        <TrendingUp size={14} color="var(--accent-primary)" /> Interactive graph <ChevronDown size={14} />
-                    </button>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        Last {data.length} analyses
+                    </p>
                 </div>
 
                 {/* Trend Indicator */}
@@ -188,59 +174,38 @@ function TrendChart({ projectId = null, limit = 10 }) {
                 </div>
             </div>
 
-            <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                    <defs>
-                        <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#42D4FF" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#42D4FF" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="colorPurple" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#9333EA" stopOpacity={0.2} />
-                            <stop offset="95%" stopColor="#9333EA" stopOpacity={0} />
-                        </linearGradient>
-                    </defs>
+            <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                     <CartesianGrid
-                        strokeDasharray="4 4"
-                        stroke="rgba(255,255,255,0.03)"
-                        vertical={true}
+                        strokeDasharray="3 3"
+                        stroke="rgba(255,255,255,0.05)"
+                        vertical={false}
                     />
                     <XAxis
                         dataKey="name"
                         stroke="var(--text-tertiary)"
-                        fontSize={10}
-                        fontWeight="700"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                    />
+                    <YAxis
+                        domain={[0, 100]}
+                        stroke="var(--text-tertiary)"
+                        fontSize={12}
                         tickLine={false}
                         axisLine={false}
-                        dy={10}
+                        tickFormatter={(value) => `${value}`}
                     />
-                    <YAxis hide={true} />
                     <Tooltip content={<CustomTooltip />} />
-                    
-                    {/* Secondary Purple Layer (Mocked for 1:1 look) */}
-                    <Area
+                    <Line
                         type="monotone"
                         dataKey="score"
-                        stroke="#9333EA"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorPurple)"
-                        dot={false}
-                        transform="translate(0, 10)"
-                    />
-
-                    {/* Primary Blue Layer */}
-                    <Area
-                        type="monotone"
-                        dataKey="score"
-                        stroke="#42D4FF"
+                        stroke="var(--accent-primary)"
                         strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#colorScore)"
-                        dot={{ r: 4, fill: "white", stroke: "#42D4FF", strokeWidth: 2 }}
-                        activeDot={{ r: 6, fill: "white", stroke: "#42D4FF", strokeWidth: 3 }}
+                        dot={{ fill: 'var(--accent-primary)', strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, stroke: 'var(--accent-primary)', strokeWidth: 2, fill: 'white' }}
                     />
-                </AreaChart>
+                </LineChart>
             </ResponsiveContainer>
         </div>
     )

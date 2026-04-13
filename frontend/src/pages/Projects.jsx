@@ -166,7 +166,7 @@ export default function Projects() {
                                         right: 0, 
                                         width: '100px', 
                                         height: '100px', 
-                                        background: 'radial-gradient(circle at top right, rgba(66, 212, 255, 0.05), transparent)', 
+                                        background: 'radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent)', 
                                         pointerEvents: 'none' 
                                     }} />
 
@@ -174,12 +174,12 @@ export default function Projects() {
                                         <div style={{
                                             width: '44px',
                                             height: '44px',
-                                            background: 'rgba(66, 212, 255, 0.1)',
+                                            background: 'rgba(59, 130, 246, 0.1)',
                                             borderRadius: '12px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            border: '1px solid rgba(66, 212, 255, 0.2)'
+                                            border: '1px solid rgba(59, 130, 246, 0.2)'
                                         }}>
                                             <Folder size={22} color="var(--accent-primary)" />
                                         </div>

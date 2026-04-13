@@ -20,8 +20,8 @@ function Hero() {
                     style={{ marginBottom: '2rem' }}
                 >
                     <span style={{
-                        background: 'rgba(66, 212, 255, 0.1)',
-                        border: '1px solid rgba(66, 212, 255, 0.2)',
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        border: '1px solid rgba(59, 130, 246, 0.2)',
                         color: 'var(--accent-primary)',
                         padding: '0.6rem 1.25rem',
                         borderRadius: 'var(--radius-full)',
@@ -84,7 +84,7 @@ function Hero() {
                         padding: '1.25rem 3rem',
                         fontSize: '1.1rem',
                         background: 'var(--accent-primary)',
-                        boxShadow: '0 20px 40px rgba(66, 212, 255, 0.25)',
+                        boxShadow: '0 20px 40px rgba(59, 130, 246, 0.25)',
                         border: 'none',
                     }}>
                         Start Free Analysis <ArrowRight size={22} style={{ marginLeft: '0.5rem' }} />
@@ -183,7 +183,7 @@ function Hero() {
                                 color: 'var(--text-tertiary)',
                                 alignItems: 'center'
                             }}>
-                                <div style={{ color: 'var(--accent-primary)', padding: '0.5rem', background: 'rgba(66, 212, 255, 0.1)', borderRadius: '10px' }}><Play size={20} /></div>
+                                <div style={{ color: 'var(--accent-primary)', padding: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '10px' }}><Play size={20} /></div>
                                 <TrendingUp size={20} />
                                 <Bot size={20} />
                                 <Shield size={20} />
@@ -220,7 +220,7 @@ function Hero() {
                                         <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.02em', display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>84.2<span style={{ fontSize: '1rem', color: 'var(--text-tertiary)' }}>%</span></div>
                                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                                             <div style={{ padding: '0.2rem 0.4rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', borderRadius: '4px', fontSize: '0.6rem', fontWeight: '800' }}>+3.4%</div>
-                                            <div style={{ padding: '0.2rem 0.4rem', background: 'rgba(66, 212, 255, 0.1)', color: 'var(--accent-primary)', borderRadius: '4px', fontSize: '0.6rem', fontWeight: '800' }}>Optimized</div>
+                                            <div style={{ padding: '0.2rem 0.4rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-primary)', borderRadius: '4px', fontSize: '0.6rem', fontWeight: '800' }}>Optimized</div>
                                         </div>
                                     </div>
                                     <div style={{ height: '70px', width: '100%', position: 'relative' }}>
@@ -283,7 +283,7 @@ function Hero() {
                         transform: 'translate(-50%, -50%)',
                         width: '120%',
                         height: '140%',
-                        background: 'radial-gradient(circle at center, rgba(66, 212, 255, 0.15), transparent 70%)',
+                        background: 'radial-gradient(circle at center, rgba(59, 130, 246, 0.15), transparent 70%)',
                         zIndex: -1,
                         pointerEvents: 'none'
                     }}></div>

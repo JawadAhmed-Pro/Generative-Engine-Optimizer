@@ -325,7 +325,7 @@ function VisibilityAnalysis() {
                             fontSize: '1.1rem',
                             fontWeight: '700',
                             gap: '0.75rem',
-                            boxShadow: '0 4px 20px rgba(66, 212, 255, 0.2)'
+                            boxShadow: '0 4px 20px rgba(59, 130, 246, 0.2)'
                         }}
                     >
                         {loading ? 'Initializing Analysis...' : <><Search size={22} /> Run Visibility Audit</>}
@@ -435,7 +435,7 @@ function VisibilityAnalysis() {
                             width: '64px',
                             height: '64px',
                             borderRadius: '50%',
-                            background: 'rgba(66, 212, 255, 0.1)',
+                            background: 'rgba(59, 130, 246, 0.1)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',

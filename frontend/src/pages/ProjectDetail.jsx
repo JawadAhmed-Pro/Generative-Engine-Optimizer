@@ -264,7 +264,7 @@ function ProjectDetail() {
                                 <div style={{
                                     width: '44px',
                                     height: '44px',
-                                    background: item.url ? 'rgba(66, 212, 255, 0.1)' : 'rgba(180, 100, 255, 0.1)',
+                                    background: item.url ? 'rgba(59, 130, 246, 0.1)' : 'rgba(139, 92, 246, 0.1)',
                                     borderRadius: '10px',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -302,7 +302,7 @@ function ProjectDetail() {
                                 </div>
                                 <div style={{
                                     padding: '0.25rem 0.75rem',
-                                    background: item.url ? 'rgba(66, 212, 255, 0.2)' : 'rgba(180, 100, 255, 0.2)',
+                                    background: item.url ? 'rgba(59, 130, 246, 0.2)' : 'rgba(139, 92, 246, 0.2)',
                                     borderRadius: '20px',
                                     fontSize: '0.7rem',
                                     fontWeight: '600',
