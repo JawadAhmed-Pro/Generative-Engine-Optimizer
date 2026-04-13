@@ -33,5 +33,4 @@ slowapi
 bleach
 
 # Execution Engine Dependencies
-duckduckgo-search
 httpx
