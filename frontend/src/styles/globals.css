@@ -219,7 +219,7 @@ textarea:focus-visible {
   position: absolute;
   filter: blur(140px);
   border-radius: 50%;
-  opacity: 0.6;
+  opacity: 0.3;
   /* Increased for more vibrancy */
   /* Bring blobs in front of container background but behind content */
   z-index: 1;
@@ -353,9 +353,11 @@ textarea:focus-visible {
   0% {
     transform: translate(0, 0) scale(1) rotate(0deg);
   }
+
   50% {
     transform: translate(5%, 10%) scale(1.1) rotate(5deg);
   }
+
   100% {
     transform: translate(-5%, -10%) scale(0.9) rotate(-5deg);
   }
@@ -389,16 +391,16 @@ body.light-theme .topbar-dropdown * {
   color: inherit;
 }
 
-body.light-theme .topbar-dropdown p, 
-body.light-theme .topbar-dropdown span, 
+body.light-theme .topbar-dropdown p,
+body.light-theme .topbar-dropdown span,
 body.light-theme .topbar-dropdown div {
   color: #334155;
 }
 
-body.light-theme .topbar-dropdown h1, 
-body.light-theme .topbar-dropdown h2, 
-body.light-theme .topbar-dropdown h3, 
-body.light-theme .topbar-dropdown h4, 
+body.light-theme .topbar-dropdown h1,
+body.light-theme .topbar-dropdown h2,
+body.light-theme .topbar-dropdown h3,
+body.light-theme .topbar-dropdown h4,
 body.light-theme .topbar-dropdown strong {
   color: #020617;
 }
@@ -541,7 +543,8 @@ body.light-theme .aurora-blob {
   min-height: 100vh;
   transition: margin-left 0.3s ease;
   position: relative;
-  z-index: 10; /* Ensure content stays above the Aurora atmosphere blobs */
+  z-index: 10;
+  /* Ensure content stays above the Aurora atmosphere blobs */
 }
 
 .main-content.collapsed {
@@ -988,7 +991,7 @@ body.light-theme .glass-card {
   background: #FFFFFF !important;
   backdrop-filter: blur(15px) !important;
   border: 1.5px solid #E2E8F0 !important;
-  box-shadow: 
+  box-shadow:
     0 10px 30px -10px rgba(0, 0, 0, 0.08),
     inset 0 1px 1px rgba(255, 255, 255, 1) !important;
 }
