@@ -14,11 +14,17 @@ export function AuthProvider({ children }) {
     // Check token on mount
     useEffect(() => {
         const checkAuth = async () => {
+            // BACKEND BYPASS FOR UI AUDITING - REMOVE FOR PRODUCTION
+            setUser({
+                id: 'mock-id-123',
+                email: 'admin@geo-tool.site',
+                name: 'GEO Auditor',
+                is_active: true
+            });
+            setLoading(false);
+            return;
+            
             const savedToken = localStorage.getItem('geo_token');
-            if (!savedToken) {
-                setLoading(false);
-                return;
-            }
 
             // Implement a timeout for the auth check so the UI doesn't hang
             const controller = new AbortController();
