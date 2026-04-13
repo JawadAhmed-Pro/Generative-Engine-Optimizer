@@ -10,11 +10,11 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     
-    # Security - MUST be set in environment variables
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY")
+    # Security - Set in environment variables for production
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dev_secret_key_change_me_in_production")
     
-    # Database Configuration - MUST be set in environment variables
-    DATABASE_URL: str = os.getenv("DATABASE_URL")
+    # Database Configuration - Set in environment variables for production
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./geo_agent.db")
     
     @property
     def async_database_url(self) -> str:
