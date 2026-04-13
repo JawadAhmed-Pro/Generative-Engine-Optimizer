@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, ExternalLink, Calendar, TrendingUp, FileText, Link as LinkIcon, AlertCircle, Download, Copy, Check } from 'lucide-react'
+import { X, ExternalLink, Calendar, TrendingUp, FileText, Link as LinkIcon, AlertCircle, Download, Copy, Check, Target, Shield } from 'lucide-react'
 import axios from 'axios'
 import { useToast } from './ToastProvider'
 
@@ -130,6 +130,12 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                                 <ExternalLink size={14} /> {data.url}
                             </a>
                         )}
+                        {data.analysis?.intent_analysis && (
+                            <div className={`intent-badge intent-${data.analysis.intent_analysis.primary_intent?.toLowerCase().replace(' ', '-')}`} style={{ marginTop: '0.75rem', marginBottom: 0 }}>
+                                <Target size={14} />
+                                Intent: {data.analysis.intent_analysis.primary_intent}
+                            </div>
+                        )}
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         {data && (
@@ -222,6 +228,20 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Readability</div>
                             </div>
                         </div>
+
+                        {/* EEAT Breakdown in Modal */}
+                        {data.analysis?.eeat_analysis && (
+                            <div style={{ marginBottom: '2rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+                                    {['experience', 'expertise', 'authoritativeness', 'trustworthiness'].map(key => (
+                                        <div key={key} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '8px', padding: '0.75rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{key}</div>
+                                            <div style={{ fontSize: '1rem', fontWeight: '700' }}>{data.analysis.eeat_analysis[key]}%</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Metadata */}
                         <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>

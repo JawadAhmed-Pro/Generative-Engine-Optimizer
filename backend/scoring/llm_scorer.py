@@ -362,6 +362,11 @@ Provide response in this EXACT JSON format:
     "content_authority": <int>,
     "internal_linkability": <int>,
     "readability_ux": <int>,
+    "primary_intent": "Informational" | "Navigational" | "Transactional" | "Commercial Investigation",
+    "experience_score": <int>,
+    "expertise_score": <int>,
+    "authoritativeness_score": <int>,
+    "trustworthiness_score": <int>,
     "explanation": "<summary string>",
     "top_suggestion": "<string>"
 }
@@ -409,6 +414,11 @@ Provide response in this EXACT JSON format:
             "content_authority": 50,
             "internal_linkability": 50,
             "readability_ux": 50,
+            "primary_intent": "Informational",
+            "experience_score": 50,
+            "expertise_score": 50,
+            "authoritativeness_score": 50,
+            "trustworthiness_score": 50,
             "explanation": "Analysis failed. Using default scores.",
             "top_suggestion": "Retry analysis."
         }

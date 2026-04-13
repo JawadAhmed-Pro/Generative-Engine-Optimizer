@@ -204,6 +204,8 @@ class AnalysisResponse(BaseModel):
     rule_based_scores: Dict[str, ScoreMetric]
     llm_scores: Dict[str, ScoreMetric]
     suggestions: List[Dict[str, Any]]
+    intent_analysis: Optional[Dict[str, Any]] = None
+    eeat_analysis: Optional[Dict[str, Any]] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 

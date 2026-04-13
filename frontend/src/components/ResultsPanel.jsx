@@ -1,4 +1,4 @@
-import { CheckCircle, AlertTriangle, XCircle, Sparkles, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { CheckCircle, AlertTriangle, XCircle, Sparkles, TrendingUp, TrendingDown, Minus, Target, Award, Shield, UserCheck, Zap } from 'lucide-react'
 import MetricCard from './MetricCard'
 import SuggestionList from './SuggestionList'
 import ExportButton from './ExportButton'
@@ -137,6 +137,13 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     Citation Probability
                 </h2>
 
+                {results.intent_analysis && (
+                    <div className={`intent-badge intent-${results.intent_analysis.primary_intent?.toLowerCase().replace(' ', '-')}`}>
+                        <Target size={14} />
+                        Intent: {results.intent_analysis.primary_intent}
+                    </div>
+                )}
+
                 {probabilityMetrics ? (
                     <>
                         <div className={`score-badge ${getScoreClass(probabilityMetrics.probability)}`} style={{ fontSize: '3.5rem', padding: '2rem', display: 'inline-block' }}>
@@ -202,6 +209,45 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     <ExportButton results={results} />
                 </div>
             </div>
+
+            {/* E-E-A-T Signals */}
+            {results.eeat_analysis && (
+                <div style={{ marginBottom: '2rem' }}>
+                    <h3 style={{ marginBottom: '1rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Shield size={18} color="var(--accent-primary)" /> AI Trust & Authority (E-E-A-T)
+                    </h3>
+                    <div className="eeat-grid">
+                        <div className="eeat-card">
+                            <div className="eeat-label">Experience</div>
+                            <div className="eeat-value">{results.eeat_analysis.experience}<span>/100</span></div>
+                            <div className="eeat-bar-bg">
+                                <div className="eeat-bar-fill" style={{ width: `${results.eeat_analysis.experience}%` }}></div>
+                            </div>
+                        </div>
+                        <div className="eeat-card">
+                            <div className="eeat-label">Expertise</div>
+                            <div className="eeat-value">{results.eeat_analysis.expertise}<span>/100</span></div>
+                            <div className="eeat-bar-bg">
+                                <div className="eeat-bar-fill" style={{ width: `${results.eeat_analysis.expertise}%` }}></div>
+                            </div>
+                        </div>
+                        <div className="eeat-card">
+                            <div className="eeat-label">Authoritativeness</div>
+                            <div className="eeat-value">{results.eeat_analysis.authoritativeness}<span>/100</span></div>
+                            <div className="eeat-bar-bg">
+                                <div className="eeat-bar-fill" style={{ width: `${results.eeat_analysis.authoritativeness}%` }}></div>
+                            </div>
+                        </div>
+                        <div className="eeat-card">
+                            <div className="eeat-label">Trustworthiness</div>
+                            <div className="eeat-value">{results.eeat_analysis.trustworthiness}<span>/100</span></div>
+                            <div className="eeat-bar-bg">
+                                <div className="eeat-bar-fill" style={{ width: `${results.eeat_analysis.trustworthiness}%` }}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Probability Breakdown Factors */}
             {probabilityMetrics && probabilityMetrics.factors && probabilityMetrics.factors.length > 0 && (

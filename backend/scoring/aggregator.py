@@ -27,6 +27,13 @@ class ScoreAggregator:
         linkability = llm_scores.get('internal_linkability', 50)
         readability_ux = llm_scores.get('readability_ux', 50)
         
+        # --- Extract New Functional Metrics ---
+        primary_intent = llm_scores.get('primary_intent', 'Informational')
+        experience_score = llm_scores.get('experience_score', 50)
+        expertise_score = llm_scores.get('expertise_score', 50)
+        authoritativeness_score = llm_scores.get('authoritativeness_score', 50)
+        trustworthiness_score = llm_scores.get('trustworthiness_score', 50)
+        
         # --- Rule-Based Metrics ---
         rb_structure = rule_based_scores.get('structure', {}).get('score', 50)
         rb_keywords = rule_based_scores.get('keywords', {}).get('score', 50)
@@ -171,5 +178,16 @@ class ScoreAggregator:
             'technical_readability_score': round(technical_readability_score, 1),
             'rule_based_scores': rule_based_scores,
             'llm_scores': formatted_llm_scores_response,
-            'suggestions': suggestions[:8]
+            'suggestions': suggestions[:8],
+            'intent_analysis': {
+                'primary_intent': primary_intent,
+                'alignment_score': user_intent
+            },
+            'eeat_analysis': {
+                'experience': experience_score,
+                'expertise': expertise_score,
+                'authoritativeness': authoritativeness_score,
+                'trustworthiness': trustworthiness_score,
+                'overall_eeat': round((experience_score + expertise_score + authoritativeness_score + trustworthiness_score) / 4, 1)
+            }
         }
