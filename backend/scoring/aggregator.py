@@ -37,8 +37,31 @@ class ScoreAggregator:
         # --- Rule-Based Metrics ---
         rb_structure = rule_based_scores.get('structure', {}).get('score', 50)
         rb_keywords = rule_based_scores.get('keywords', {}).get('score', 50)
+        rb_keywords = rule_based_scores.get('keywords', {}).get('score', 50)
         rb_authority = rule_based_scores.get('authority', {}).get('score', 50)
         rb_readability = rule_based_scores.get('readability', {}).get('score', 50)
+
+        # --- E-E-A-T Hybrid Scoring & Fine-Tuning ---
+        # Inject rule-based signals into pillar scores
+        auth_details = rule_based_scores.get('authority', {}).get('details', {})
+        
+        # 1. Hybrid Trust: LLM Subjective + Rule-based Citations/Facts
+        # Boost up to 20% from rule-based objective evidence
+        trust_booster = min((auth_details.get('citations', 0) * 5) + (auth_details.get('fact_density', 0) * 10), 20)
+        hybrid_trust = min(trustworthiness_score * 0.8 + trust_booster, 100)
+        
+        # 2. Hybrid Expertise: LLM Subjective + Rule-based Credential Detection
+        expertise_booster = min((auth_details.get('expert_mentions', 0) * 10), 20)
+        hybrid_expertise = min(expertise_score * 0.8 + expertise_booster, 100)
+        
+        # 3. Weighted Overall EEAT (The "SEO Significance" calculation)
+        # Trust is 40%, Expertise 25%, Authoritativeness 20%, Experience 15%
+        overall_eeat = (
+            hybrid_trust * 0.40 +
+            hybrid_expertise * 0.25 +
+            authoritativeness_score * 0.20 +
+            experience_score * 0.15
+        )
 
         # --- Mapping New Metrics to Old DB Columns ---
         
@@ -53,8 +76,9 @@ class ScoreAggregator:
         # 2. Citation Worthiness Score
         # Maps to: Content Authority, Internal Linking, Reviews (if ecom)
         citation_worthiness_score = (
-            content_authority * 0.6 +
-            linkability * 0.3 +
+            content_authority * 0.4 +
+            linkability * 0.2 +
+            overall_eeat * 0.3 + 
             rb_authority * 0.1
         )
         # Adjust for ecommerce if present
@@ -185,9 +209,9 @@ class ScoreAggregator:
             },
             'eeat_analysis': {
                 'experience': experience_score,
-                'expertise': expertise_score,
+                'expertise': round(hybrid_expertise, 1),
                 'authoritativeness': authoritativeness_score,
-                'trustworthiness': trustworthiness_score,
-                'overall_eeat': round((experience_score + expertise_score + authoritativeness_score + trustworthiness_score) / 4, 1)
+                'trustworthiness': round(hybrid_trust, 1),
+                'overall_eeat': round(overall_eeat, 1)
             }
         }

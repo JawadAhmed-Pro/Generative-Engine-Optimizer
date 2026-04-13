@@ -345,13 +345,17 @@ You are an OBJECTIVE AUDITOR. Grade fairly based on industry standards.
 
 **METRICS TO EVALUATE (2025 Standards):**
 
-1. **Semantic Richness (Information Gain)**: Does it provide UNIQUE information, insights, or viewpoints that cannot be found easily elsewhere? 
-2. **User Intent Alignment (Direct Answers)**: Does it use the 'Inverted Pyramid'? Is there a direct, concise answer (75-120 words) immediately following the main headings/queries?
-3. **Structural Integrity (Extraction Confidence)**: Are there lists, tables, or short paragraphs (<4 sentences) that an LLM can easily extract as tokens?
-4. **AI-Friendly Formatting**: Use of headings (H1-H3) and the presence of 'hard grounding' markers (named authors, expert credentials).
-5. **Content Authority (Grounding Confidence)**: Density of verifiable facts, statistics, and citations. 
-6. **Internal Linkability**: How well the content would connect to other topics in a RAG graph.
-7. **Readability UX**: Is it clear of narrative 'fluff' and slow build-ups?
+1. **Semantic Richness (Information Gain)**: Does it provide UNIQUE information, insights, or viewpoints?
+2. **User Intent Alignment (Direct Answers)**: Is there a concise direct answer immediately following queries?
+3. **Structural Integrity (Extraction Confidence)**: Ease of extraction for LLMs (lists, tables).
+4. **AI-Friendly Formatting**: Headings and 'hard grounding' markers.
+5. **Content Authority (Grounding Confidence)**: Density of verifiable facts/stats.
+6. **E-E-A-T (Critical Calibration)**:
+    - **Experience**: Look for "First-person grounding" (e.g., 'In my testing', original photos described, personal anecdotes). 
+    - **Expertise**: Use of domain methodology and LSI terminology.
+    - **Authoritativeness**: Signal of the source as a primary authority.
+    - **Trustworthiness**: Absence of generic fluff; presence of safety warnings, citations, and data.
+7. **Readability UX**: Clarity and lack of narrative 'fluff'.
 
 Provide response in this EXACT JSON format:
 {

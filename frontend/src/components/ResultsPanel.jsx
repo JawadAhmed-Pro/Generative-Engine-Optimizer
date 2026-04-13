@@ -238,11 +238,17 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                                 <div className="eeat-bar-fill" style={{ width: `${results.eeat_analysis.authoritativeness}%` }}></div>
                             </div>
                         </div>
-                        <div className="eeat-card">
-                            <div className="eeat-label">Trustworthiness</div>
+                        <div className={`eeat-card ${results.eeat_analysis.trustworthiness >= 80 ? 'trust-priority-glow' : ''}`}>
+                            <div className="eeat-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                Trustworthiness
+                                {results.eeat_analysis.trustworthiness >= 80 && <Zap size={10} color="var(--success)" />}
+                            </div>
                             <div className="eeat-value">{results.eeat_analysis.trustworthiness}<span>/100</span></div>
                             <div className="eeat-bar-bg">
-                                <div className="eeat-bar-fill" style={{ width: `${results.eeat_analysis.trustworthiness}%` }}></div>
+                                <div className="eeat-bar-fill" style={{ 
+                                    width: `${results.eeat_analysis.trustworthiness}%`,
+                                    background: results.eeat_analysis.trustworthiness >= 80 ? 'var(--success)' : 'var(--accent-primary)' 
+                                }}></div>
                             </div>
                         </div>
                     </div>
