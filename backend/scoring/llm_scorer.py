@@ -96,6 +96,93 @@ class LLMScorer:
                 
         return "Error: Could not generate content. Please check API keys."
 
+    async def find_semantic_gaps(self, user_content: str, competitor_contents: List[str]) -> str:
+        """Analyze gaps between user content and top competitors."""
+        prompt = f"""
+You are an expert Generative Engine Optimizer.
+Run a "Semantic Gap Analysis" between the User's Content and the Top Ranking Competitors.
+
+USER CONTENT:
+{user_content[:2000]}
+
+TOP COMPETITORS:
+"""
+        for i, comp in enumerate(competitor_contents):
+            prompt += f"\n--- Competitor {i+1} ---\n{comp[:1500]}\n"
+
+        prompt += """
+Identify exactly what structural elements the user is missing that the competitors have. Focus on empirical differences like:
+- Missing sections (e.g., pricing tables, technical specifications, comparisons)
+- Missing trust signals (e.g., expert quotes, data blocks, FAQs)
+- Missing sub-topics or questions answered that AI expects for 'Information Gain'.
+
+Provide a concise, bulleted list of 2-4 Actionable "Missing Pieces".
+Each bullet MUST clearly state: "Competitors have [X], but you do not."
+Keep it brief, extremely direct, and highly actionable. No fluff.
+"""
+        if self.groq_api_key:
+            try:
+                app_logger.debug("Generating Semantic Gap Analysis via Groq...")
+                return await self._generate_with_groq(prompt)
+            except Exception as e:
+                app_logger.error(f"Groq Gap Analysis Failed: {e}")
+
+        if hasattr(self, 'gemini_client') and self.gemini_client:
+            try:
+                app_logger.debug("Generating Semantic Gap Analysis via Gemini...")
+                response = await self.gemini_client.aio.models.generate_content(
+                    model=settings.GEMINI_MODEL,
+                    contents=prompt
+                )
+                return response.text
+            except Exception as e:
+                app_logger.error(f"Gemini Gap Analysis Failed: {e}")
+                
+        return "No significant structural gaps identified."
+
+    async def generate_targeted_injection(self, context_text: str, injection_target: str, tone: str = "professional") -> str:
+        """
+        Generates a specific missing block (table, faq, paragraph) to fulfill a gap,
+        matching the tone of the surrounding context.
+        """
+        prompt = f"""
+You are a master structural copywriter. Your task is to generate a specific missing section for an article.
+DO NOT rewrite the existing text. ONLY produce the new requested section in valid Markdown.
+
+CONTEXT OF THE EXISTING ARTICLE (Use to match Topic & Tone):
+{context_text[:2000]}
+
+REQUESTED INJECTION / MISSING PIECE:
+{injection_target}
+
+TONE: {tone}
+
+INSTRUCTIONS:
+1. Generate the exact block requested (e.g. if requested a Pricing Table, build a Markdown Table).
+2. Ensure the facts or structure aligns with typical AI extraction expectations (use clear headings, bullet points, or tables if applicable).
+3. Output ONLY the new section content, no conversational preamble. DO NOT wrap it in ```markdown unless it is a code block. 
+"""
+        if self.groq_api_key:
+            try:
+                app_logger.debug("Generating targeted injection via Groq...")
+                return await self._generate_with_groq(prompt)
+            except Exception as e:
+                app_logger.error(f"Groq Injection Failed: {e}")
+
+        # Fallback to Gemini
+        if hasattr(self, 'gemini_client') and self.gemini_client:
+            try:
+                app_logger.debug("Generating targeted injection via Gemini...")
+                response = await self.gemini_client.aio.models.generate_content(
+                    model=settings.GEMINI_MODEL,
+                    contents=prompt
+                )
+                return response.text
+            except Exception as e:
+                app_logger.error(f"Gemini Injection Failed: {e}")
+                
+        return "> Injection generation failed. Check API connectivity."
+
     async def _generate_with_groq(self, prompt: str) -> str:
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {

@@ -4,6 +4,9 @@ Compare GEO scores between user's content and competitor URLs.
 """
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+import asyncio
+from search_service import SearchService
+import traceback
 
 
 class CompetitorAnalyzer:
@@ -15,6 +18,7 @@ class CompetitorAnalyzer:
         self.llm_scorer = llm_scorer
         self.aggregator = aggregator
         self.discovery_engine = discovery_engine
+        self.search_service = SearchService()
 
     async def analyze_competitor(self, url: str, content_type: str = "general") -> Dict[str, Any]:
         """
@@ -28,8 +32,8 @@ class CompetitorAnalyzer:
             Analysis results for the competitor
         """
         try:
-            # Fetch content
-            extracted = self.content_fetcher.fetch_url(url)
+            # Fetch content asynchronously
+            extracted = await self.content_fetcher.async_fetch_url(url)
             extracted['content_type'] = content_type
 
             # Rule-based scoring
@@ -68,7 +72,8 @@ class CompetitorAnalyzer:
                 "has_schema": bool(extracted.get('schema', {}).get('types', [])),
                 "schema_types": extracted.get('schema', {}).get('types', []),
                 "headings": extracted.get('headings', {}),
-                "analyzed_at": datetime.utcnow().isoformat()
+                "analyzed_at": datetime.utcnow().isoformat(),
+                "raw_text_sample": extracted.get('content', '')[:1500] 
             }
 
         except Exception as e:
@@ -98,16 +103,29 @@ class CompetitorAnalyzer:
         Compare user's content against multiple competitors.
         Includes semantic gap and prompt coverage analysis.
         """
+        # Auto-discover opponents if none provided
+        if not competitor_urls and keyword:
+            competitor_urls = self.search_service.get_top_competitors(keyword, limit=3)
+            
         # Limit competitors
-        competitor_urls = competitor_urls[:5]
+        competitor_urls = competitor_urls[:3] # Ensure speed
 
-        # 1. Standard competitive analysis
-        user_result = await self.analyze_competitor(user_url, content_type)
+        # 1. Standard competitive analysis (Concurrent)
+        tasks = [self.analyze_competitor(user_url, content_type)]
+        for comp_url in competitor_urls:
+            tasks.append(self.analyze_competitor(comp_url, content_type))
+            
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        user_result = results[0] if not isinstance(results[0], Exception) else {"status": "error", "error": "Failed user"}
         
         competitor_results = []
-        for comp_url in competitor_urls:
-            result = await self.analyze_competitor(comp_url, content_type)
-            competitor_results.append(result)
+        for res in results[1:]:
+            if isinstance(res, Exception):
+                # Handle exception and continue
+                pass
+            elif res.get('status') == 'success':
+                competitor_results.append(res)
 
         # 2. Prompt Discovery & Coverage Gap (The "Killer Feature")
         prompt_coverage = {}
@@ -124,8 +142,23 @@ class CompetitorAnalyzer:
 
         # Generate comparison insights
         comparison = self._generate_comparison(user_result, competitor_results)
+        
+        # 3. Deep Semantic Gap Analysis via LLM
+        semantic_gap_markdown = "No competitors found."
+        if competitor_results and user_result.get('status') == 'success':
+            comp_texts = [c.get('raw_text_sample', '') for c in competitor_results]
+            user_text = user_result.get('raw_text_sample', '')
+            semantic_gap_markdown = await self.llm_scorer.find_semantic_gaps(user_text, comp_texts)
+            
+        comparison['semantic_gaps'] = semantic_gap_markdown
+        
         if prompt_coverage:
             comparison['prompt_coverage'] = prompt_coverage
+
+        # Remove raw text before returning to client to save bandwidth
+        if 'raw_text_sample' in user_result: del user_result['raw_text_sample']
+        for comp in competitor_results:
+            if 'raw_text_sample' in comp: del comp['raw_text_sample']
 
         return {
             "user": user_result,

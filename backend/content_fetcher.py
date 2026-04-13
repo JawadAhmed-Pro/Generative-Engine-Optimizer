@@ -6,6 +6,8 @@ from urllib.parse import urlparse
 import logging
 from config import settings
 from logger import app_logger
+import httpx
+import asyncio
 
 class ContentFetcher:
     """Fetches and extracts content from URLs."""
@@ -57,6 +59,61 @@ class ContentFetcher:
             raise Exception(f"Failed to extract any content from {url}")
 
         # Parse HTML with BeautifulSoup (reusing existing logic)
+        soup = BeautifulSoup(page_content, 'lxml')
+        
+        # Extract content
+        extracted = {
+            'url': url,
+            'title': self._extract_title(soup, driver_title),
+            'content': self._extract_text(soup),
+            'metadata': self._extract_metadata(soup),
+            'headings': self._extract_headings(soup),
+            'schema': self._extract_schema(soup),
+            'raw_html': str(soup),
+        }
+        
+        return extracted
+        
+    async def async_fetch_url(self, url: str) -> Dict[str, Any]:
+        """
+        Asynchronously fetch content from a URL using httpx. 
+        Falls back to thread-pool Jina request if blocked.
+        """
+        parsed = urlparse(url)
+        if not parsed.scheme in ['http', 'https']:
+            raise ValueError(f"Invalid URL scheme: {parsed.scheme}")
+            
+        page_content = ""
+        driver_title = ""
+        
+        try:
+            app_logger.info(f"[Async] Fetching URL: {url}")
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Upgrade-Insecure-Requests': '1'
+            }
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(url, headers=headers)
+                response.raise_for_status()
+                page_content = response.text
+                app_logger.info(f"[Async] Successfully fetched {url}")
+                
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code in [403, 401, 406, 429]:
+                app_logger.warning(f"[Async] Blocked by {url} ({e.response.status_code}). Falling back to Jina.")
+                page_content, driver_title = await asyncio.to_thread(self._fetch_via_jina, url)
+            else:
+                raise Exception(f"Failed to fetch exactly {url}: HTTP {e.response.status_code}")
+        except Exception as e:
+           app_logger.warning(f"[Async] Connection error for {url}: {e}. Falling back to Jina.")
+           page_content, driver_title = await asyncio.to_thread(self._fetch_via_jina, url)
+
+        if not page_content:
+            raise Exception(f"Failed to extract any content from {url}")
+
+        # Parse HTML with BeautifulSoup 
         soup = BeautifulSoup(page_content, 'lxml')
         
         # Extract content

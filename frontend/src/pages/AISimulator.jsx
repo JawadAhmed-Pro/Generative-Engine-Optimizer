@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Search, FileText, Zap, CheckCircle, XCircle, AlertTriangle, RefreshCw, BookOpen, ShoppingCart, Info, Sparkles, Tag, Globe } from 'lucide-react'
+import { Search, FileText, Zap, CheckCircle, XCircle, AlertTriangle, RefreshCw, BookOpen, ShoppingCart, Info, Sparkles, Tag, Globe, Trophy } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
@@ -12,6 +12,8 @@ function AISimulator() {
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState(null)
     const [error, setError] = useState(null)
+    const [validationResult, setValidationResult] = useState(null)
+    const [isValidating, setIsValidating] = useState(false)
     const resultRef = useRef(null)
 
     // Scroll to results when they appear
@@ -39,6 +41,24 @@ function AISimulator() {
             setError(err.response?.data?.detail || 'Simulation failed')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleValidate = async () => {
+        if (!content.trim()) return
+        setIsValidating(true)
+        setValidationResult(null)
+        try {
+            const response = await axios.post('/api/validate-citation', {
+                content: content,
+                content_type: domain === 'blog' ? 'general' : domain
+            })
+            setValidationResult(response.data)
+        } catch (err) {
+            console.error('Validation failed:', err)
+            setError('Real-world validation failed. Please try again.')
+        } finally {
+            setIsValidating(false)
         }
     }
 
@@ -251,57 +271,133 @@ function AISimulator() {
                                 onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                             />
                         </div>
-                    </div>
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                            <button
+                                onClick={handleSimulate}
+                                disabled={loading || !query.trim() || !content.trim()}
+                                className="btn btn-primary"
+                                style={{ 
+                                    flex: 1,
+                                    padding: '1.1rem',
+                                    fontSize: '1rem',
+                                    fontWeight: '700',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.8rem',
+                                    borderRadius: '12px',
+                                    background: 'var(--accent-gradient)',
+                                    boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.4)',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                {loading ? (
+                                    <>
+                                        <RefreshCw size={20} className="spin" /> 
+                                        <span>Running Deep Intelligence Analysis...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Zap size={20} fill="currentColor" /> 
+                                        <span>Execute Simulation</span>
+                                    </>
+                                )}
+                                {!loading && <div className="shimmer-effect" />}
+                            </button>
 
-                    <button
-                        onClick={handleSimulate}
-                        disabled={loading || !query.trim() || !content.trim()}
-                        className="btn btn-primary"
-                        style={{ 
-                            width: '100%', 
-                            padding: '1rem', 
-                            fontSize: '1.1rem',
-                            borderRadius: '12px',
-                            boxShadow: '0 10px 30px -10px rgba(59, 130, 246, 0.5)',
-                            position: 'relative',
-                            overflow: 'hidden'
-                        }}
-                    >
-                        {loading ? (
-                            <>
-                                <RefreshCw size={20} className="spin" /> 
-                                <span>Running Deep Intelligence Analysis...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Zap size={20} fill="currentColor" /> 
-                                <span>Execute Simulation</span>
-                            </>
+                            <button
+                                onClick={handleValidate}
+                                disabled={isValidating || !content.trim()}
+                                className="btn btn-outline"
+                                style={{ 
+                                    padding: '1rem 1.5rem',
+                                    fontSize: '0.95rem',
+                                    fontWeight: '700',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.6rem',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                                    color: '#10b981',
+                                    background: 'rgba(16, 185, 129, 0.05)',
+                                    cursor: (isValidating || !content.trim()) ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                {isValidating ? <RefreshCw size={18} className="spin" /> : <CheckCircle size={18} />}
+                                {isValidating ? 'Validating...' : 'Run Live Proof'}
+                            </button>
+                        </div>
+
+                        {error && (
+                            <motion.div 
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                style={{
+                                    marginTop: '1.25rem',
+                                    padding: '1rem',
+                                    background: 'rgba(239, 68, 68, 0.08)',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                    borderRadius: '10px',
+                                    color: 'var(--error)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1rem',
+                                    fontSize: '0.95rem'
+                                }}
+                            >
+                                <AlertTriangle size={20} />
+                                {error}
+                            </motion.div>
                         )}
-                        {/* Shimmer Effect */}
-                        {!loading && <div className="shimmer-effect" />}
-                    </button>
 
-                    {error && (
-                        <motion.div 
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            style={{
-                                padding: '1rem',
-                                background: 'rgba(239, 68, 68, 0.08)',
-                                border: '1px solid rgba(239, 68, 68, 0.2)',
-                                borderRadius: '10px',
-                                color: 'var(--error)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '1rem',
-                                fontSize: '0.95rem'
-                            }}
-                        >
-                            <AlertTriangle size={20} />
-                            {error}
-                        </motion.div>
-                    )}
+                        <AnimatePresence>
+                            {validationResult && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                    style={{ marginTop: '1.5rem' }}
+                                >
+                                    <div className="glass-card" style={{ 
+                                        padding: '1.5rem', 
+                                        border: `1px solid ${validationResult.threshold_met ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)'}`,
+                                        background: validationResult.threshold_met ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(0,0,0,0.2) 100%)' : 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(0,0,0,0.2) 100%)'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                {validationResult.threshold_met ? (
+                                                    <Trophy size={24} color="#10b981" />
+                                                ) : (
+                                                    <AlertTriangle size={24} color="#f59e0b" />
+                                                )}
+                                                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800' }}>
+                                                    {validationResult.threshold_met ? 'Extraction Verification Success' : 'Extraction Threshold Warning'}
+                                                </h3>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Probability</div>
+                                                <div style={{ fontSize: '1.4rem', fontWeight: '900', color: validationResult.threshold_met ? '#10b981' : '#f59e0b' }}>
+                                                    {validationResult.probability.toFixed(1)}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: '1.5' }}>
+                                            {validationResult.threshold_met 
+                                                ? "Outstanding. Your content architecture has crossed the required threshold. AI agents like Perplexity and SearchGPT are highly likely to extract and cite this content."
+                                                : "Warning: Low extraction probability. AI agents may struggle to parse this content as authoritative. Use the Content Optimizer to injection missing structural elements."}
+                                        </p>
+                                        <button 
+                                            onClick={() => setValidationResult(null)}
+                                            style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline', padding: 0 }}
+                                        >
+                                            Dismiss Result
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
 
                 {/* Results Section - Now Flows Vertically */}

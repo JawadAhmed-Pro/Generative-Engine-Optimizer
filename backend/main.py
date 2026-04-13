@@ -1412,6 +1412,70 @@ async def discover_prompts(
         app_logger.error(f"Discovery Failed: {e}")
         raise HTTPException(status_code=500, detail=f"Prompt discovery failed: {str(e)}")
 
+class InjectRequest(BaseModel):
+    context_text: str
+    injection_target: str
+    tone: str = "professional"
+
+@app.post("/api/optimize/inject")
+async def generate_targeted_injection(
+    request: InjectRequest,
+    current_user: dict = Depends(require_auth)
+):
+    """Generate a specific missing block for the Smart Injection Auto-Writer."""
+    try:
+        injected_markdown = await llm_scorer.generate_targeted_injection(
+            context_text=request.context_text,
+            injection_target=request.injection_target,
+            tone=request.tone
+        )
+        return {"status": "success", "injection": injected_markdown}
+    except Exception as e:
+        app_logger.error(f"Targeted Injection Failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Injection generation failed.")
+
+class ValidateCitationRequest(BaseModel):
+    content: str
+    content_type: str = "general"
+
+@app.post("/api/validate-citation")
+async def validate_citation(
+    request: ValidateCitationRequest,
+    current_user: dict = Depends(require_auth)
+):
+    """Run a live simulation to determine if the content crosses the 'Extraction Threshold'."""
+    try:
+        # Full pseudo-analysis for validation
+        extracted = {'content': request.content, 'content_type': request.content_type}
+        rule_scores = rule_scorer.analyze(request.content, extracted, request.content_type)
+        llm_scores_res = await llm_scorer.analyze(request.content, extracted)
+        final_scores = aggregator.aggregate(rule_scores, llm_scores_res)
+        
+        overall_score = (final_scores['ai_visibility_score'] + final_scores['citation_worthiness_score'] + final_scores['semantic_coverage_score'] + final_scores['technical_readability_score']) / 4
+        
+        prob_calc = probability_model.calculate_probability(
+            overall_score=overall_score,
+            rule_scores=final_scores['rule_based_scores'],
+            llm_scores=final_scores['llm_scores'],
+            content_type=request.content_type,
+            engine="perplexity"
+        )
+        
+        # Determine Success 
+        threshold_met = prob_calc.get('probability', 0) >= 80.0
+        
+        return {
+            "status": "success",
+            "threshold_met": threshold_met,
+            "probability": prob_calc.get('probability', 0),
+            "simulated_score": overall_score,
+            "validation_factors": prob_calc.get('factors', [])
+        }
+    except Exception as e:
+        app_logger.error(f"Validation Engine Failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Validation failed.")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

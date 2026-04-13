@@ -207,6 +207,12 @@ function ContentOptimization() {
     const [importUrl, setImportUrl] = useState('')
     const [importLoading, setImportLoading] = useState(false)
 
+    // Smart Injection State
+    const [injectionTarget, setInjectionTarget] = useState('')
+    const [injectionTone, setInjectionTone] = useState('professional')
+    const [injectedText, setInjectedText] = useState('')
+    const [isInjecting, setIsInjecting] = useState(false)
+
     const handleImportUrl = async () => {
         if (!importUrl.trim()) return
         setImportLoading(true)
@@ -244,6 +250,32 @@ function ContentOptimization() {
             console.error('Keyword extraction failed:', err)
         } finally {
             setKeywordsLoading(false)
+        }
+    }
+
+    const handleSmartInject = async () => {
+        if (!content.trim() || !injectionTarget.trim()) return
+        setIsInjecting(true)
+        try {
+            const response = await axios.post('/api/optimize/inject', {
+                context_text: content,
+                injection_target: injectionTarget,
+                tone: injectionTone
+            })
+            setInjectedText(response.data.injection)
+        } catch (err) {
+            console.error('Injection failed:', err)
+            alert('Failed to generate requested section.')
+        } finally {
+            setIsInjecting(false)
+        }
+    }
+
+    const acceptInjection = () => {
+        if (injectedText) {
+            updateOptimization({ content: content + '\n\n' + injectedText })
+            setInjectedText('')
+            setInjectionTarget('')
         }
     }
 
@@ -595,6 +627,84 @@ function ContentOptimization() {
                                 marginBottom: '1rem'
                             }}>
                                 <InfoIcon size={14} /> Paste the full text you want to improve. Markdown is supported.
+                            </div>
+                        )}
+
+                        {/* Smart Injection Auto-Writer Panel */}
+                        {activeTab !== 'schema' && (
+                            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid rgba(16, 185, 129, 0.4)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                                    <Sparkles size={18} color="#10b981" />
+                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, color: '#10b981' }}>Smart Injection Auto-Writer</h3>
+                                </div>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+                                    Detected a missing semantic gap? Tell the AI what structural block to generate (e.g., "Pricing Table" or "Specs List"), and it will generate it matching your existing tone.
+                                </p>
+                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                                    <div style={{ flex: '1 1 300px' }}>
+                                        <input
+                                            type="text"
+                                            value={injectionTarget}
+                                            onChange={(e) => setInjectionTarget(e.target.value)}
+                                            placeholder="What is missing? (e.g. 'Add an FAQ section covering pricing')"
+                                            style={{
+                                                width: '100%',
+                                                padding: '0.85rem 1.1rem',
+                                                background: 'rgba(0,0,0,0.3)',
+                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '8px',
+                                                color: 'white',
+                                                fontSize: '0.9rem',
+                                                outline: 'none'
+                                            }}
+                                            className="focus-ring"
+                                        />
+                                    </div>
+                                    <div style={{ flex: '0 0 150px' }}>
+                                        <select
+                                            value={injectionTone}
+                                            onChange={(e) => setInjectionTone(e.target.value)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '0.85rem 1.1rem',
+                                                background: 'rgba(0,0,0,0.3)',
+                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '8px',
+                                                color: 'white',
+                                                fontSize: '0.9rem',
+                                                outline: 'none',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <option value="professional">Professional</option>
+                                            <option value="conversational">Conversational</option>
+                                            <option value="technical">Technical</option>
+                                            <option value="persuasive">Persuasive</option>
+                                        </select>
+                                    </div>
+                                    <button
+                                        onClick={handleSmartInject}
+                                        disabled={isInjecting || !injectionTarget.trim() || !content.trim()}
+                                        className="btn btn-primary"
+                                        style={{ padding: '0.85rem 1.5rem', fontSize: '0.9rem', background: '#10b981', color: '#000', fontWeight: '700' }}
+                                    >
+                                        {isInjecting ? <RefreshCw size={16} className="spin" /> : 'Generate Block'}
+                                    </button>
+                                </div>
+                                {injectedText && (
+                                    <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '1.25rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Generated Injection Preview</span>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <button onClick={() => setInjectedText('')} style={{ fontSize: '0.8rem', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem' }}>Discard</button>
+                                                <button onClick={acceptInjection} style={{ fontSize: '0.8rem', color: '#fff', background: '#10b981', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '0.5rem 1rem', fontWeight: 'bold' }}>Insert into Article</button>
+                                            </div>
+                                        </div>
+                                        <div className="markdown-content" style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                                            <ReactMarkdown>{injectedText}</ReactMarkdown>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
