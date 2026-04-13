@@ -24,9 +24,10 @@ class PromptDiscoveryEngine:
         """
         app_logger.info(f"Starting real-world prompt discovery for: {keyword}")
         
-        # 1. Scrape Real Data (Grounded Signals)
-        paa_data = await self._scrape_jina_search(f"site:google.com \"People also ask\" {keyword}")
-        reddit_data = await self._scrape_jina_search(f"site:reddit.com OR site:quora.com {keyword} \"question\"")
+        # 1. Scrape Real Data (Grounded Signals) - Run in parallel to save time
+        paa_task = self._scrape_jina_search(f"site:google.com \"People also ask\" {keyword}")
+        reddit_task = self._scrape_jina_search(f"site:reddit.com OR site:quora.com {keyword} \"question\"")
+        paa_data, reddit_data = await asyncio.gather(paa_task, reddit_task)
         
         # 2. Synthesize with LLM
         signals = {

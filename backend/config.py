@@ -10,11 +10,11 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     
-    # Security
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "b39x_Y6c-vH!kL8#qR2zT5wP9fA1m@sN$")
+    # Security - MUST be set in environment variables
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY")
     
-    # Database Configuration
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/geo_agent")
+    # Database Configuration - MUST be set in environment variables
+    DATABASE_URL: str = os.getenv("DATABASE_URL")
     
     @property
     def async_database_url(self) -> str:

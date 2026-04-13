@@ -10,6 +10,7 @@ export default function ContentStrategy() {
     const [niche, setNiche] = useState('general');
     const [prompts, setPrompts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [statusMessage, setStatusMessage] = useState('');
     const [error, setError] = useState('');
     
     const navigate = useNavigate();
@@ -59,12 +60,14 @@ export default function ContentStrategy() {
         if (!keyword.trim()) return;
 
         setIsLoading(true);
+        setStatusMessage('Initializing deep research engine...');
         setError('');
         setPrompts([]);
 
         try {
             const response = await axios.post('/api/discover-prompts', { keyword, niche });
             if (response.data.job_id) {
+                setStatusMessage('Parallelizing search signals from Google & Social sources...');
                 pollJobStatus(response.data.job_id);
             } else {
                 setPrompts(response.data.prompts || response.data.data?.top_prompts || []);
@@ -181,7 +184,10 @@ export default function ContentStrategy() {
                                     style={{ width: '100%', padding: '1.1rem', background: 'var(--accent-gradient)', border: 'none', fontSize: '1.1rem', fontWeight: '700', gap: '0.75rem', boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.4)' }}
                                 >
                                     {isLoading ? (
-                                        <RefreshCwIcon size={22} className="spin" />
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+                                            <RefreshCwIcon size={22} className="spin" />
+                                            <span style={{ fontSize: '0.7rem', fontWeight: '500', opacity: 0.8 }}>{statusMessage || 'Researching...'}</span>
+                                        </div>
                                     ) : (
                                         <><Search size={22} /> Generate Strategy</>
                                     )}
