@@ -199,13 +199,13 @@ function OnboardingWizard({ onComplete }) {
                                             gap: '1rem',
                                             padding: '1.25rem',
                                             background: answers[step.key] === option.value
-                                                ? 'rgba(59, 130, 246, 0.1)'
+                                                ? 'rgba(66, 212, 255, 0.1)'
                                                 : 'rgba(255,255,255,0.03)',
                                             border: answers[step.key] === option.value
                                                 ? '1px solid var(--accent-primary)'
                                                 : '1px solid rgba(255,255,255,0.05)',
                                             boxShadow: answers[step.key] === option.value
-                                                ? '0 0 20px rgba(59, 130, 246, 0.15)'
+                                                ? '0 0 20px rgba(66, 212, 255, 0.15)'
                                                 : 'none',
                                             borderRadius: '16px',
                                             cursor: 'pointer',
@@ -272,7 +272,7 @@ function OnboardingWizard({ onComplete }) {
                                         <div style={{
                                             width: '40px',
                                             height: '40px',
-                                            background: 'rgba(59, 130, 246, 0.2)',
+                                            background: 'rgba(66, 212, 255, 0.2)',
                                             borderRadius: '8px',
                                             display: 'flex',
                                             alignItems: 'center',

@@ -4,12 +4,16 @@ import { motion } from 'framer-motion'
 
 function WhyGeo() {
     const modules = [
+        {
+            icon: <BarChart2 size={28} />,
             color: 'rgba(66, 212, 255, 1)', // Neon Blue
             title: "Visibility Analysis",
             description: "Quantify your authority across 4 key GEO metrics. See exactly how AI search engines perceive your assets.",
             features: ["AI Authority Index", "Citation Probability", "Semantic Mapping", "Structural Analysis"],
             link: "/app/visibility"
         },
+        {
+            icon: <PenTool size={28} />,
             color: 'rgba(180, 100, 255, 1)', // Neon Purple
             title: "Content Optimizer",
             description: "Transform raw data into AI-native, citation-optimized narratives via advanced quantization.",

@@ -34,7 +34,7 @@ function NotFound() {
                 right: '20%',
                 width: '400px',
                 height: '400px',
-                background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(66, 212, 255, 0.1) 0%, transparent 70%)',
                 borderRadius: '50%',
                 filter: 'blur(80px)'
             }} />
