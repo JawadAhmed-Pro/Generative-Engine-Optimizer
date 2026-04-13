@@ -111,7 +111,7 @@ function OnboardingWizard({ onComplete }) {
                 left: '10%',
                 width: '300px',
                 height: '300px',
-                background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(66, 212, 255, 0.15) 0%, transparent 70%)',
                 borderRadius: '50%',
                 filter: 'blur(60px)'
             }} />
@@ -121,7 +121,7 @@ function OnboardingWizard({ onComplete }) {
                 right: '10%',
                 width: '400px',
                 height: '400px',
-                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(180, 100, 255, 0.15) 0%, transparent 70%)',
                 borderRadius: '50%',
                 filter: 'blur(80px)'
             }} />

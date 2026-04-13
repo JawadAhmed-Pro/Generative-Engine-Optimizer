@@ -157,7 +157,7 @@ function AISimulator() {
                                     width: '32px', 
                                     height: '32px', 
                                     borderRadius: '8px', 
-                                    background: domain === 'ecommerce' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
+                                    background: domain === 'ecommerce' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(66, 212, 255, 0.1)', 
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center' 
@@ -208,7 +208,7 @@ function AISimulator() {
                                     width: '32px', 
                                     height: '32px', 
                                     borderRadius: '8px', 
-                                    background: domain === 'blog' ? 'rgba(59, 130, 246, 0.1)' : domain === 'education' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(236, 72, 153, 0.1)', 
+                                    background: domain === 'blog' ? 'rgba(66, 212, 255, 0.1)' : domain === 'education' ? 'rgba(180, 100, 255, 0.1)' : 'rgba(236, 72, 153, 0.1)', 
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center' 
@@ -262,7 +262,7 @@ function AISimulator() {
                             padding: '1rem', 
                             fontSize: '1.1rem',
                             borderRadius: '12px',
-                            boxShadow: '0 10px 30px -10px rgba(59, 130, 246, 0.5)',
+                            boxShadow: '0 10px 30px -10px rgba(66, 212, 255, 0.5)',
                             position: 'relative',
                             overflow: 'hidden'
                         }}
@@ -523,9 +523,9 @@ function AISimulator() {
                                                             fontSize: '0.85rem', 
                                                             color: 'var(--text-primary)',
                                                             padding: '0.65rem 0.85rem',
-                                                            background: 'rgba(59, 130, 246, 0.03)',
+                                                            background: 'rgba(66, 212, 255, 0.03)',
                                                             borderRadius: '8px',
-                                                            border: '1px solid rgba(59, 130, 246, 0.1)'
+                                                            border: '1px solid rgba(66, 212, 255, 0.1)'
                                                         }}>
                                                             <div style={{ minWidth: '4px', height: '18px', background: 'var(--accent-primary)', borderRadius: '2px', marginTop: '2px' }} />
                                                             {sug}

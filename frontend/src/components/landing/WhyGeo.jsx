@@ -4,17 +4,13 @@ import { motion } from 'framer-motion'
 
 function WhyGeo() {
     const modules = [
-        {
-            icon: <BarChart2 size={28} />,
-            color: '#3B82F6', // var(--accent-primary)
+            color: 'rgba(66, 212, 255, 1)', // Neon Blue
             title: "Visibility Analysis",
             description: "Quantify your authority across 4 key GEO metrics. See exactly how AI search engines perceive your assets.",
             features: ["AI Authority Index", "Citation Probability", "Semantic Mapping", "Structural Analysis"],
             link: "/app/visibility"
         },
-        {
-            icon: <PenTool size={28} />,
-            color: '#8B5CF6', // var(--accent-secondary)
+            color: 'rgba(180, 100, 255, 1)', // Neon Purple
             title: "Content Optimizer",
             description: "Transform raw data into AI-native, citation-optimized narratives via advanced quantization.",
             features: ["Semantic Rewriting", "Intent Calibration", "Structured Export", "Contextual Scaling"],
@@ -42,9 +38,9 @@ function WhyGeo() {
                 {/* Section Header */}
                 <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
                     <span style={{
-                        background: 'rgba(139, 92, 246, 0.1)',
-                        border: '1px solid rgba(139, 92, 246, 0.2)',
-                        color: 'var(--accent-secondary)',
+                        background: 'rgba(180, 100, 255, 0.1)',
+                        border: '1px solid rgba(180, 100, 255, 0.2)',
+                        color: 'rgba(180, 100, 255, 1)',
                         padding: '0.6rem 1.25rem',
                         borderRadius: 'var(--radius-full)',
                         fontSize: '0.8rem',

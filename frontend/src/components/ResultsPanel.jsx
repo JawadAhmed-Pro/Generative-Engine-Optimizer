@@ -54,7 +54,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    style={{ filter: 'drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3))' }}
+                    style={{ filter: 'drop-shadow(0 2px 4px rgba(66, 212, 255, 0.3))' }}
                 />
                 {data.map((d, i) => {
                     const x = (i / (data.length - 1)) * (width - padding * 2) + padding;

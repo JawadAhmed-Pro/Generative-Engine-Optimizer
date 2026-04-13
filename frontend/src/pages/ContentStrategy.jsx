@@ -181,7 +181,7 @@ export default function ContentStrategy() {
                                     type="submit"
                                     disabled={isLoading || !keyword.trim()}
                                     className="btn btn-primary"
-                                    style={{ width: '100%', padding: '1.1rem', background: 'var(--accent-gradient)', border: 'none', fontSize: '1.1rem', fontWeight: '700', gap: '0.75rem', boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.4)' }}
+                                    style={{ width: '100%', padding: '1.1rem', background: 'var(--accent-gradient)', border: 'none', fontSize: '1.1rem', fontWeight: '700', gap: '0.75rem', boxShadow: '0 10px 25px -5px rgba(66, 212, 255, 0.4)' }}
                                 >
                                     {isLoading ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
@@ -215,7 +215,7 @@ export default function ContentStrategy() {
                                 className="glass-card" 
                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', textAlign: 'center', height: '100%', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.01)', minHeight: '100%' }}
                             >
-                                <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(59, 130, 246, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                                <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(66, 212, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', border: '1px solid rgba(66, 212, 255, 0.1)' }}>
                                     <BookOpen size={32} color="var(--accent-primary)" style={{ opacity: 0.5 }} />
                                 </div>
                                 <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Ready for Discovery</h3>
@@ -280,9 +280,9 @@ export default function ContentStrategy() {
                                                             fontSize: '0.75rem',
                                                             fontWeight: '800',
                                                             borderRadius: '8px',
-                                                            background: 'rgba(59, 130, 246, 0.1)',
+                                                            background: 'rgba(66, 212, 255, 0.1)',
                                                             color: 'var(--accent-primary)',
-                                                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                                                            border: '1px solid rgba(66, 212, 255, 0.2)',
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             gap: '0.4rem'
@@ -328,7 +328,7 @@ export default function ContentStrategy() {
             <style>{`
                 .focus-ring:focus {
                     border-color: var(--accent-primary) !important;
-                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+                    box-shadow: 0 0 0 2px rgba(66, 212, 255, 0.15);
                     background: rgba(0,0,0,0.4) !important;
                 }
             `}</style>

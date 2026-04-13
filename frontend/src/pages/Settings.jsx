@@ -82,7 +82,7 @@ export default function Settings() {
                 }
                 .settings-container .account-item:hover {
                     background: rgba(255, 255, 255, 0.04);
-                    border-color: rgba(59, 130, 246, 0.3);
+                    border-color: rgba(66, 212, 255, 0.3);
                 }
                 .avatar-container {
                     width: 100px;
@@ -460,7 +460,7 @@ function PreferencesCard() {
                             alignItems: 'center',
                             gap: '0.75rem',
                             padding: '1.5rem 1rem',
-                            background: defaultDomain === niche.id ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-tertiary)',
+                            background: defaultDomain === niche.id ? 'rgba(66, 212, 255, 0.15)' : 'var(--bg-tertiary)',
                             border: defaultDomain === niche.id ? '1px solid var(--accent-primary)' : '1px solid var(--bg-tertiary)',
                             borderRadius: '12px',
                             cursor: 'pointer',
@@ -500,7 +500,7 @@ function ThemeCard() {
                     onClick={() => setTheme('dark')}
                     style={{
                         flex: 1,
-                        background: theme === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-tertiary)',
+                        background: theme === 'dark' ? 'rgba(66, 212, 255, 0.15)' : 'var(--bg-tertiary)',
                         border: theme === 'dark' ? '1px solid var(--accent-primary)' : '1px solid var(--bg-tertiary)',
                         padding: '1.25rem',
                         borderRadius: '12px',
@@ -522,7 +522,7 @@ function ThemeCard() {
                     onClick={() => setTheme('light')}
                     style={{
                         flex: 1,
-                        background: theme === 'light' ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-tertiary)',
+                        background: theme === 'light' ? 'rgba(66, 212, 255, 0.15)' : 'var(--bg-tertiary)',
                         border: theme === 'light' ? '1px solid var(--accent-primary)' : '1px solid var(--bg-tertiary)',
                         padding: '1.25rem',
                         borderRadius: '12px',
