@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react'
 import axios from 'axios'
+import { useTheme } from '../context/ThemeContext'
 
 // Simple client-side cache to persist dashboard data between navigation
 const trendCache = new Map();
@@ -10,6 +9,7 @@ function TrendChart({ projectId = null, limit = 10 }) {
     const [data, setData] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const { isDark } = useTheme()
 
     useEffect(() => {
         fetchTrendData()
@@ -77,16 +77,17 @@ function TrendChart({ projectId = null, limit = 10 }) {
         if (active && payload && payload.length) {
             return (
                 <div style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(15, 23, 42, 0.1)',
                     borderRadius: '8px',
                     padding: '0.75rem 1rem',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                    backdropFilter: 'blur(10px)'
                 }}>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.25rem' }}>
                         {label}
                     </p>
-                    <p style={{ color: 'var(--accent-primary)', fontWeight: '600', fontSize: '1rem' }}>
+                    <p style={{ color: isDark ? 'white' : '#0F172A', fontWeight: '800', fontSize: '1.1rem' }}>
                         Score: {payload[0].value}
                     </p>
                     {payload[0].payload.title && (
@@ -129,14 +130,19 @@ function TrendChart({ projectId = null, limit = 10 }) {
     }
 
     return (
-        <div className="glass-card" style={{ padding: '1.5rem' }}>
+        <div className="depth-card" style={{ 
+            padding: '2rem', 
+            background: isDark ? 'rgba(255,255,255,0.02)' : 'white',
+            border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)',
+            borderRadius: '16px'
+        }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <div>
-                    <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.25rem' }}>
-                        Score Trend
+                    <h3 style={{ fontSize: '1rem', fontWeight: '900', marginBottom: '0.25rem', color: isDark ? 'white' : '#0F172A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Optimization Trends
                     </h3>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        Last {data.length} analyses
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: '600' }}>
+                        Multi-layered performance analysis
                     </p>
                 </div>
 
@@ -177,8 +183,8 @@ function TrendChart({ projectId = null, limit = 10 }) {
             <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                     <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="rgba(255,255,255,0.05)"
+                        strokeDasharray="4 4"
+                        stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"}
                         vertical={false}
                     />
                     <XAxis
@@ -200,20 +206,16 @@ function TrendChart({ projectId = null, limit = 10 }) {
                     <Line
                         type="monotone"
                         dataKey="score"
-                        stroke="#00d2ff"
+                        stroke={isDark ? "#94A3B8" : "#4169E1"}
                         strokeWidth={4}
-                        dot={{ fill: '#00d2ff', strokeWidth: 0, r: 4 }}
-                        activeDot={{ r: 6, stroke: '#00d2ff', strokeWidth: 2, fill: 'white' }}
-                        filter="url(#neon-glow)"
+                        dot={{ fill: isDark ? "#94A3B8" : "#4169E1", strokeWidth: 0, r: 4 }}
+                        activeDot={{ r: 7, stroke: isDark ? "white" : "#0F172A", strokeWidth: 2, fill: isDark ? "#475569" : "#4169E1" }}
                     />
-                    <defs>
-                        <filter id="neon-glow" height="300%" width="300%" x="-75%" y="-75%">
-                            <feGaussianBlur stdDeviation="3" result="blur" />
-                            <feMerge>
-                                <feMergeNode in="blur" />
-                                <feMergeNode in="SourceGraphic" />
-                            </feMerge>
-                        </filter>
+                     <defs>
+                        <linearGradient id="line-gradient" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor={isDark ? "#94A3B8" : "#4169E1"} />
+                            <stop offset="100%" stopColor={isDark ? "#475569" : "#4B0082"} />
+                        </linearGradient>
                     </defs>
                 </LineChart>
             </ResponsiveContainer>
