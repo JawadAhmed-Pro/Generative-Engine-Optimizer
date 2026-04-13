@@ -14,6 +14,8 @@ const TableWithCopy = ({ children }) => {
 
     const handleCopyTable = async () => {
         if (!tableRef.current) return
+        try {
+            const canvas = await html2canvas(tableRef.current, {
                 backgroundColor: '#0c0c0e', // Anthracite background for table image export
                 scale: 2, // High resolution
                 logging: false,
