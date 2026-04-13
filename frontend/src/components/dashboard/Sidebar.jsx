@@ -26,7 +26,6 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
         { icon: <FileText size={20} />, label: 'Content Optimization', path: '/app/optimization' },
         { icon: <Zap size={20} />, label: 'AI Simulator', path: '/app/ai-simulator' },
         { icon: <BarChart2 size={20} />, label: 'Visibility Analysis', path: '/app/visibility' },
-        { icon: <Globe size={20} />, label: 'Citation Tracking', path: '/app/citations' },
         { icon: <GitCompareArrows size={20} />, label: 'Competitor Analysis', path: '/app/competitors' },
         { icon: <Sparkles size={20} />, label: 'Content Strategy', path: '/app/strategy' },
         { icon: <Settings size={20} />, label: 'Settings', path: '/app/settings' },

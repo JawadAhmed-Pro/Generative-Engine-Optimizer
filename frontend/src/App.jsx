@@ -8,7 +8,6 @@ import AISimulator from './pages/AISimulator'
 import Projects from './pages/Projects'
 import ProjectDetail from './pages/ProjectDetail'
 import VisibilityAnalysis from './pages/VisibilityAnalysis'
-import CitationTracking from './pages/CitationTracking'
 import CompetitorAnalysis from './pages/CompetitorAnalysis'
 import ContentStrategy from './pages/ContentStrategy'
 import Settings from './pages/Settings'
@@ -51,7 +50,6 @@ function App() {
                                 <Route path="projects" element={<Projects />} />
                                 <Route path="projects/:id" element={<ProjectDetail />} />
                                 <Route path="visibility" element={<VisibilityAnalysis />} />
-                                <Route path="citations" element={<CitationTracking />} />
                                 <Route path="competitors" element={<CompetitorAnalysis />} />
                                 <Route path="strategy" element={<ContentStrategy />} />
                                 <Route path="settings" element={<Settings />} />
