@@ -200,11 +200,21 @@ function TrendChart({ projectId = null, limit = 10 }) {
                     <Line
                         type="monotone"
                         dataKey="score"
-                        stroke="var(--accent-primary)"
-                        strokeWidth={3}
-                        dot={{ fill: 'var(--accent-primary)', strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6, stroke: 'var(--accent-primary)', strokeWidth: 2, fill: 'white' }}
+                        stroke="#00d2ff"
+                        strokeWidth={4}
+                        dot={{ fill: '#00d2ff', strokeWidth: 0, r: 4 }}
+                        activeDot={{ r: 6, stroke: '#00d2ff', strokeWidth: 2, fill: 'white' }}
+                        filter="url(#neon-glow)"
                     />
+                    <defs>
+                        <filter id="neon-glow" height="300%" width="300%" x="-75%" y="-75%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feMerge>
+                                <feMergeNode in="blur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
                 </LineChart>
             </ResponsiveContainer>
         </div>

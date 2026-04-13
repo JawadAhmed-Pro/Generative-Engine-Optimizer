@@ -133,19 +133,26 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                                     alignItems: 'center',
                                     justifyContent: collapsed ? 'center' : 'flex-start',
                                     gap: '0.75rem',
-                                    padding: collapsed ? '0.75rem' : '0.75rem',
-                                    borderRadius: 'var(--radius-md)',
-                                    color: isActive ? 'white' : 'var(--text-secondary)',
-                                    background: isActive ? 'var(--accent-primary)' : 'transparent',
+                                    padding: '0.75rem 1rem',
+                                    borderRadius: '0', // Square active indicators
+                                    color: isActive ? '#00d2ff' : 'rgba(255,255,255,0.4)',
+                                    background: isActive ? 'linear-gradient(to right, rgba(0, 210, 255, 0.08), transparent)' : 'transparent',
                                     textDecoration: 'none',
-                                    fontSize: '0.9rem',
-                                    fontWeight: isActive ? '600' : '500',
-                                    transition: 'all 0.2s ease',
-                                    whiteSpace: 'nowrap'
+                                    fontSize: '0.85rem',
+                                    fontWeight: isActive ? '700' : '500',
+                                    transition: 'all 0.3s ease',
+                                    position: 'relative',
+                                    borderLeft: isActive ? '2px solid #00d2ff' : '2px solid transparent'
                                 })}
                             >
-                                {item.icon}
-                                {!collapsed && item.label}
+                                <div style={{ 
+                                    color: 'inherit',
+                                    filter: 'drop-shadow(0 0 8px currentColor)',
+                                    opacity: 1
+                                }}>
+                                    {item.icon}
+                                </div>
+                                {!collapsed && <span style={{ transition: 'all 0.3s ease', letterSpacing: '0.01em' }}>{item.label}</span>}
                             </NavLink>
                         </li>
                     ))}
@@ -183,11 +190,11 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                     {!collapsed && (
                         <>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '0.9rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {user?.name || 'User'}
+                                <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'white', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    Premium <Sparkles size={12} color="#FFD700" fill="#FFD700" />
                                 </div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {user?.email || ''}
+                                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
+                                    Member
                                 </div>
                             </div>
                             <button
