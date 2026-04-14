@@ -20,11 +20,11 @@ function MetricCard({ title, score, description }) {
     }
 
     return (
-        <div className="glass-card" style={{
+        <div className="depth-card" style={{
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            borderTop: `1px solid ${getProgressColor(score)}33`,
+            borderTop: `1px solid ${getProgressColor(score)}`,
             height: '100%'
         }}>
             <div>
@@ -34,11 +34,12 @@ function MetricCard({ title, score, description }) {
                         width: '32px',
                         height: '32px',
                         borderRadius: '8px',
-                        background: `${getProgressColor(score)}15`,
+                        background: 'var(--bg-tertiary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: getProgressColor(score)
+                        color: getProgressColor(score),
+                        border: `1px solid ${getProgressColor(score)}44`
                     }}>
                         {getIcon()}
                     </div>
@@ -53,14 +54,14 @@ function MetricCard({ title, score, description }) {
             </div>
 
             <div>
-                <div className="progress-bar" style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', marginBottom: '1rem' }}>
+                <div className="progress-bar" style={{ height: '6px', background: 'var(--bg-tertiary)', borderRadius: '10px', overflow: 'hidden', marginBottom: '1rem' }}>
                     <div
                         className="progress-fill"
                         style={{
                             height: '100%',
                             width: `${score}%`,
                             background: getProgressColor(score),
-                            boxShadow: `0 0 10px ${getProgressColor(score)}44`,
+                            boxShadow: `0 0 10px ${getProgressColor(score)}22`,
                             transition: 'width 1s ease-out'
                         }}
                     ></div>

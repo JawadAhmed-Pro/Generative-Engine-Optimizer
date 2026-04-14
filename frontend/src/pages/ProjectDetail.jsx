@@ -163,7 +163,7 @@ function ProjectDetail() {
                 {/* Header with filters */}
                 <div style={{
                     padding: '1rem 1.5rem',
-                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    borderBottom: '1px solid var(--section-divider)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
@@ -175,8 +175,8 @@ function ProjectDetail() {
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value)}
                             style={{
-                                background: 'rgba(0,0,0,0.3)',
-                                border: '1px solid rgba(255,255,255,0.1)',
+                                background: 'var(--bg-tertiary)',
+                                border: '1px solid var(--card-border)',
                                 color: 'var(--text-primary)',
                                 padding: '0.5rem 0.75rem',
                                 borderRadius: '6px',
@@ -197,8 +197,8 @@ function ProjectDetail() {
                                 setSortOrder(newOrder)
                             }}
                             style={{
-                                background: 'rgba(0,0,0,0.3)',
-                                border: '1px solid rgba(255,255,255,0.1)',
+                                background: 'var(--bg-tertiary)',
+                                border: '1px solid var(--card-border)',
                                 color: 'var(--text-primary)',
                                 padding: '0.5rem 0.75rem',
                                 borderRadius: '6px',
@@ -214,31 +214,43 @@ function ProjectDetail() {
                 </div>
 
                 {filteredItems.length === 0 ? (
-                    <div style={{ padding: '2.5rem', textAlign: 'center' }}>
+                    <div className="glass-card glow-static" style={{ 
+                        padding: '4rem 2rem', 
+                        textAlign: 'center',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid var(--card-border)',
+                        background: 'rgba(96, 165, 250, 0.02)',
+                        minHeight: '300px'
+                    }}>
                         <div style={{
-                            width: '60px',
-                            height: '60px',
-                            background: 'rgba(255,255,255,0.05)',
-                            borderRadius: '12px',
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '24px',
+                            background: 'rgba(96, 165, 250, 0.08)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            margin: '0 auto 1rem'
+                            marginBottom: '2rem',
+                            border: '1px solid var(--card-border)',
+                            boxShadow: 'var(--elevation-med)'
                         }}>
-                            <FileText size={28} color="var(--text-secondary)" />
+                            <FileText size={32} color="var(--accent-primary)" style={{ filter: 'drop-shadow(0 0 8px rgba(96, 165, 250, 0.5))' }} />
                         </div>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '300px', fontSize: '1.05rem', lineHeight: '1.6' }}>
                             {items.length === 0
-                                ? 'No items in this project yet.'
+                                ? 'No items in this project yet. Start your first perception audit.'
                                 : 'No items match your filter.'}
                         </p>
                         {items.length === 0 && (
                             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                                <Link to="/app/visibility" className="btn btn-primary">
-                                    <Search size={16} style={{ marginRight: '0.5rem' }} /> Analyze URL
+                                <Link to="/app/visibility" className="btn btn-primary" style={{ padding: '0.85rem 1.5rem', fontWeight: '700' }}>
+                                    <Search size={18} style={{ marginRight: '0.5rem' }} /> Analyze URL
                                 </Link>
-                                <Link to="/app/optimization" className="btn btn-outline">
-                                    <PenTool size={16} style={{ marginRight: '0.5rem' }} /> Optimize Content
+                                <Link to="/app/optimization" className="btn btn-outline" style={{ padding: '0.85rem 1.5rem', fontWeight: '700', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)' }}>
+                                    <PenTool size={18} style={{ marginRight: '0.5rem' }} /> Optimize Content
                                 </Link>
                             </div>
                         )}
@@ -249,22 +261,22 @@ function ProjectDetail() {
                             <div
                                 key={item.id}
                                 onClick={() => setSelectedItem(item.id)}
+                                className="table-row-hover"
                                 style={{
                                     padding: '1rem 1.5rem',
-                                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                    borderBottom: '1px solid var(--section-divider)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '1rem',
-                                    transition: 'background 0.2s',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    borderLeft: '4px solid transparent'
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                             >
                                 <div style={{
                                     width: '44px',
                                     height: '44px',
-                                    background: item.url ? 'rgba(59, 130, 246, 0.1)' : 'rgba(139, 92, 246, 0.1)',
+                                    background: item.url ? 'rgba(59, 130, 246, 0.1)' : 'rgba(37, 99, 235, 0.1)',
                                     borderRadius: '10px',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -288,12 +300,13 @@ function ProjectDetail() {
                                 <div style={{
                                     width: '60px',
                                     height: '60px',
-                                    background: 'rgba(0,0,0,0.2)',
+                                    background: 'var(--bg-tertiary)',
                                     borderRadius: '8px',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
-                                    justifyContent: 'center'
+                                    justifyContent: 'center',
+                                    border: '1px solid var(--card-border)'
                                 }}>
                                     <div style={{ fontSize: '1.25rem', fontWeight: '700', color: getScoreColor(item.score) }}>
                                         {item.score?.toFixed(0) || '—'}
@@ -302,7 +315,7 @@ function ProjectDetail() {
                                 </div>
                                 <div style={{
                                     padding: '0.25rem 0.75rem',
-                                    background: item.url ? 'rgba(59, 130, 246, 0.2)' : 'rgba(139, 92, 246, 0.2)',
+                                    background: item.url ? 'rgba(59, 130, 246, 0.2)' : 'rgba(37, 99, 235, 0.2)',
                                     borderRadius: '20px',
                                     fontSize: '0.7rem',
                                     fontWeight: '600',

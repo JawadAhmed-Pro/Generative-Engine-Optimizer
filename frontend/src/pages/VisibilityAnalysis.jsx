@@ -122,10 +122,10 @@ function VisibilityAnalysis() {
                 <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                     <div style={{ 
                         display: 'inline-flex', 
-                        background: 'rgba(255,255,255,0.03)', 
+                        background: 'var(--bg-tertiary)', 
                         padding: '4px', 
                         borderRadius: '12px', 
-                        border: '1px solid rgba(255,255,255,0.08)',
+                        border: '1px solid var(--card-border)',
                         gap: '4px'
                     }}>
                         {[
@@ -194,8 +194,8 @@ function VisibilityAnalysis() {
                                             : "https://store.com/products/wireless-headphones-v2"}
                                         style={{
                                             width: '100%',
-                                            background: 'rgba(0,0,0,0.3)',
-                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            background: 'var(--bg-tertiary)',
+                                            border: '1px solid var(--card-border)',
                                             borderRadius: '10px',
                                             padding: '1rem 1.25rem',
                                             color: 'var(--text-primary)',
@@ -218,7 +218,7 @@ function VisibilityAnalysis() {
                             </div>
 
                             {/* Project Selector Group */}
-                            <div style={{ paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--card-border)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
                                     <Folder size={18} color="var(--accent-secondary)" />
                                     <span style={{ fontWeight: '700', fontSize: '0.95rem', letterSpacing: '0.02em' }}>Assign to Project</span>
@@ -234,8 +234,8 @@ function VisibilityAnalysis() {
                                             autoFocus
                                             style={{
                                                 flex: 1,
-                                                background: 'rgba(0,0,0,0.4)',
-                                                border: '1px solid rgba(255,255,255,0.2)',
+                                                background: 'var(--bg-tertiary)',
+                                                border: '1px solid var(--card-border)',
                                                 color: 'var(--text-primary)',
                                                 padding: '0.75rem 1rem',
                                                 borderRadius: '8px',
@@ -268,8 +268,8 @@ function VisibilityAnalysis() {
                                                 onChange={(e) => setSelectedProject(e.target.value)}
                                                 style={{
                                                     width: '100%',
-                                                    background: 'rgba(0,0,0,0.4)',
-                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                    background: 'var(--bg-secondary)',
+                                                    border: '1px solid var(--card-border)',
                                                     color: 'var(--text-primary)',
                                                     padding: '0.75rem 2.5rem 0.75rem 1rem',
                                                     borderRadius: '8px',
@@ -345,11 +345,11 @@ function VisibilityAnalysis() {
                     <div className="depth-card" style={{ padding: '0', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
                         <div style={{
                             padding: '1.25rem 1.5rem',
-                            borderBottom: '1px solid rgba(255,255,255,0.08)',
+                            borderBottom: '1px solid var(--card-border)',
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            background: 'rgba(255,255,255,0.02)'
+                            background: 'var(--bg-tertiary)'
                         }}>
                             <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                                 ANALYSIS HISTORY
@@ -369,14 +369,14 @@ function VisibilityAnalysis() {
                                     <div
                                         key={item.id}
                                         onClick={() => setSelectedHistoryItem(item.id)}
+                                        className="table-row-hover"
                                         style={{
                                             padding: '1.25rem 1.5rem',
-                                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                            borderBottom: '1px solid var(--card-border)',
                                             cursor: 'pointer',
                                             transition: 'all 0.2s ease',
-                                            borderLeft: '2px solid var(--accent-primary)'
+                                            borderLeft: '4px solid transparent'
                                         }}
-                                        className="history-item-hover"
                                     >
                                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                                             <div style={{ flex: 1 }}>
@@ -399,8 +399,9 @@ function VisibilityAnalysis() {
                                                         fontWeight: '700',
                                                         padding: '0.15rem 0.5rem',
                                                         borderRadius: '4px',
-                                                        background: item.score > 80 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                                                        background: item.score > 80 ? '#0a1d15' : '#1d150a',
                                                         color: item.score > 80 ? 'var(--success)' : 'var(--warning)',
+                                                        border: `1px solid ${item.score > 80 ? 'var(--success)' : 'var(--warning)'}33`
                                                     }}>
                                                         {item.score?.toFixed(0)}%
                                                     </div>
@@ -420,28 +421,29 @@ function VisibilityAnalysis() {
                 {analysisResults ? (
                     <ResultsPanel results={analysisResults} onReset={() => updateVisibility({ analysisResults: null })} />
                 ) : (
-                    <div className="glass-card" style={{ 
+                    <div className="glass-card glow-static" style={{ 
                         minHeight: '400px', 
-                        background: 'rgba(15, 23, 42, 0.3)',
+                        background: 'var(--bg-secondary)',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '1.5rem',
-                        borderStyle: 'dashed',
-                        borderWidth: '2px'
+                        border: '1px solid var(--card-border)'
                     }}>
                         <div style={{
-                            width: '64px',
-                            height: '64px',
-                            borderRadius: '50%',
-                            background: 'rgba(59, 130, 246, 0.1)',
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '24px',
+                            background: 'rgba(96, 165, 250, 0.08)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: 'var(--accent-primary)'
+                            color: 'var(--accent-primary)',
+                            border: '1px solid var(--card-border)',
+                            boxShadow: 'var(--elevation-med)'
                         }}>
-                            <Target size={32} />
+                            <Target size={32} style={{ filter: 'drop-shadow(0 0 8px var(--accent-primary))' }} />
                         </div>
                         <div style={{ textAlign: 'center' }}>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem' }}>Ready for Analysis</h3>

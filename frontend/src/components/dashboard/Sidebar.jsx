@@ -26,6 +26,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
         { icon: <FileText size={20} />, label: 'Content Optimization', path: '/app/optimization' },
         { icon: <Zap size={20} />, label: 'AI Simulator', path: '/app/ai-simulator' },
         { icon: <BarChart2 size={20} />, label: 'Visibility Analysis', path: '/app/visibility' },
+        { icon: <Globe size={20} />, label: 'Citation Tracking', path: '/app/citations' },
         { icon: <GitCompareArrows size={20} />, label: 'Competitor Analysis', path: '/app/competitors' },
         { icon: <Sparkles size={20} />, label: 'Content Strategy', path: '/app/strategy' },
         { icon: <Settings size={20} />, label: 'Settings', path: '/app/settings' },
@@ -42,7 +43,8 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
 
             {/* Logo & Toggle */}
             <div style={{
-                padding: collapsed ? '1rem 0.5rem' : '1.25rem 1rem',
+                height: '64px',
+                padding: collapsed ? '0 0.5rem' : '0 1rem',
                 borderBottom: '1px solid rgba(255,255,255,0.05)',
                 display: 'flex',
                 alignItems: 'center',
@@ -105,12 +107,11 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                         alignItems: 'center',
                         justifyContent: 'center',
                         transition: 'all 0.2s ease',
-                        background: 'rgba(255,255,255,0.05)',
                         marginLeft: collapsed ? 'auto' : '0',
                         marginRight: collapsed ? 'auto' : '0'
                     }}
-                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'none'}
                     aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
                     {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
@@ -126,7 +127,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                                 to={item.path}
                                 end={item.end}
                                 title={collapsed ? item.label : undefined}
-                                className={({ isActive }) => isActive ? 'active-nav-item' : 'nav-item'}
+                                className={({ isActive }) => isActive ? 'nav-item-premium-active' : 'nav-item'}
                                 style={({ isActive }) => ({
                                     display: 'flex',
                                     alignItems: 'center',
@@ -134,12 +135,11 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                                     gap: '0.75rem',
                                     padding: collapsed ? '0.75rem' : '0.75rem',
                                     borderRadius: 'var(--radius-md)',
-                                    color: isActive ? 'white' : 'var(--text-secondary)',
-                                    background: isActive ? 'var(--accent-primary)' : 'transparent',
+                                    color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
                                     textDecoration: 'none',
                                     fontSize: '0.9rem',
                                     fontWeight: isActive ? '600' : '500',
-                                    transition: 'all 0.2s ease',
+                                    transition: 'all 0.3s ease',
                                     whiteSpace: 'nowrap'
                                 })}
                             >
@@ -152,7 +152,13 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
             </nav>
 
             {/* User Profile */}
-            <div style={{ padding: collapsed ? '1rem 0.5rem' : '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ 
+                height: '64px',
+                padding: collapsed ? '0 0.5rem' : '0 1.25rem', 
+                borderTop: '1px solid rgba(255,255,255,0.05)',
+                display: 'flex',
+                alignItems: 'center'
+            }}>
                 <div 
                     onClick={() => navigate('/app/settings')}
                     style={{ 
@@ -160,7 +166,8 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                         alignItems: 'center', 
                         justifyContent: collapsed ? 'center' : 'flex-start', 
                         gap: '0.75rem',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        width: '100%'
                     }}
                     title="Profile Settings"
                 >

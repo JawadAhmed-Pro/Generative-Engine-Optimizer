@@ -39,17 +39,29 @@ function NotFound() {
                 filter: 'blur(80px)'
             }} />
 
-            <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+            <div className="glass glow-high" style={{ 
+                textAlign: 'center', 
+                position: 'relative', 
+                zIndex: 1,
+                padding: '4.5rem 3rem',
+                borderRadius: '32px',
+                maxWidth: '600px',
+                width: '100%',
+                background: 'rgba(10, 10, 18, 0.6)',
+                border: '1px solid rgba(96, 165, 250, 0.2)',
+                boxShadow: 'var(--elevation-high)'
+            }}>
                 {/* 404 Number */}
                 <div style={{
                     fontSize: '10rem',
-                    fontWeight: '800',
+                    fontWeight: '900',
                     lineHeight: 1,
                     background: 'linear-gradient(135deg, #ef4444 0%, #f97316 50%, #eab308 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
-                    marginBottom: '1rem'
+                    marginBottom: '1rem',
+                    filter: 'drop-shadow(0 0 20px rgba(239, 68, 68, 0.3))'
                 }}>
                     404
                 </div>
@@ -58,71 +70,81 @@ function NotFound() {
                 <div style={{
                     width: '80px',
                     height: '80px',
-                    background: 'rgba(239, 68, 68, 0.15)',
-                    borderRadius: '50%',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    borderRadius: '24px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    margin: '0 auto 1.5rem'
+                    margin: '0 auto 1.5rem',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    boxShadow: '0 0 20px rgba(239, 68, 68, 0.1)'
                 }}>
                     <AlertTriangle size={40} color="#ef4444" />
                 </div>
 
                 {/* Message */}
-                <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
+                <h1 style={{ fontSize: '2.5rem', fontWeight: '900', marginBottom: '0.75rem', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                     Page Not Found
                 </h1>
                 <p style={{
                     color: 'var(--text-secondary)',
                     maxWidth: '400px',
-                    margin: '0 auto 2rem',
-                    lineHeight: 1.6
+                    margin: '0 auto 2.5rem',
+                    lineHeight: 1.6,
+                    fontSize: '1.1rem'
                 }}>
-                    The page you're looking for doesn't exist or has been moved.
+                    The atmospheric coordinates for this page don't exist in the GEO Perception Layer.
                 </p>
 
                 {/* Action buttons */}
-                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '1.25rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <Link
                         to="/app"
                         className="btn btn-primary"
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.875rem 1.5rem',
-                            fontSize: '0.9rem',
-                            textDecoration: 'none'
+                            gap: '0.6rem',
+                            padding: '1rem 1.75rem',
+                            fontSize: '0.95rem',
+                            fontWeight: '700',
+                            textDecoration: 'none',
+                            background: 'var(--accent-gradient)',
+                            border: 'none',
+                            boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)'
                         }}
                     >
-                        <Home size={18} /> Go to Dashboard
+                        <Home size={20} /> Go to Dashboard
                     </Link>
                     <button
                         onClick={() => window.history.back()}
+                        className="btn-outline"
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.875rem 1.5rem',
-                            background: 'rgba(255,255,255,0.1)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: '8px',
+                            gap: '0.6rem',
+                            padding: '1rem 1.75rem',
+                            background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '12px',
                             color: 'var(--text-primary)',
                             cursor: 'pointer',
-                            fontSize: '0.9rem'
+                            fontSize: '0.95rem',
+                            fontWeight: '700'
                         }}
                     >
-                        <ArrowLeft size={18} /> Go Back
+                        <ArrowLeft size={20} /> Orbit Back
                     </button>
                 </div>
 
                 {/* Help text */}
                 <p style={{
-                    marginTop: '3rem',
+                    marginTop: '3.5rem',
                     color: 'var(--text-tertiary)',
-                    fontSize: '0.85rem'
+                    fontSize: '0.85rem',
+                    fontWeight: '600'
                 }}>
-                    Need help? Contact support or check the documentation.
+                    Need navigation assistance? <span style={{ color: 'var(--accent-primary)', cursor: 'pointer' }}>Contact support</span>
                 </p>
             </div>
         </div>

@@ -85,7 +85,7 @@ function FeatureSection() {
                                     fontWeight: '800',
                                     fontSize: '1.25rem',
                                     flexShrink: 0,
-                                    boxShadow: '0 10px 30px rgba(139, 92, 246, 0.3)',
+                                    boxShadow: '0 10px 30px rgba(37, 99, 235, 0.3)',
                                     color: 'white'
                                 }}>2</div>
                                 <div>

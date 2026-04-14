@@ -4,7 +4,8 @@ import { motion } from 'framer-motion'
 
 function Hero() {
     return (
-        <section className="section" style={{ paddingTop: '6rem', paddingBottom: '4rem', position: 'relative', background: 'transparent' }}>
+        <section className="section" style={{ paddingTop: '6rem', paddingBottom: '4rem', position: 'relative', background: 'transparent', perspective: '1200px' }}>
+
             <motion.div
                 className="container"
                 initial={{ opacity: 0, y: 20 }}
@@ -265,7 +266,7 @@ function Hero() {
                                         </div>
                                     </div>
 
-                                    <div className="depth-card" style={{ padding: '1rem', background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), transparent)', border: '1px solid rgba(139, 92, 246, 0.2)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+                                    <div className="depth-card" style={{ padding: '1rem', background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), transparent)', border: '1px solid rgba(37, 99, 235, 0.2)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
                                         <Sparkles size={18} color="var(--accent-secondary)" style={{ marginBottom: '0.5rem' }} />
                                         <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'white' }}>Critical Insight</div>
                                         <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.25rem' }}>Action required in Perplexity stack</div>

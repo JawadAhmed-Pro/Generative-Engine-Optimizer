@@ -206,11 +206,31 @@ export default function ContentStrategy() {
                                 initial={{ opacity: 0 }} 
                                 animate={{ opacity: 1 }} 
                                 exit={{ opacity: 0 }}
-                                className="glass-card" 
-                                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', textAlign: 'center', height: '100%', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.01)', minHeight: '100%' }}
+                                className="depth-card glow-static" 
+                                style={{ 
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    padding: '4rem 2rem', 
+                                    textAlign: 'center', 
+                                    height: '100%', 
+                                    minHeight: '100%' 
+                                }}
                             >
-                                <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(59, 130, 246, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
-                                    <BookOpen size={32} color="var(--accent-primary)" style={{ opacity: 0.5 }} />
+                                <div style={{ 
+                                    width: '80px', 
+                                    height: '80px', 
+                                    borderRadius: '24px', 
+                                    background: 'rgba(96, 165, 250, 0.08)', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    marginBottom: '2rem', 
+                                    border: '1px solid rgba(96, 165, 250, 0.2)',
+                                    boxShadow: 'var(--elevation-med)'
+                                }}>
+                                    <BookOpen size={32} color="var(--accent-primary)" style={{ filter: 'drop-shadow(0 0 8px rgba(96, 165, 250, 0.5))' }} />
                                 </div>
                                 <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Ready for Discovery</h3>
                                 <p style={{ color: 'var(--text-secondary)', maxWidth: '450px', margin: '0 auto', fontSize: '1.05rem', lineHeight: '1.6' }}>
@@ -241,7 +261,7 @@ export default function ContentStrategy() {
                                                 initial={{ opacity: 0, x: 20 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: index * 0.1 }}
-                                                className="glass-card" 
+                                                className="depth-card" 
                                                 style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}
                                             >
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem' }}>
@@ -319,13 +339,6 @@ export default function ContentStrategy() {
                 </div>
             </div>
 
-            <style>{`
-                .focus-ring:focus {
-                    border-color: var(--accent-primary) !important;
-                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
-                    background: rgba(0,0,0,0.4) !important;
-                }
-            `}</style>
         </div>
     );
 }

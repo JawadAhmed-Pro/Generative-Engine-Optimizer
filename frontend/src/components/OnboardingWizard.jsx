@@ -121,7 +121,7 @@ function OnboardingWizard({ onComplete }) {
                 right: '10%',
                 width: '400px',
                 height: '400px',
-                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, transparent 70%)',
                 borderRadius: '50%',
                 filter: 'blur(80px)'
             }} />

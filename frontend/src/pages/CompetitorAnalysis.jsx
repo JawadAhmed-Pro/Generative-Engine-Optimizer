@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { BarChart2, Plus, Trash2, RefreshCw, TrendingUp, TrendingDown, Minus, AlertTriangle, Trophy, Zap, Clock, Sparkles, Globe, UserPlus, Info, ChevronDown, Table, ExternalLink, BookOpen, ShoppingCart, Search } from 'lucide-react'
+import { BarChart2, Plus, Trash2, RefreshCw, TrendingUp, TrendingDown, Minus, AlertTriangle, Trophy, Zap, Clock, Sparkles, Globe, UserPlus, Info, ChevronDown, Table, ExternalLink, BookOpen, ShoppingCart } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
-import ReactMarkdown from 'react-markdown'
 
 function CompetitorAnalysis() {
     const [userUrl, setUserUrl] = useState('')
     const [competitorUrls, setCompetitorUrls] = useState([''])
-    const [targetKeyword, setTargetKeyword] = useState('')
     const [contentType, setContentType] = useState('general')
     const [loading, setLoading] = useState(false)
     const [results, setResults] = useState(null)
@@ -75,7 +73,6 @@ function CompetitorAnalysis() {
             const response = await axios.post('/api/competitor-compare', {
                 user_url: userUrl.trim(),
                 competitor_urls: validCompetitors,
-                keyword: targetKeyword.trim(),
                 content_type: contentType
             })
             if (response.data.job_id) {
@@ -163,33 +160,6 @@ function CompetitorAnalysis() {
                                 color: 'white',
                                 fontSize: '1rem',
                                 outline: 'none'
-                            }}
-                            className="focus-ring"
-                        />
-                    </div>
-
-                    {/* Target Keyword Data */}
-                    <div style={{ marginBottom: '2rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-                            <Search size={18} color="var(--accent-primary)" />
-                            <span style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Target Keyword (Auto-Discovers Competitors)</span>
-                        </div>
-                        <input
-                            type="text"
-                            value={targetKeyword}
-                            onChange={(e) => setTargetKeyword(e.target.value)}
-                            placeholder="e.g., 'best running shoes 2026' (Leave competitor URLs blank to automatically find the top 3 ranking URLs)"
-                            style={{
-                                width: '100%',
-                                padding: '1.1rem 1.25rem',
-                                background: 'rgba(59, 130, 246, 0.05)',
-                                border: '1px solid rgba(59, 130, 246, 0.2)',
-                                borderRadius: '12px',
-                                color: 'white',
-                                fontSize: '1rem',
-                                outline: 'none',
-                                transition: 'all 0.2s',
-                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
                             }}
                             className="focus-ring"
                         />
@@ -313,7 +283,7 @@ function CompetitorAnalysis() {
                         
                         <button
                             onClick={handleCompare}
-                            disabled={loading || !userUrl.trim() || (competitorUrls.filter(u => u.trim()).length === 0 && !targetKeyword.trim())}
+                            disabled={loading || !userUrl.trim() || competitorUrls.filter(u => u.trim()).length === 0}
                             className="btn btn-primary"
                             style={{ padding: '1.1rem 2.5rem', fontSize: '1.1rem', fontWeight: '700', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.4)', background: 'var(--accent-gradient)' }}
                         >
@@ -338,12 +308,10 @@ function CompetitorAnalysis() {
                 {results && results.comparison ? (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="animate-fade-in">
                         {/* Status/Position Banner */}
-                        <div className="glass-card" style={{
+                        <div className="depth-card" style={{
                             padding: '2rem',
                             marginBottom: '2rem',
-                            background: results.comparison.position === 'ahead'
-                                ? 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 100%)'
-                                : 'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.05) 100%)',
+                            background: 'var(--bg-tertiary)',
                             borderLeft: `4px solid ${results.comparison.position === 'ahead' ? '#10b981' : '#ef4444'}`,
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -465,23 +433,12 @@ function CompetitorAnalysis() {
                         {/* Analysis Grid: Gaps & Strengths */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                             {/* Gaps to Address */}
-                            <div className="glass-card" style={{ padding: '2rem' }}>
+                            <div className="depth-card" style={{ padding: '2rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(245, 158, 11, 0.1)', paddingBottom: '1rem' }}>
                                     <AlertTriangle size={22} color="#f59e0b" />
                                     <h3 style={{ fontSize: '1.1rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}>PRIORITY GAP ANALYSIS</h3>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    {results.comparison.semantic_gaps && results.comparison.semantic_gaps !== "No competitors found." && (
-                                        <div style={{ padding: '1.5rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', color: 'white', marginBottom: '1rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                                                <Sparkles size={18} color="var(--accent-primary)" />
-                                                <h4 style={{ margin: 0, fontWeight: '800', fontSize: '1rem', color: 'var(--text-primary)' }}>Semantic Gap Engine</h4>
-                                            </div>
-                                            <div className="markdown-content" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>
-                                                <ReactMarkdown>{results.comparison.semantic_gaps}</ReactMarkdown>
-                                            </div>
-                                        </div>
-                                    )}
                                     {results.comparison.gaps?.length > 0 ? results.comparison.gaps.map((gap, idx) => (
                                         <div key={idx} style={{ padding: '1.25rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', borderLeft: `4px solid ${gap.priority === 'high' ? '#ef4444' : '#f59e0b'}` }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -510,7 +467,7 @@ function CompetitorAnalysis() {
                             </div>
 
                             {/* Strategic Strengths */}
-                            <div className="glass-card" style={{ padding: '2rem' }}>
+                            <div className="depth-card" style={{ padding: '2rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(16, 185, 129, 0.1)', paddingBottom: '1rem' }}>
                                     <Trophy size={22} color="#10b981" />
                                     <h3 style={{ fontSize: '1.1rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Competitive Defenses</h3>
@@ -552,7 +509,7 @@ function CompetitorAnalysis() {
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
                                 {results.comparison.quick_wins?.map((win, idx) => (
-                                    <div key={idx} style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(245,158,11,0.15)' }}>
+                                    <div key={idx} style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid var(--card-border)' }}>
                                         <div style={{ fontWeight: '800', marginBottom: '0.75rem', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <div style={{ width: '8px', height: '8px', background: '#f59e0b', borderRadius: '50%' }} />
                                             {win.area}
@@ -573,9 +530,29 @@ function CompetitorAnalysis() {
                         </div>
                     </motion.div>
                 ) : !loading && (
-                    <div className="glass-card animate-fade-in" style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.01)', minHeight: '400px', marginBottom: '2rem' }}>
-                        <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(59, 130, 246, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
-                            <BarChart2 size={32} color="var(--accent-primary)" style={{ opacity: 0.5 }} />
+                    <div className="depth-card animate-fade-in glow-static" style={{ 
+                        padding: '4rem 2rem', 
+                        textAlign: 'center', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        minHeight: '400px', 
+                        marginBottom: '2rem' 
+                    }}>
+                        <div style={{ 
+                            width: '80px', 
+                            height: '80px', 
+                            borderRadius: '24px', 
+                            background: 'rgba(96, 165, 250, 0.08)', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            marginBottom: '2rem', 
+                            border: '1px solid var(--card-border)',
+                            boxShadow: 'var(--elevation-med)'
+                        }}>
+                            <BarChart2 size={32} color="var(--accent-primary)" style={{ filter: 'drop-shadow(0 0 8px rgba(96, 165, 250, 0.5))' }} />
                         </div>
                         <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Ready for Competitive Audit</h3>
                         <p style={{ color: 'var(--text-secondary)', maxWidth: '450px', margin: '0 auto', fontSize: '1.05rem', lineHeight: '1.6' }}>
@@ -587,9 +564,9 @@ function CompetitorAnalysis() {
 
             {/* History Table - Professionalized */}
             {history.length > 0 && (
-                <div className="glass-card" style={{ padding: '2rem' }}>
+                <div className="depth-card glow-static" style={{ padding: '2rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                        <Clock size={20} color="var(--text-tertiary)" />
+                        <Clock size={20} color="var(--accent-primary)" />
                         <h3 style={{ fontSize: '1rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Audit Trail</h3>
                     </div>
                     <div style={{ overflowX: 'auto' }}>
@@ -631,17 +608,6 @@ function CompetitorAnalysis() {
                     </div>
                 </div>
             )}
-
-            <style>{`
-                .focus-ring:focus {
-                    border-color: var(--accent-primary) !important;
-                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
-                    background: rgba(0,0,0,0.4) !important;
-                }
-                .table-row-hover:hover {
-                    background: rgba(255,255,255,0.015);
-                }
-            `}</style>
         </div>
     )
 }

@@ -120,7 +120,7 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
                     head: [['Metric', 'Score']],
                     body: detailedMetrics,
                     theme: 'striped',
-                    headStyles: { fillColor: [139, 92, 246] },
+                    headStyles: { fillColor: [37, 99, 235] },
                     margin: { left: 20, right: 20 },
                     styles: { fontSize: 9 }
                 })

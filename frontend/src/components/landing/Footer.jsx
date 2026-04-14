@@ -47,7 +47,7 @@ function Footer() {
                         right: '-10%',
                         width: '70%',
                         height: '100%',
-                        background: 'radial-gradient(circle at center, rgba(139, 92, 246, 0.2), transparent 70%)',
+                        background: 'radial-gradient(circle at center, rgba(37, 99, 235, 0.2), transparent 70%)',
                         filter: 'blur(100px)',
                         zIndex: 0,
                         pointerEvents: 'none',

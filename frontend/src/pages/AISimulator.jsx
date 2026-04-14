@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Search, FileText, Zap, CheckCircle, XCircle, AlertTriangle, RefreshCw, BookOpen, ShoppingCart, Info, Sparkles, Tag, Globe, Trophy } from 'lucide-react'
+import { Search, FileText, Zap, CheckCircle, XCircle, AlertTriangle, RefreshCw, BookOpen, ShoppingCart, Info, Sparkles, Tag, Globe } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
@@ -12,8 +12,6 @@ function AISimulator() {
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState(null)
     const [error, setError] = useState(null)
-    const [validationResult, setValidationResult] = useState(null)
-    const [isValidating, setIsValidating] = useState(false)
     const resultRef = useRef(null)
 
     // Scroll to results when they appear
@@ -41,24 +39,6 @@ function AISimulator() {
             setError(err.response?.data?.detail || 'Simulation failed')
         } finally {
             setLoading(false)
-        }
-    }
-
-    const handleValidate = async () => {
-        if (!content.trim()) return
-        setIsValidating(true)
-        setValidationResult(null)
-        try {
-            const response = await axios.post('/api/validate-citation', {
-                content: content,
-                content_type: domain === 'blog' ? 'general' : domain
-            })
-            setValidationResult(response.data)
-        } catch (err) {
-            console.error('Validation failed:', err)
-            setError('Real-world validation failed. Please try again.')
-        } finally {
-            setIsValidating(false)
         }
     }
 
@@ -92,11 +72,11 @@ function AISimulator() {
                     {/* Segmented Domain Selector - Centered Below Title */}
                     <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                         <div style={{ 
-                            background: 'rgba(255,255,255,0.03)', 
+                            background: 'var(--bg-tertiary)', 
                             padding: '4px', 
                             borderRadius: '12px', 
                             display: 'flex', 
-                            border: '1px solid rgba(255,255,255,0.08)',
+                            border: '1px solid var(--card-border)',
                             height: 'fit-content'
                         }}>
                             <button
@@ -177,10 +157,11 @@ function AISimulator() {
                                     width: '32px', 
                                     height: '32px', 
                                     borderRadius: '8px', 
-                                    background: domain === 'ecommerce' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
+                                    background: 'var(--bg-tertiary)', 
                                     display: 'flex', 
                                     alignItems: 'center', 
-                                    justifyContent: 'center' 
+                                    justifyContent: 'center',
+                                    border: `1px solid ${domain === 'ecommerce' ? 'var(--success)' : 'var(--accent-primary)'}`
                                 }}>
                                     {domain === 'blog' ? (
                                         <FileText size={18} color="var(--accent-primary)" />
@@ -206,19 +187,18 @@ function AISimulator() {
                                 style={{
                                     width: '100%',
                                     padding: '1rem',
-                                    background: 'rgba(0,0,0,0.3)',
-                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid var(--card-border)',
                                     borderRadius: '10px',
                                     color: 'var(--text-primary)',
                                     fontSize: '1.05rem',
                                     outline: 'none',
                                     minHeight: '80px',
                                     resize: 'none',
-                                    transition: 'border-color 0.3s ease',
+                                    transition: 'all 0.3s ease',
                                     fontFamily: 'inherit'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = 'var(--accent-primary)'}
-                                onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                                className="focus-ring"
                             />
                         </div>
 
@@ -228,13 +208,14 @@ function AISimulator() {
                                     width: '32px', 
                                     height: '32px', 
                                     borderRadius: '8px', 
-                                    background: domain === 'blog' ? 'rgba(59, 130, 246, 0.1)' : domain === 'education' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(236, 72, 153, 0.1)', 
+                                    background: 'var(--bg-tertiary)',
+                                    border: `1px solid ${domain === 'blog' ? 'var(--accent-primary)' : domain === 'education' ? 'var(--accent-secondary)' : '#0EA5E9'}`,
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center' 
                                 }}>
                                     {domain === 'ecommerce' ? (
-                                        <Tag size={18} color="#ec4899" />
+                                        <Tag size={18} color="#0EA5E9" />
                                     ) : (
                                         <FileText size={18} color={domain === 'blog' ? 'var(--accent-primary)' : 'var(--accent-secondary)'} />
                                     )}
@@ -256,8 +237,8 @@ function AISimulator() {
                                     width: '100%',
                                     minHeight: '400px',
                                     padding: '1.25rem',
-                                    background: 'rgba(0,0,0,0.3)',
-                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid var(--card-border)',
                                     borderRadius: '10px',
                                     color: 'var(--text-primary)',
                                     fontFamily: "'JetBrains Mono', monospace",
@@ -265,139 +246,62 @@ function AISimulator() {
                                     lineHeight: '1.6',
                                     resize: 'vertical',
                                     outline: 'none',
-                                    transition: 'border-color 0.3s ease'
+                                    transition: 'all 0.3s ease'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = 'var(--accent-secondary)'}
-                                onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                                className="focus-ring"
                             />
                         </div>
-                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                            <button
-                                onClick={handleSimulate}
-                                disabled={loading || !query.trim() || !content.trim()}
-                                className="btn btn-primary"
-                                style={{ 
-                                    flex: 1,
-                                    padding: '1.1rem',
-                                    fontSize: '1rem',
-                                    fontWeight: '700',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '0.8rem',
-                                    borderRadius: '12px',
-                                    background: 'var(--accent-gradient)',
-                                    boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.4)',
-                                    position: 'relative',
-                                    overflow: 'hidden'
-                                }}
-                            >
-                                {loading ? (
-                                    <>
-                                        <RefreshCw size={20} className="spin" /> 
-                                        <span>Running Deep Intelligence Analysis...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Zap size={20} fill="currentColor" /> 
-                                        <span>Execute Simulation</span>
-                                    </>
-                                )}
-                                {!loading && <div className="shimmer-effect" />}
-                            </button>
-
-                            <button
-                                onClick={handleValidate}
-                                disabled={isValidating || !content.trim()}
-                                className="btn btn-outline"
-                                style={{ 
-                                    padding: '1rem 1.5rem',
-                                    fontSize: '0.95rem',
-                                    fontWeight: '700',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.6rem',
-                                    borderRadius: '12px',
-                                    border: '1px solid rgba(16, 185, 129, 0.4)',
-                                    color: '#10b981',
-                                    background: 'rgba(16, 185, 129, 0.05)',
-                                    cursor: (isValidating || !content.trim()) ? 'not-allowed' : 'pointer'
-                                }}
-                            >
-                                {isValidating ? <RefreshCw size={18} className="spin" /> : <CheckCircle size={18} />}
-                                {isValidating ? 'Validating...' : 'Run Live Proof'}
-                            </button>
-                        </div>
-
-                        {error && (
-                            <motion.div 
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                style={{
-                                    marginTop: '1.25rem',
-                                    padding: '1rem',
-                                    background: 'rgba(239, 68, 68, 0.08)',
-                                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                                    borderRadius: '10px',
-                                    color: 'var(--error)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '1rem',
-                                    fontSize: '0.95rem'
-                                }}
-                            >
-                                <AlertTriangle size={20} />
-                                {error}
-                            </motion.div>
-                        )}
-
-                        <AnimatePresence>
-                            {validationResult && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                    style={{ marginTop: '1.5rem' }}
-                                >
-                                    <div className="glass-card" style={{ 
-                                        padding: '1.5rem', 
-                                        border: `1px solid ${validationResult.threshold_met ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)'}`,
-                                        background: validationResult.threshold_met ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(0,0,0,0.2) 100%)' : 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(0,0,0,0.2) 100%)'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                {validationResult.threshold_met ? (
-                                                    <Trophy size={24} color="#10b981" />
-                                                ) : (
-                                                    <AlertTriangle size={24} color="#f59e0b" />
-                                                )}
-                                                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800' }}>
-                                                    {validationResult.threshold_met ? 'Extraction Verification Success' : 'Extraction Threshold Warning'}
-                                                </h3>
-                                            </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Probability</div>
-                                                <div style={{ fontSize: '1.4rem', fontWeight: '900', color: validationResult.threshold_met ? '#10b981' : '#f59e0b' }}>
-                                                    {validationResult.probability.toFixed(1)}%
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: '1.5' }}>
-                                            {validationResult.threshold_met 
-                                                ? "Outstanding. Your content architecture has crossed the required threshold. AI agents like Perplexity and SearchGPT are highly likely to extract and cite this content."
-                                                : "Warning: Low extraction probability. AI agents may struggle to parse this content as authoritative. Use the Content Optimizer to injection missing structural elements."}
-                                        </p>
-                                        <button 
-                                            onClick={() => setValidationResult(null)}
-                                            style={{ background: 'transparent', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline', padding: 0 }}
-                                        >
-                                            Dismiss Result
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
                     </div>
+
+                    <button
+                        onClick={handleSimulate}
+                        disabled={loading || !query.trim() || !content.trim()}
+                        className="btn btn-primary"
+                        style={{ 
+                            width: '100%', 
+                            padding: '1rem', 
+                            fontSize: '1.1rem',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 30px -10px rgba(59, 130, 246, 0.5)',
+                            position: 'relative',
+                            overflow: 'hidden'
+                        }}
+                    >
+                        {loading ? (
+                            <>
+                                <RefreshCw size={20} className="spin" /> 
+                                <span>Running Deep Intelligence Analysis...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Zap size={20} fill="currentColor" /> 
+                                <span>Execute Simulation</span>
+                            </>
+                        )}
+                        {/* Shimmer Effect */}
+                        {!loading && <div className="shimmer-effect" />}
+                    </button>
+
+                    {error && (
+                        <motion.div 
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            style={{
+                                padding: '1rem',
+                                background: '#1d0a0a',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                borderRadius: '10px',
+                                color: 'var(--error)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '1rem',
+                                fontSize: '0.95rem'
+                            }}
+                        >
+                            <AlertTriangle size={20} />
+                            {error}
+                        </motion.div>
+                    )}
                 </div>
 
                 {/* Results Section - Now Flows Vertically */}
@@ -409,7 +313,7 @@ function AISimulator() {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="depth-card" 
+                                className="depth-card glow-static" 
                                 style={{
                                     padding: '2.5rem 1.5rem',
                                     textAlign: 'center',
@@ -417,23 +321,22 @@ function AISimulator() {
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderStyle: 'dashed',
-                                    background: 'rgba(255,255,255,0.01)'
+                                    justifyContent: 'center'
                                 }}
                             >
                                 <div style={{
                                     width: '80px',
                                     height: '80px',
-                                    background: 'rgba(255,255,255,0.03)',
+                                    background: 'var(--bg-tertiary)',
                                     borderRadius: '24px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     marginBottom: '2rem',
-                                    border: '1px solid rgba(255,255,255,0.05)'
+                                    border: '1px solid var(--card-border)',
+                                    boxShadow: 'var(--elevation-med)'
                                 }}>
-                                    <RefreshCw size={32} color="var(--text-tertiary)" />
+                                    <RefreshCw size={32} color="var(--accent-primary)" style={{ filter: 'drop-shadow(0 0 8px var(--accent-primary)44)' }} />
                                 </div>
                                 <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem' }}>Simulation Pending</h3>
                                 <p style={{ color: 'var(--text-secondary)', maxWidth: '300px', lineHeight: '1.6' }}>
@@ -486,16 +389,16 @@ function AISimulator() {
                                 style={{ 
                                     padding: 0, 
                                     overflow: 'hidden',
-                                    border: `1px solid ${result.would_cite ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`
+                                    border: `1px solid ${result.would_cite ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)'}`
                                 }}
                             >
                                 {/* Status Header Banner */}
                                 <div style={{
                                     padding: '1.25rem 1.5rem',
                                     background: result.would_cite 
-                                        ? 'linear-gradient(90deg, rgba(16, 185, 129, 0.2) 0%, transparent 100%)' 
-                                        : 'linear-gradient(90deg, rgba(245, 158, 11, 0.2) 0%, transparent 100%)',
-                                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                        ? 'linear-gradient(90deg, #0a1d15 0%, transparent 100%)' 
+                                        : 'linear-gradient(90deg, #1d150a 0%, transparent 100%)',
+                                    borderBottom: '1px solid var(--card-border)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '1.25rem'
@@ -504,7 +407,8 @@ function AISimulator() {
                                         width: '56px',
                                         height: '56px',
                                         borderRadius: '16px',
-                                        background: result.would_cite ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                        background: result.would_cite ? '#0a1d15' : '#1d150a',
+                                        border: `1px solid ${result.would_cite ? 'var(--success)' : 'var(--warning)'}33`,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -528,11 +432,11 @@ function AISimulator() {
                                             <div style={{ 
                                                 padding: '0.2rem 0.6rem', 
                                                 borderRadius: '100px', 
-                                                background: result.would_cite ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                                                background: result.would_cite ? '#0a2219' : '#22190a',
                                                 fontSize: '0.75rem',
                                                 fontWeight: '700',
                                                 color: result.would_cite ? 'var(--success)' : 'var(--warning)',
-                                                border: `1px solid ${result.would_cite ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`
+                                                border: `1px solid ${result.would_cite ? 'var(--success)' : 'var(--warning)'}44`
                                             }}>
                                                 {result.confidence}% Match
                                             </div>
@@ -556,7 +460,7 @@ function AISimulator() {
                                         </div>
                                         <div className="markdown-content" style={{ 
                                             padding: '1.5rem', 
-                                            background: 'rgba(0,0,0,0.25)', 
+                                            background: '#0a0a0f', 
                                             borderRadius: '12px',
                                             borderRadius: '12px',
                                             border: '1px solid rgba(255,255,255,0.03)',
@@ -591,9 +495,9 @@ function AISimulator() {
                                                             fontSize: '0.85rem', 
                                                             color: 'var(--text-secondary)',
                                                             padding: '0.65rem 0.85rem',
-                                                            background: 'rgba(245, 158, 11, 0.03)',
+                                                            background: '#1d150a',
                                                             borderRadius: '8px',
-                                                            border: '1px solid rgba(245, 158, 11, 0.1)'
+                                                            border: '1px solid rgba(245, 158, 11, 0.2)'
                                                         }}>
                                                             <div style={{ minWidth: '4px', height: '18px', background: 'var(--warning)', borderRadius: '2px', marginTop: '2px' }} />
                                                             {gap}
@@ -619,9 +523,9 @@ function AISimulator() {
                                                             fontSize: '0.85rem', 
                                                             color: 'var(--text-primary)',
                                                             padding: '0.65rem 0.85rem',
-                                                            background: 'rgba(59, 130, 246, 0.03)',
+                                                            background: '#0a1529',
                                                             borderRadius: '8px',
-                                                            border: '1px solid rgba(59, 130, 246, 0.1)'
+                                                            border: '1px solid rgba(59, 130, 246, 0.2)'
                                                         }}>
                                                             <div style={{ minWidth: '4px', height: '18px', background: 'var(--accent-primary)', borderRadius: '2px', marginTop: '2px' }} />
                                                             {sug}

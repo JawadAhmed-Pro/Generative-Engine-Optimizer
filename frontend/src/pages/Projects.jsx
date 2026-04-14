@@ -115,13 +115,13 @@ export default function Projects() {
                     <div style={{
                         width: '100px',
                         height: '100px',
-                        background: 'rgba(255,255,255,0.03)',
+                        background: 'var(--bg-secondary)',
                         borderRadius: '30px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginBottom: '2rem',
-                        border: '1px solid rgba(255,255,255,0.05)'
+                        border: '1px solid var(--card-border)'
                     }}>
                         <Folder size={48} color="var(--text-tertiary)" strokeWidth={1.5} />
                     </div>
@@ -157,7 +157,7 @@ export default function Projects() {
                                     display: 'flex',
                                     flexDirection: 'column',
                                     position: 'relative',
-                                    border: '1px solid rgba(255,255,255,0.05)',
+                                    border: '1px solid var(--card-border)',
                                     overflow: 'hidden'
                                 }}>
                                     <div style={{ 
@@ -174,12 +174,12 @@ export default function Projects() {
                                         <div style={{
                                             width: '44px',
                                             height: '44px',
-                                            background: 'rgba(59, 130, 246, 0.1)',
+                                            background: 'var(--bg-tertiary)',
                                             borderRadius: '12px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            border: '1px solid rgba(59, 130, 246, 0.2)'
+                                            border: '1px solid var(--card-border)'
                                         }}>
                                             <Folder size={22} color="var(--accent-primary)" />
                                         </div>
@@ -205,7 +205,7 @@ export default function Projects() {
                                         alignItems: 'center', 
                                         gap: '1rem', 
                                         paddingTop: '1.25rem', 
-                                        borderTop: '1px solid rgba(255,255,255,0.05)' 
+                                        borderTop: '1px solid var(--card-border)' 
                                     }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
                                             <Activity size={14} color="var(--success)" />
@@ -255,8 +255,8 @@ export default function Projects() {
                                 width: '100%',
                                 maxWidth: '480px', 
                                 padding: '2.5rem',
-                                border: '1px solid currentColor',
-                                opacity: 0.98,
+                                border: '1px solid var(--card-border)',
+                                background: 'var(--bg-secondary)',
                                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                             }}
                             onClick={e => e.stopPropagation()}
@@ -286,17 +286,17 @@ export default function Projects() {
                                         required
                                         style={{
                                             width: '100%',
-                                            background: 'rgba(0,0,0,0.3)',
-                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            background: 'var(--bg-tertiary)',
+                                            border: '1px solid var(--card-border)',
                                             borderRadius: '12px',
                                             padding: '1rem 1.25rem',
-                                            color: 'white',
+                                            color: 'var(--text-primary)',
                                             fontSize: '1rem',
                                             outline: 'none',
                                             transition: 'border-color 0.2s'
                                         }}
                                         onFocus={e => e.target.style.borderColor = 'var(--accent-primary)'}
-                                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                        onBlur={e => e.target.style.borderColor = 'var(--card-border)'}
                                     />
                                 </div>
 
@@ -308,11 +308,11 @@ export default function Projects() {
                                         placeholder="Optional campaign description..."
                                         style={{
                                             width: '100%',
-                                            background: 'rgba(0,0,0,0.3)',
-                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            background: 'var(--bg-tertiary)',
+                                            border: '1px solid var(--card-border)',
                                             borderRadius: '12px',
                                             padding: '1rem 1.25rem',
-                                            color: 'white',
+                                            color: 'var(--text-primary)',
                                             fontSize: '1rem',
                                             outline: 'none',
                                             minHeight: '100px',
@@ -320,7 +320,7 @@ export default function Projects() {
                                             transition: 'border-color 0.2s'
                                         }}
                                         onFocus={e => e.target.style.borderColor = 'var(--accent-primary)'}
-                                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                        onBlur={e => e.target.style.borderColor = 'var(--card-border)'}
                                     />
                                 </div>
 

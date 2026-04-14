@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Bell, HelpCircle, User, Menu, X, Settings, LogOut, FileText, TrendingUp, ExternalLink, Zap, ArrowLeft } from 'lucide-react'
+import { Bell, HelpCircle, User, Menu, X, Settings, LogOut, FileText, TrendingUp, ExternalLink, Zap, ArrowLeft, Search, Command } from 'lucide-react'
 import axios from 'axios'
 
 function TopBar({ onMenuToggle, isMobile }) {
@@ -43,24 +43,12 @@ function TopBar({ onMenuToggle, isMobile }) {
     const stopPropagation = (e) => e.stopPropagation()
 
     return (
-        <header className="top-bar" style={{
-            background: 'rgba(3, 3, 3, 0.7)',
-            backdropFilter: 'blur(20px)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 1.5rem',
-            height: '64px',
-            position: 'sticky',
-            top: 0,
-            zIndex: 1000
-        }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <header className="top-bar">
+            <div className="top-bar-left">
                 {isMobile && (
                     <button
                         onClick={onMenuToggle}
-                        style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        className="top-bar-menu-btn"
                         aria-label="Toggle navigation menu"
                     >
                         <Menu size={24} />
@@ -91,6 +79,19 @@ function TopBar({ onMenuToggle, isMobile }) {
                         <span>Go Back</span>
                     </button>
                 )}
+                
+                <div className="top-bar-search">
+                    <Search size={18} className="search-icon" />
+                    <input 
+                        type="text" 
+                        placeholder="Search workspace..." 
+                        aria-label="Search everything"
+                    />
+                    <div className="search-hint">
+                        <Command size={12} />
+                        <span>K</span>
+                    </div>
+                </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -161,7 +162,7 @@ function TopBar({ onMenuToggle, isMobile }) {
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            background: item.type === 'citation' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(167, 139, 250, 0.1)',
+                                            background: item.type === 'citation' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(37, 99, 235, 0.1)',
                                             color: item.type === 'citation' ? 'var(--accent-primary)' : 'var(--accent-secondary)'
                                         }}>
                                             {item.type === 'citation' ? <TrendingUp size={16} /> : <FileText size={16} />}

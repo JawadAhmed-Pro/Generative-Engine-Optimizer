@@ -65,7 +65,8 @@ export function EmptyState({ icon: Icon, title, description }) {
             <div style={{
                 width: '64px',
                 height: '64px',
-                background: 'rgba(255,255,255,0.05)',
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--card-border)',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',

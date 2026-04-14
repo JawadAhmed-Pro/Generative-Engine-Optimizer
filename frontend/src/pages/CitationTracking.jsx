@@ -141,10 +141,10 @@ function CitationTracking() {
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
                 <div style={{ 
                     display: 'inline-flex', 
-                    background: 'rgba(255,255,255,0.03)', 
+                    background: 'var(--bg-tertiary)', 
                     padding: '4px', 
                     borderRadius: '12px', 
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    border: '1px solid var(--card-border)',
                     gap: '4px',
                     overflowX: 'auto',
                     maxWidth: '100%',
@@ -194,7 +194,7 @@ function CitationTracking() {
                                         value={domain}
                                         onChange={(e) => setDomain(e.target.value)}
                                         placeholder={currentConfig.domainPlaceholder}
-                                        style={{ width: '100%', padding: '0.85rem 1.1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white', fontSize: '1rem', outline: 'none' }}
+                                        style={{ width: '100%', padding: '0.85rem 1.1rem', background: 'transparent', border: '1px solid var(--card-border)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none' }}
                                         className="focus-ring"
                                     />
                                 </div>
@@ -208,13 +208,13 @@ function CitationTracking() {
                                         value={brandName}
                                         onChange={(e) => setBrandName(e.target.value)}
                                         placeholder={currentConfig.brandPlaceholder}
-                                        style={{ width: '100%', padding: '0.85rem 1.1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white', fontSize: '1rem', outline: 'none' }}
+                                        style={{ width: '100%', padding: '0.85rem 1.1rem', background: 'transparent', border: '1px solid var(--card-border)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none' }}
                                         className="focus-ring"
                                     />
                                 </div>
                             </div>
 
-                            <div style={{ paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--section-divider)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
                                     <FileText size={16} color="var(--accent-primary)" />
                                     <span style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>CUSTOM PROMPTS (OPTIONAL)</span>
@@ -224,7 +224,7 @@ function CitationTracking() {
                                     onChange={(e) => setCustomPrompts(e.target.value)}
                                     placeholder={currentConfig.promptPlaceholder}
                                     rows={3}
-                                    style={{ width: '100%', padding: '0.85rem 1.1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white', fontSize: '1rem', outline: 'none', resize: 'none' }}
+                                    style={{ width: '100%', padding: '0.85rem 1.1rem', background: 'transparent', border: '1px solid var(--card-border)', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none', resize: 'none' }}
                                     className="focus-ring"
                                 />
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-tertiary)', fontSize: '0.75rem', marginTop: '0.75rem' }}>
@@ -258,7 +258,7 @@ function CitationTracking() {
                 {/* Right Column - Sidebar */}
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <div className="depth-card" style={{ padding: '0', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
+                        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--section-divider)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-tertiary)' }}>
                             <span style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>SCAN HISTORY</span>
                             <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: '700' }}>{history.length}</span>
                         </div>
@@ -272,7 +272,7 @@ function CitationTracking() {
                         ) : (
                             <div style={{ flex: 1, overflowY: 'auto', maxHeight: '550px' }}>
                                 {history.map(item => (
-                                    <div key={item.id} onClick={() => loadHistoricalResult(item.id)} style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s ease', borderLeft: '2px solid var(--accent-primary)' }} className="history-item-hover">
+                                    <div key={item.id} onClick={() => loadHistoricalResult(item.id)} style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--section-divider)', cursor: 'pointer', transition: 'all 0.2s ease', borderLeft: '2px solid var(--accent-primary)' }} className="history-item-hover">
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.4rem', color: 'var(--text-primary)', wordBreak: 'break-all', lineHeight: '1.4' }}>{item.domain}</div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -302,7 +302,7 @@ function CitationTracking() {
                                 { label: 'TOTAL MENTIONS', value: results.summary?.total_citations || 0, sub: 'Direct citations', color: 'var(--accent-primary)' },
                                 { label: 'PROMPTS TESTED', value: results.summary?.prompts_tested || 0, sub: 'Strategic queries', color: 'white' }
                             ].map((stat, i) => (
-                                <div key={i} className="glass-card" style={{ padding: '1.5rem', textAlign: 'left', position: 'relative', overflow: 'hidden' }}>
+                                <div key={i} className="depth-card" style={{ padding: '1.5rem', textAlign: 'left', position: 'relative', overflow: 'hidden' }}>
                                     <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-tertiary)', letterSpacing: '0.1em', marginBottom: '1rem' }}>{stat.label}</div>
                                     <div style={{ fontSize: '2rem', fontWeight: '900', color: stat.color, marginBottom: '0.25rem', letterSpacing: '-0.02em' }}>{stat.value}</div>
                                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>{stat.sub}</div>
@@ -315,10 +315,10 @@ function CitationTracking() {
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             {results.platforms && Object.entries(results.platforms).map(([key, platform]) => (
-                                <div key={key} className="depth-card" style={{ padding: '0', overflow: 'hidden', border: platform.status === 'error' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(255, 255, 255, 0.05)' }}>
-                                    <div onClick={() => setExpandedPlatform(expandedPlatform === key ? null : key)} style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: expandedPlatform === key ? 'rgba(255, 255, 255, 0.02)' : 'transparent', transition: 'background 0.2s' }}>
+                                <div key={key} className="depth-card" style={{ padding: '0', overflow: 'hidden', border: platform.status === 'error' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid var(--card-border)' }}>
+                                    <div onClick={() => setExpandedPlatform(expandedPlatform === key ? null : key)} style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: expandedPlatform === key ? 'var(--bg-tertiary)' : 'transparent', transition: 'background 0.2s' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>{key === 'perplexity' ? '🔍' : key === 'gemini' ? '✨' : '🤖'}</div>
+                                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>{key === 'perplexity' ? '🔍' : key === 'gemini' ? '✨' : '🤖'}</div>
                                             <div>
                                                 <h3 style={{ fontSize: '1.05rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>{platform.name}</h3>
                                                 <div style={{ fontSize: '0.8rem', color: platform.status === 'error' ? 'var(--error)' : 'var(--text-secondary)', marginTop: '0.2rem' }}>{platform.status === 'error' ? platform.error : `${platform.total_mentions || 0} citations detected`}</div>
@@ -334,17 +334,17 @@ function CitationTracking() {
                                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
                                                 <div style={{ padding: '0 1.5rem 1.5rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                                                     {platform.citations.map((citation, idx) => (
-                                                        <div key={idx} style={{ padding: '1.25rem', background: 'rgba(0,0,0,0.25)', borderRadius: '12px', borderLeft: `4px solid ${citation.cited ? 'var(--success)' : 'rgba(255,255,255,0.1)'}`, position: 'relative', overflow: 'hidden' }}>
+                                                        <div key={idx} style={{ padding: '1.25rem', background: 'var(--bg-tertiary)', borderRadius: '12px', border: '1px solid var(--card-border)', borderLeft: `4px solid ${citation.cited ? 'var(--success)' : 'var(--card-border)'}`, position: 'relative', overflow: 'hidden' }}>
                                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                                                                 <div style={{ fontWeight: '700', fontSize: '0.95rem', flex: 1, color: 'var(--text-primary)', lineHeight: '1.6' }}>
                                                                     <span style={{ color: 'var(--accent-primary)', marginRight: '0.25rem' }}>Q:</span> "{citation.prompt}"
                                                                 </div>
-                                                                <div style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', background: citation.cited ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)', color: citation.cited ? 'var(--success)' : 'var(--text-tertiary)', marginLeft: '1.5rem', whiteSpace: 'nowrap', border: citation.cited ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.1)' }}>
+                                                                <div style={{ padding: '0.25rem 0.75rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', background: citation.cited ? 'rgba(16,185,129,0.1)' : 'var(--bg-secondary)', color: citation.cited ? 'var(--success)' : 'var(--text-tertiary)', marginLeft: '1.5rem', whiteSpace: 'nowrap', border: citation.cited ? '1px solid rgba(16,185,129,0.2)' : '1px solid var(--card-border)' }}>
                                                                     {citation.cited ? `Found Reference ${getSentimentEmoji(citation.sentiment)}` : 'Reference Missing'}
                                                                 </div>
                                                             </div>
                                                             {citation.context && citation.context.length > 0 && (
-                                                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.75rem', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', fontStyle: 'italic', border: '1px solid rgba(255,255,255,0.05)', lineHeight: '1.6' }}>
+                                                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.75rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', fontStyle: 'italic', border: '1px solid var(--card-border)', lineHeight: '1.6' }}>
                                                                     <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>AI CITATION CONTEXT:</div>
                                                                     "...{citation.context[0]}..."
                                                                 </div>
@@ -363,8 +363,8 @@ function CitationTracking() {
                         </div>
                     </div>
                 ) : (
-                    <div className="glass-card animate-fade-in" style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.01)', minHeight: '400px', marginBottom: '2rem' }}>
-                        <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'rgba(59, 130, 246, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                    <div className="depth-card animate-fade-in" style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', marginBottom: '2rem' }}>
+                        <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', border: '1px solid var(--card-border)' }}>
                             <div style={{ transform: 'scale(1.2)' }}>{currentConfig.primaryIcon}</div>
                         </div>
                         <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Ready for {currentConfig.label} Citation Scan</h3>

@@ -14,7 +14,7 @@ function WhyGeo() {
         },
         {
             icon: <PenTool size={28} />,
-            color: '#8B5CF6', // var(--accent-secondary)
+            color: '#2563EB', // var(--accent-secondary)
             title: "Content Optimizer",
             description: "Transform raw data into AI-native, citation-optimized narratives via advanced quantization.",
             features: ["Semantic Rewriting", "Intent Calibration", "Structured Export", "Contextual Scaling"],
@@ -42,9 +42,9 @@ function WhyGeo() {
                 {/* Section Header */}
                 <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
                     <span style={{
-                        background: 'rgba(139, 92, 246, 0.1)',
-                        border: '1px solid rgba(139, 92, 246, 0.2)',
-                        color: 'var(--accent-secondary)',
+                        background: 'rgba(37, 99, 235, 0.1)',
+                        border: '1px solid rgba(37, 99, 235, 0.2)',
+                        color: '#2563EB',
                         padding: '0.6rem 1.25rem',
                         borderRadius: 'var(--radius-full)',
                         fontSize: '0.8rem',

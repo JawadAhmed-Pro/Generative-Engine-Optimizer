@@ -158,8 +158,8 @@ function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
                                         <div style={{
                                             marginTop: '1rem',
                                             padding: '1rem',
-                                            background: 'rgba(16, 185, 129, 0.1)',
-                                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                                            background: '#0a1d15',
+                                            border: '1px solid #10b98144',
                                             borderRadius: '6px',
                                             fontSize: '0.9rem',
                                             whiteSpace: 'pre-wrap'

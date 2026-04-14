@@ -42,24 +42,24 @@ const TableWithCopy = ({ children }) => {
                 opacity: 1, // Always visible for usability, or change to 0 and use group-hover
                 transition: 'opacity 0.2s'
             }}>
-                <button
-                    onClick={handleCopyTable}
-                    className="btn btn-outline"
-                    style={{
-                        padding: '0.25rem 0.75rem',
-                        fontSize: '0.75rem',
-                        background: 'rgba(0,0,0,0.6)',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        gap: '0.25rem',
-                        color: copied ? 'var(--success)' : 'var(--text-secondary)'
-                    }}
-                    title="Copy this table as an image (for Medium/LinkedIn)"
-                >
+                    <button
+                        onClick={handleCopyTable}
+                        className="btn btn-outline"
+                        style={{
+                            padding: '0.25rem 0.75rem',
+                            fontSize: '0.75rem',
+                            background: '#0a0a0f',
+                            border: '1px solid var(--card-border)',
+                            gap: '0.25rem',
+                            color: copied ? 'var(--success)' : 'var(--text-secondary)'
+                        }}
+                        title="Copy this table as an image (for Medium/LinkedIn)"
+                    >
                     {copied ? <Check size={14} /> : <Download size={14} />}
                     {copied ? 'Copied!' : 'Copy Table Image'}
                 </button>
             </div>
-            <div ref={tableRef} style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div ref={tableRef} style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
                 <table>
                     {children}
                 </table>
@@ -71,8 +71,8 @@ const TableWithCopy = ({ children }) => {
 // Shared input style for schema forms
 const inputStyle = {
     width: '100%',
-    background: 'rgba(0,0,0,0.3)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--card-border)',
     color: 'var(--text-primary)',
     padding: '0.5rem 0.75rem',
     borderRadius: '6px',
@@ -207,12 +207,6 @@ function ContentOptimization() {
     const [importUrl, setImportUrl] = useState('')
     const [importLoading, setImportLoading] = useState(false)
 
-    // Smart Injection State
-    const [injectionTarget, setInjectionTarget] = useState('')
-    const [injectionTone, setInjectionTone] = useState('professional')
-    const [injectedText, setInjectedText] = useState('')
-    const [isInjecting, setIsInjecting] = useState(false)
-
     const handleImportUrl = async () => {
         if (!importUrl.trim()) return
         setImportLoading(true)
@@ -250,32 +244,6 @@ function ContentOptimization() {
             console.error('Keyword extraction failed:', err)
         } finally {
             setKeywordsLoading(false)
-        }
-    }
-
-    const handleSmartInject = async () => {
-        if (!content.trim() || !injectionTarget.trim()) return
-        setIsInjecting(true)
-        try {
-            const response = await axios.post('/api/optimize/inject', {
-                context_text: content,
-                injection_target: injectionTarget,
-                tone: injectionTone
-            })
-            setInjectedText(response.data.injection)
-        } catch (err) {
-            console.error('Injection failed:', err)
-            alert('Failed to generate requested section.')
-        } finally {
-            setIsInjecting(false)
-        }
-    }
-
-    const acceptInjection = () => {
-        if (injectedText) {
-            updateOptimization({ content: content + '\n\n' + injectedText })
-            setInjectedText('')
-            setInjectionTarget('')
         }
     }
 
@@ -478,7 +446,7 @@ function ContentOptimization() {
                                         gap: '0.4rem',
                                         height: 'auto',
                                         borderRadius: '6px',
-                                        borderColor: 'rgba(255,255,255,0.15)',
+                                        borderColor: 'var(--card-border)',
                                         display: activeTab === 'schema' ? 'none' : 'flex'
                                     }}
                                     title="Import from URL"
@@ -490,8 +458,8 @@ function ContentOptimization() {
                                 value={contentType}
                                 onChange={(e) => updateOptimization({ contentType: e.target.value })}
                                 style={{
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid var(--card-border)',
                                     color: 'var(--text-primary)',
                                     padding: '0.4rem 2.5rem 0.4rem 1rem',
                                     borderRadius: '8px',
@@ -517,8 +485,8 @@ function ContentOptimization() {
                             <div className="glass-card animate-fade-in" style={{
                                 padding: '1rem',
                                 marginBottom: '1.5rem',
-                                background: 'rgba(59, 130, 246, 0.08)',
-                                border: '1px solid rgba(59, 130, 246, 0.2)',
+                                background: '#111827',
+                                border: '1px solid rgba(59, 130, 246, 0.3)',
                                 borderRadius: '12px'
                             }}>
                                 <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -529,8 +497,8 @@ function ContentOptimization() {
                                         onChange={(e) => setImportUrl(e.target.value)}
                                         style={{
                                             flex: 1,
-                                            background: 'rgba(0,0,0,0.2)',
-                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            background: 'var(--bg-tertiary)',
+                                            border: '1px solid var(--card-border)',
                                             color: 'white',
                                             padding: '0.75rem 1rem',
                                             borderRadius: '8px',
@@ -563,8 +531,8 @@ function ContentOptimization() {
                                 style={{
                                     width: '100%',
                                     minHeight: '440px',
-                                    background: 'rgba(0,0,0,0.25)',
-                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid var(--card-border)',
                                     borderRadius: '12px',
                                     padding: '1.25rem',
                                     color: 'var(--text-primary)',
@@ -573,7 +541,7 @@ function ContentOptimization() {
                                     lineHeight: '1.6',
                                     resize: 'vertical',
                                     outline: 'none',
-                                    boxShadow: (content && activeTab === 'generate' && !analysisResults) ? '0 0 0 2px var(--accent-primary)' : 'inset 0 2px 4px rgba(0,0,0,0.2)',
+                                    boxShadow: (content && activeTab === 'generate' && !analysisResults) ? '0 0 0 2px var(--accent-primary)' : 'none',
                                     transition: 'all 0.3s ease',
                                     display: activeTab === 'schema' ? 'none' : 'block'
                                 }}
@@ -606,12 +574,11 @@ function ContentOptimization() {
                                 fontSize: '0.75rem',
                                 color: 'var(--text-tertiary)',
                                 fontWeight: '600',
-                                background: 'rgba(0,0,0,0.4)',
+                                background: 'var(--bg-tertiary)',
                                 padding: '0.2rem 0.6rem',
                                 borderRadius: '6px',
-                                backdropFilter: 'blur(4px)',
                                 pointerEvents: 'none',
-                                border: '1px solid rgba(255,255,255,0.05)'
+                                border: '1px solid var(--card-border)'
                             }}>
                                 {content.length.toLocaleString()} characters
                             </div>
@@ -627,84 +594,6 @@ function ContentOptimization() {
                                 marginBottom: '1rem'
                             }}>
                                 <InfoIcon size={14} /> Paste the full text you want to improve. Markdown is supported.
-                            </div>
-                        )}
-
-                        {/* Smart Injection Auto-Writer Panel */}
-                        {activeTab !== 'schema' && (
-                            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid rgba(16, 185, 129, 0.4)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                                    <Sparkles size={18} color="#10b981" />
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, color: '#10b981' }}>Smart Injection Auto-Writer</h3>
-                                </div>
-                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-                                    Detected a missing semantic gap? Tell the AI what structural block to generate (e.g., "Pricing Table" or "Specs List"), and it will generate it matching your existing tone.
-                                </p>
-                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                                    <div style={{ flex: '1 1 300px' }}>
-                                        <input
-                                            type="text"
-                                            value={injectionTarget}
-                                            onChange={(e) => setInjectionTarget(e.target.value)}
-                                            placeholder="What is missing? (e.g. 'Add an FAQ section covering pricing')"
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.85rem 1.1rem',
-                                                background: 'rgba(0,0,0,0.3)',
-                                                border: '1px solid rgba(255,255,255,0.1)',
-                                                borderRadius: '8px',
-                                                color: 'white',
-                                                fontSize: '0.9rem',
-                                                outline: 'none'
-                                            }}
-                                            className="focus-ring"
-                                        />
-                                    </div>
-                                    <div style={{ flex: '0 0 150px' }}>
-                                        <select
-                                            value={injectionTone}
-                                            onChange={(e) => setInjectionTone(e.target.value)}
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.85rem 1.1rem',
-                                                background: 'rgba(0,0,0,0.3)',
-                                                border: '1px solid rgba(255,255,255,0.1)',
-                                                borderRadius: '8px',
-                                                color: 'white',
-                                                fontSize: '0.9rem',
-                                                outline: 'none',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            <option value="professional">Professional</option>
-                                            <option value="conversational">Conversational</option>
-                                            <option value="technical">Technical</option>
-                                            <option value="persuasive">Persuasive</option>
-                                        </select>
-                                    </div>
-                                    <button
-                                        onClick={handleSmartInject}
-                                        disabled={isInjecting || !injectionTarget.trim() || !content.trim()}
-                                        className="btn btn-primary"
-                                        style={{ padding: '0.85rem 1.5rem', fontSize: '0.9rem', background: '#10b981', color: '#000', fontWeight: '700' }}
-                                    >
-                                        {isInjecting ? <RefreshCw size={16} className="spin" /> : 'Generate Block'}
-                                    </button>
-                                </div>
-                                {injectedText && (
-                                    <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '1.25rem' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
-                                            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Generated Injection Preview</span>
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <button onClick={() => setInjectedText('')} style={{ fontSize: '0.8rem', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem' }}>Discard</button>
-                                                <button onClick={acceptInjection} style={{ fontSize: '0.8rem', color: '#fff', background: '#10b981', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '0.5rem 1rem', fontWeight: 'bold' }}>Insert into Article</button>
-                                            </div>
-                                        </div>
-                                        <div className="markdown-content" style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                                            <ReactMarkdown>{injectedText}</ReactMarkdown>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         )}
 
@@ -726,8 +615,8 @@ function ContentOptimization() {
                                             autoFocus
                                             style={{
                                                 flex: 1,
-                                                background: 'rgba(255,255,255,0.05)',
-                                                border: '1px solid rgba(255,255,255,0.15)',
+                                                background: 'var(--bg-tertiary)',
+                                                border: '1px solid var(--card-border)',
                                                 color: 'var(--text-primary)',
                                                 padding: '0.6rem 1rem',
                                                 borderRadius: '8px',
@@ -759,8 +648,8 @@ function ContentOptimization() {
                                             onChange={(e) => setSelectedProject(e.target.value)}
                                             style={{
                                                 flex: 1,
-                                                background: 'rgba(255,255,255,0.05)',
-                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                background: 'var(--bg-tertiary)',
+                                                border: '1px solid var(--card-border)',
                                                 color: 'var(--text-primary)',
                                                 padding: '0.6rem 2.5rem 0.6rem 1rem',
                                                 borderRadius: '8px',
@@ -803,10 +692,9 @@ function ContentOptimization() {
                             <div style={{
                                 marginBottom: '1.5rem',
                                 padding: '1.25rem',
-                                background: 'rgba(59, 130, 246, 0.05)',
+                                background: '#111827',
                                 borderRadius: '12px',
-                                border: '1px solid rgba(59, 130, 246, 0.15)',
-                                backdropFilter: 'blur(10px)'
+                                border: '1px solid rgba(59, 130, 246, 0.3)'
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                                     <Sparkles size={18} color="var(--accent-primary)" />
@@ -827,7 +715,7 @@ function ContentOptimization() {
                                                 onClick={() => setSelectedKeyword(keywords.primary_keyword)}
                                                 style={{
                                                     padding: '0.6rem 1.25rem',
-                                                    background: selectedKeyword === keywords.primary_keyword ? 'linear-gradient(135deg, var(--accent-primary) 0%, #2563eb 100%)' : 'rgba(255,255,255,0.08)',
+                                                    background: selectedKeyword === keywords.primary_keyword ? 'linear-gradient(135deg, var(--accent-primary) 0%, #2563eb 100%)' : 'var(--bg-tertiary)',
                                                     border: '1px solid rgba(255,255,255,0.1)',
                                                     borderRadius: '100px',
                                                     color: 'white',
@@ -855,7 +743,7 @@ function ContentOptimization() {
                                                             onClick={() => setSelectedKeyword(kw)}
                                                             style={{
                                                                 padding: '0.4rem 1rem',
-                                                                background: selectedKeyword === kw ? 'var(--accent-primary)' : 'rgba(255,255,255,0.04)',
+                                                                background: selectedKeyword === kw ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
                                                                 border: '1px solid rgba(255,255,255,0.08)',
                                                                 borderRadius: '100px',
                                                                 color: selectedKeyword === kw ? 'white' : 'var(--text-secondary)',
@@ -882,8 +770,8 @@ function ContentOptimization() {
                                         placeholder="Add custom keyword..."
                                         style={{
                                             flex: 1,
-                                            background: 'rgba(0,0,0,0.2)',
-                                            border: '1px solid rgba(255,255,255,0.08)',
+                                            background: 'var(--bg-tertiary)',
+                                            border: '1px solid var(--card-border)',
                                             color: 'var(--text-primary)',
                                             padding: '0.6rem 1rem',
                                             borderRadius: '8px',
@@ -906,9 +794,9 @@ function ContentOptimization() {
                                     <div style={{
                                         marginTop: '1.25rem',
                                         padding: '0.75rem 1rem',
-                                        background: 'rgba(16, 185, 129, 0.08)',
+                                        background: '#0a1d15',
                                         borderRadius: '8px',
-                                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                                        border: '1px solid rgba(16, 185, 129, 0.3)',
                                         fontSize: '0.85rem',
                                         display: 'flex',
                                         alignItems: 'center',

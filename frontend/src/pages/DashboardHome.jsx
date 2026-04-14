@@ -50,6 +50,66 @@ function DashboardHome() {
         }
     }
 
+    // Static Visual Gauges for Premium Dashboard (Mockup-Inspired)
+    const VisualMetricGauge = ({ value, max, type, color }) => {
+        const percentage = Math.min((value / max) * 100, 100);
+
+        switch (type) {
+            case 'score': // Sparkline (Card 1 style)
+                return (
+                    <div style={{ width: '60px', height: '24px', opacity: 0.8 }}>
+                        <svg width="60" height="24" viewBox="0 0 60 24">
+                            <path
+                                d="M0 18 Q15 22 20 14 T40 10 T60 4"
+                                fill="none"
+                                stroke={color}
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                style={{ filter: `drop-shadow(0 0 4px ${color}40)` }}
+                            />
+                        </svg>
+                    </div>
+                );
+            case 'optimized': // Refined Circular Gauge (Card 2 style)
+                const radius = 12;
+                const circumference = 2 * Math.PI * radius;
+                const offset = circumference - (percentage / 100) * circumference;
+                return (
+                    <div style={{ position: 'relative', width: '32px', height: '32px' }}>
+                        <svg width="32" height="32" viewBox="0 0 32 32">
+                            <circle cx="16" cy="16" r={radius} fill="none" stroke="var(--bg-tertiary)" strokeWidth="4" />
+                            <circle
+                                cx="16" cy="16" r={radius} fill="none" stroke={color}
+                                strokeWidth="4" strokeDasharray={circumference}
+                                strokeDashoffset={offset} strokeLinecap="round"
+                                style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                            />
+                        </svg>
+                    </div>
+                );
+            case 'analyzed': // Rhythmic Bar Cluster (Card 3 style)
+                return (
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '22px' }}>
+                        {[0.4, 0.7, 0.5, 0.9, 0.6, 1.0].map((h, i) => (
+                            <div key={i} style={{
+                                width: '4px',
+                                height: `${h * 100}%`,
+                                background: color,
+                                borderRadius: '1px',
+                                opacity: 0.3 + (h * 0.7)
+                            }}></div>
+                        ))}
+                    </div>
+                );
+            case 'projects': // Solid Beacon
+                return (
+                    <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: color, transform: 'rotate(45deg)', boxShadow: `0 0 12px ${color}40` }}></div>
+                );
+            default:
+                return null;
+        }
+    };
+
     const getScoreColor = (score) => {
         if (score >= 80) return 'var(--success)'
         if (score >= 60) return 'var(--warning)'
@@ -76,10 +136,10 @@ function DashboardHome() {
 
             <div className="section-group" style={{ paddingTop: 0 }}>
                 <div className="glass-card" style={{
-                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
+                    background: '#0d111a',
                     padding: '2.5rem 2rem',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                    border: '1px solid var(--card-border)',
+                    boxShadow: 'var(--elevation-high)',
                     position: 'relative',
                     overflow: 'hidden'
                 }}>
@@ -90,23 +150,23 @@ function DashboardHome() {
                         right: '-10%',
                         width: '40%',
                         height: '140%',
-                        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
+                        background: 'radial-gradient(circle, var(--interior-decor-glow) 0%, transparent 70%)',
                         filter: 'blur(40px)',
                         pointerEvents: 'none'
                     }}></div>
 
                     <div style={{ position: 'relative', zIndex: 1 }}>
                         <h2 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.75rem', letterSpacing: '-0.03em' }}>
-                            Welcome back, <span className="text-gradient">{user?.name || 'Creator'}</span>.
+                            Welcome back, <span className="text-gradient">{user?.name || 'Creator'} !</span>
                         </h2>
                         <p style={{ color: 'var(--text-secondary)', maxWidth: '650px', marginBottom: '1.5rem', fontSize: '1.1rem', lineHeight: '1.6' }}>
                             Your SEO is now AI-Driven. Track your authority, optimize for citation probability, and outpace the competition on the next generation of search engines.
                         </p>
                         <div style={{ display: 'flex', gap: '1.25rem' }}>
-                            <Link to="/app/optimization" className="btn btn-primary" style={{ padding: '0.875rem 2rem' }}>
+                            <Link to="/app/optimization" className="btn btn-premium-blue" style={{ padding: '0.875rem 2rem' }}>
                                 <Plus size={20} /> New Optimization
                             </Link>
-                            <Link to="/app/visibility" className="btn btn-outline" style={{ padding: '0.875rem 2rem' }}>
+                            <Link to="/app/visibility" className="btn btn-premium-blue" style={{ padding: '0.875rem 2rem' }}>
                                 <Search size={20} /> New Visibility Analysis
                             </Link>
                         </div>
@@ -132,7 +192,7 @@ function DashboardHome() {
                     ) : (
                         <>
                             {/* Stat Card 1 */}
-                            <div className="depth-card">
+                            <div className="depth-card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                 <div
                                     className="tooltip"
                                     data-tooltip="The statistical probability that ChatGPT, Gemini, or Perplexity will cite your link."
@@ -140,14 +200,18 @@ function DashboardHome() {
                                 >
                                     AVG. GEO SCORE <Info size={14} color="var(--accent-primary)" />
                                 </div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                                    {stats.avg_score.toFixed(1)}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', width: '100%', minHeight: '40px' }}>
+                                    <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                                        {stats.avg_score.toFixed(1)}
+                                    </div>
+                                    <VisualMetricGauge value={stats.avg_score} max={10} type="score" color={getScoreColor(stats.avg_score)} />
                                 </div>
                                 <div style={{
                                     fontSize: '0.8rem',
                                     fontWeight: '600',
                                     color: getScoreColor(stats.avg_score),
-                                    background: `${getScoreColor(stats.avg_score)}15`,
+                                    background: 'var(--bg-tertiary)',
+                                    border: `1px solid ${getScoreColor(stats.avg_score)}33`,
                                     padding: '0.25rem 0.75rem',
                                     borderRadius: '100px',
                                     display: 'inline-block'
@@ -161,8 +225,11 @@ function DashboardHome() {
                                 <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
                                     CONTENT OPTIMIZED
                                 </div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>
-                                    {stats.content_optimized}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', width: '100%', minHeight: '40px' }}>
+                                    <div style={{ fontSize: '2.5rem', fontWeight: '800' }}>
+                                        {stats.content_optimized}
+                                    </div>
+                                    <VisualMetricGauge value={stats.content_optimized} max={100} type="optimized" color="var(--accent-secondary)" />
                                 </div>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                                     High-visibility articles
@@ -174,8 +241,11 @@ function DashboardHome() {
                                 <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
                                     URLS ANALYZED
                                 </div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>
-                                    {stats.urls_analyzed}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', width: '100%', minHeight: '40px' }}>
+                                    <div style={{ fontSize: '2.5rem', fontWeight: '800' }}>
+                                        {stats.urls_analyzed}
+                                    </div>
+                                    <VisualMetricGauge value={stats.urls_analyzed} max={50} type="analyzed" color="var(--accent-primary)" />
                                 </div>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                                     GEO assessments
@@ -187,8 +257,11 @@ function DashboardHome() {
                                 <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
                                     ACTIVE PROJECTS
                                 </div>
-                                <div style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                                    {stats.total_projects}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', width: '100%', minHeight: '40px' }}>
+                                    <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                                        {stats.total_projects}
+                                    </div>
+                                    <VisualMetricGauge value={stats.total_projects} max={10} type="projects" color="var(--accent-primary)" />
                                 </div>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', fontWeight: '600' }}>
                                     Manage workspaces →
@@ -221,12 +294,14 @@ function DashboardHome() {
                         <div style={{
                             width: '64px',
                             height: '64px',
-                            background: 'rgba(59, 130, 246, 0.1)',
-                            borderRadius: '16px',
+                            background: 'var(--bg-tertiary)',
+                            border: '1px solid var(--card-border)',
+                            borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: 'var(--accent-primary)'
+                            color: 'var(--accent-primary)',
+                            flexShrink: 0
                         }}>
                             <Search size={32} />
                         </div>
@@ -240,12 +315,14 @@ function DashboardHome() {
                         <div style={{
                             width: '64px',
                             height: '64px',
-                            background: 'rgba(139, 92, 246, 0.1)',
-                            borderRadius: '16px',
+                            background: 'var(--bg-tertiary)',
+                            border: '1px solid var(--card-border)',
+                            borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: 'var(--accent-secondary)'
+                            color: 'var(--accent-secondary)',
+                            flexShrink: 0
                         }}>
                             <Zap size={32} />
                         </div>
@@ -259,12 +336,14 @@ function DashboardHome() {
                         <div style={{
                             width: '64px',
                             height: '64px',
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            borderRadius: '16px',
+                            background: 'var(--bg-tertiary)',
+                            border: '1px solid var(--card-border)',
+                            borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: 'var(--success)'
+                            color: 'var(--accent-tertiary)',
+                            flexShrink: 0
                         }}>
                             <FileText size={32} />
                         </div>

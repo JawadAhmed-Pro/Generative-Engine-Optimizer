@@ -63,25 +63,26 @@ export default function Settings() {
 
             <style>{`
                 .settings-container .depth-card {
-                    background: rgba(0, 0, 0, 0.4) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                    padding: 2.5rem;
                 }
                 .settings-container .glass-card {
-                    background: rgba(0, 0, 0, 0.3) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                    padding: 2rem;
                 }
                 .settings-container .account-item {
-                    background: rgba(255, 255, 255, 0.02);
-                    padding: 1rem;
+                    background: var(--bg-tertiary);
+                    padding: 1rem 1.25rem;
                     border-radius: 12px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border: 1px solid var(--card-border);
                     transition: all 0.3s ease;
                 }
+                body.light-theme .settings-container .account-item {
+                    background: #F8FAFC;
+                }
                 .settings-container .account-item:hover {
-                    background: rgba(255, 255, 255, 0.04);
+                    background: #14141d;
                     border-color: rgba(59, 130, 246, 0.3);
                 }
                 .avatar-container {
@@ -90,7 +91,7 @@ export default function Settings() {
                     border-radius: 20px;
                     overflow: hidden;
                     position: relative;
-                    border: 2px solid rgba(255, 255, 255, 0.1);
+                    border: 2px solid var(--card-border);
                     transition: all 0.3s ease;
                 }
                 .avatar-overlay {
@@ -117,19 +118,45 @@ export default function Settings() {
 function SettingsSection({ title, description, icon, children }) {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ 
-                padding: '1rem 0 1rem 1rem', 
-                borderLeft: '4px solid var(--accent-primary)',
-                background: 'rgba(0, 0, 0, 0.25)',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
-                borderRadius: '0 8px 8px 0',
-                marginBottom: '0.5rem'
+            <div className="glass-card glow-static" style={{ 
+                padding: '1.5rem 2rem', 
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--card-border)',
+                borderRadius: '16px',
+                marginBottom: '0.5rem',
+                position: 'relative',
+                overflow: 'hidden',
+                boxShadow: 'var(--elevation-low)'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {icon}
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>{title}</h2>
+                {/* Boundary Glow Effect */}
+                <div style={{ 
+                    position: 'absolute', 
+                    left: 0, 
+                    top: 0, 
+                    bottom: 0, 
+                    width: '4px', 
+                    background: 'var(--accent-primary)',
+                    boxShadow: '0 0 15px var(--accent-primary)'
+                }} />
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        width: '40px', 
+                        height: '40px', 
+                        borderRadius: '12px', 
+                        background: 'var(--bg-tertiary)',
+                        border: '1px solid var(--card-border)'
+                    }}>
+                        {icon}
+                    </div>
+                    <div>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, letterSpacing: '-0.02em' }}>{title}</h2>
+                        <p style={{ color: 'var(--text-tertiary)', fontSize: '0.9rem', margin: '0.25rem 0 0 0' }}>{description}</p>
+                    </div>
                 </div>
-                <p style={{ color: 'var(--text-tertiary)', fontSize: '0.9rem', margin: '0.35rem 0 0 0' }}>{description}</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {children}
@@ -170,7 +197,7 @@ function ProfileCard() {
     }
 
     return (
-        <div className="depth-card" style={{ padding: '2rem' }}>
+        <div className="glass-card" style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
                     <div 
@@ -260,14 +287,14 @@ function ProfileCard() {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         readOnly={!isEditing}
-                        className={isEditing ? 'focus-ring' : ''}
+                        className={isEditing ? 'focus-ring' : 'focus-ring-none'}
                         style={{
                             width: '100%',
-                            background: isEditing ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.02)',
-                            border: isEditing ? '1px solid var(--accent-primary)' : '1px solid rgba(255,255,255,0.05)',
+                            background: isEditing ? 'var(--bg-tertiary)' : 'transparent',
+                            border: isEditing ? '1.5px solid var(--accent-primary)' : '1px solid var(--card-border)',
                             borderRadius: '10px',
                             padding: '0.85rem 1rem',
-                            color: isEditing ? 'white' : 'var(--text-secondary)',
+                            color: 'var(--text-primary)',
                             fontSize: '0.95rem',
                             cursor: isEditing ? 'text' : 'not-allowed',
                             transition: 'all 0.3s ease'
@@ -284,14 +311,14 @@ function ProfileCard() {
                         readOnly
                         style={{
                             width: '100%',
-                            background: 'rgba(255,255,255,0.01)',
-                            border: '1px solid rgba(255,255,255,0.05)',
+                            background: 'transparent',
+                            border: '1px solid var(--card-border)',
                             borderRadius: '10px',
                             padding: '0.85rem 1rem',
                             color: 'var(--text-tertiary)',
                             fontSize: '0.95rem',
                             cursor: 'not-allowed',
-                            opacity: 0.6
+                            opacity: 0.8
                         }}
                     />
                 </div>
@@ -403,16 +430,16 @@ function AccountManagementCard() {
 
 function PlanCard() {
     return (
-        <div className="glass-card" style={{ padding: '1.5rem 2rem', border: '1px solid rgba(167, 139, 250, 0.2)', background: 'rgba(124, 58, 237, 0.03)' }}>
+        <div className="depth-card" style={{ padding: '1.5rem 2rem', border: '1px solid rgba(37, 99, 235, 0.4)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(167, 139, 250, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <CreditCard color="#a78bfa" size={24} />
+                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--bg-tertiary)', border: '1px solid rgba(37, 99, 235, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CreditCard color="var(--accent-primary)" size={24} />
                     </div>
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <span style={{ fontWeight: '800', fontSize: '1.1rem' }}>Enterprise Pro</span>
-                            <span style={{ background: '#a78bfa', color: '#1e1b4b', fontSize: '0.65rem', fontWeight: '900', padding: '0.2rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase' }}>Active</span>
+                            <span style={{ background: 'var(--accent-primary)', color: 'white', fontSize: '0.65rem', fontWeight: '900', padding: '0.2rem 0.5rem', borderRadius: '4px', textTransform: 'uppercase' }}>Active</span>
                         </div>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Your subscription renews on May 12, 2026.</p>
                     </div>
@@ -460,8 +487,8 @@ function PreferencesCard() {
                             alignItems: 'center',
                             gap: '0.75rem',
                             padding: '1.5rem 1rem',
-                            background: defaultDomain === niche.id ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-tertiary)',
-                            border: defaultDomain === niche.id ? '1px solid var(--accent-primary)' : '1px solid var(--bg-tertiary)',
+                            background: defaultDomain === niche.id ? 'var(--selection-active-bg)' : 'var(--bg-tertiary)',
+                            border: defaultDomain === niche.id ? '2px solid var(--accent-primary)' : '1px solid var(--card-border)',
                             borderRadius: '12px',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
@@ -500,8 +527,8 @@ function ThemeCard() {
                     onClick={() => setTheme('dark')}
                     style={{
                         flex: 1,
-                        background: theme === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-tertiary)',
-                        border: theme === 'dark' ? '1px solid var(--accent-primary)' : '1px solid var(--bg-tertiary)',
+                        background: theme === 'dark' ? 'var(--selection-active-bg)' : 'var(--bg-tertiary)',
+                        border: theme === 'dark' ? '2px solid var(--accent-primary)' : '1px solid var(--card-border)',
                         padding: '1.25rem',
                         borderRadius: '12px',
                         cursor: 'pointer',
@@ -522,8 +549,8 @@ function ThemeCard() {
                     onClick={() => setTheme('light')}
                     style={{
                         flex: 1,
-                        background: theme === 'light' ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-tertiary)',
-                        border: theme === 'light' ? '1px solid var(--accent-primary)' : '1px solid var(--bg-tertiary)',
+                        background: theme === 'light' ? 'var(--selection-active-bg)' : 'var(--bg-tertiary)',
+                        border: theme === 'light' ? '2px solid var(--accent-primary)' : '1px solid var(--card-border)',
                         padding: '1.25rem',
                         borderRadius: '12px',
                         cursor: 'pointer',
@@ -598,7 +625,7 @@ function DataCard() {
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem', background: 'var(--bg-tertiary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
                     <div>
                         <div style={{ fontWeight: '700', marginBottom: '0.25rem' }}>Clear Analytics History</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>Irreversibly remove all generated content and citation reports.</div>
@@ -613,7 +640,7 @@ function DataCard() {
                     </button>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem', background: 'var(--bg-tertiary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
                     <div>
                         <div style={{ fontWeight: '700', marginBottom: '0.25rem' }}>Purge All Projects</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>Delete all project containers, settings, and associations.</div>
