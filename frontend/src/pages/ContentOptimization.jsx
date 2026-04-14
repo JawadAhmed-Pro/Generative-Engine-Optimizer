@@ -841,7 +841,7 @@ function ContentOptimization() {
                         )}
 
                         {/* Smart Injection Panel - RESTORED PHASE 2 */}
-                        {activeTab !== 'schema' && content.length > 200 && (
+                        {activeTab !== 'schema' && (
                             <div style={{
                                 marginBottom: '1.5rem',
                                 padding: '1.5rem',
