@@ -16,45 +16,6 @@ export function AuthProvider({ children }) {
         setLoading(false);
     }, []);
 
-            // Implement a timeout for the auth check so the UI doesn't hang
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), NETWORK_TIMEOUT);
-
-            try {
-                const response = await fetch(`${API_BASE}/api/auth/me`, {
-                    headers: {
-                        'Authorization': `Bearer ${savedToken}`
-                    },
-                    signal: controller.signal
-                });
-
-                if (response.ok) {
-                    const userData = await response.json();
-                    setUser(userData);
-                    setToken(savedToken);
-                } else {
-                    // Token invalid, clear it
-                    localStorage.removeItem('geo_token');
-                    setToken(null);
-                    setUser(null);
-                }
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    console.warn('Auth check timed out');
-                } else {
-                    console.error('Auth check failed:', error);
-                }
-                // Don't clear token on network failure, just let them stay logged out for now
-                // but we DO need to stop loading
-            } finally {
-                clearTimeout(timeoutId);
-                setLoading(false);
-            }
-        };
-
-        checkAuth();
-    }, []);
-
     const login = async (email, password) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), NETWORK_TIMEOUT);
