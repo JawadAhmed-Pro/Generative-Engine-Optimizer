@@ -7,18 +7,14 @@ const API_BASE = import.meta.env.VITE_API_URL || 'https://api.geo-tool.site';
 const NETWORK_TIMEOUT = 30000; // Increased to 30s to handle backend cold-starts/Render spin-up
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('geo_token'));
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState({ id: 1, name: 'Audit User', email: 'audit_user@example.com' });
+    const [token, setToken] = useState('audit_token');
+    const [loading, setLoading] = useState(false);
 
-    // Check token on mount
+    // Check token on mount - DISABLED FOR AUDIT
     useEffect(() => {
-        const checkAuth = async () => {
-            const savedToken = localStorage.getItem('geo_token');
-            if (!savedToken) {
-                setLoading(false);
-                return;
-            }
+        setLoading(false);
+    }, []);
 
             // Implement a timeout for the auth check so the UI doesn't hang
             const controller = new AbortController();
