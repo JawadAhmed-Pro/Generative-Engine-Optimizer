@@ -202,6 +202,11 @@ function ContentOptimization() {
     const [selectedKeyword, setSelectedKeyword] = useState('')
     const [customKeyword, setCustomKeyword] = useState('')
 
+    // Smart Injection State - RESTORED PHASE 2
+    const [semanticGaps, setSemanticGaps] = useState([])
+    const [generatingInjection, setGeneratingInjection] = useState(false)
+    const [manualInjectionTarget, setManualInjectionTarget] = useState('')
+
     // Import URL State
     const [showUrlImport, setShowUrlImport] = useState(false)
     const [importUrl, setImportUrl] = useState('')
@@ -257,7 +262,33 @@ function ContentOptimization() {
         return () => clearTimeout(timer)
     }, [content])
 
+    const handleGenerateInjection = async (target = null) => {
+        const targetToUse = target || manualInjectionTarget;
+        if (!targetToUse) return;
+        
+        setGeneratingInjection(true);
+        try {
+            const response = await axios.post('/api/optimize/inject', {
+                context_text: content,
+                injection_target: targetToUse,
+                tone: 'professional'
+            });
+            
+            if (response.data.injection) {
+                const newContent = content + "\n\n" + response.data.injection;
+                updateOptimization({ content: newContent });
+                setManualInjectionTarget('');
+            }
+        } catch (err) {
+            alert("Failed to generate targeted injection.");
+        } finally {
+            setGeneratingInjection(false);
+        }
+    };
+
     const handleGenerateSchema = async () => {
+        if (!content.trim()) return
+        
         setSchemaLoading(true)
         setSchemaResult(null)
         setError(null)
@@ -806,6 +837,76 @@ function ContentOptimization() {
                                         <span>Targeting: <strong style={{ color: 'var(--success)' }}>{selectedKeyword}</strong></span>
                                     </div>
                                 )}
+                            </div>
+                        )}
+
+                        {/* Smart Injection Panel - RESTORED PHASE 2 */}
+                        {activeTab !== 'schema' && content.length > 200 && (
+                            <div style={{
+                                marginBottom: '1.5rem',
+                                padding: '1.5rem',
+                                background: 'linear-gradient(135deg, #0f172a 0%, #172554 100%)',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(59, 130, 246, 0.4)',
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                                position: 'relative',
+                                overflow: 'hidden'
+                            }}>
+                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'var(--accent-gradient)' }} />
+                                
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                                    <Zap size={20} color="var(--accent-primary)" fill="currentColor" />
+                                    <span style={{ fontSize: '1.1rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'white' }}>
+                                        Smart Injection Auto-Writer
+                                    </span>
+                                    <div style={{ marginLeft: 'auto', padding: '0.2rem 0.6rem', borderRadius: '100px', background: 'rgba(59, 130, 246, 0.2)', color: 'var(--accent-primary)', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                                        AI-Powered
+                                    </div>
+                                </div>
+                                
+                                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
+                                    Detected a semantic gap? Tell the AI what's missing and it will generate a tone-matched block to inject into your protagonists.
+                                </p>
+                                
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <input
+                                        type="text"
+                                        value={manualInjectionTarget}
+                                        onChange={(e) => setManualInjectionTarget(e.target.value)}
+                                        placeholder="e.g. 'Add a technical specifications comparison table' or 'Explain the E-E-A-T background'"
+                                        style={{
+                                            flex: 1,
+                                            background: 'rgba(0,0,0,0.4)',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            color: 'white',
+                                            padding: '0.75rem 1rem',
+                                            borderRadius: '8px',
+                                            outline: 'none',
+                                            fontSize: '0.9rem'
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => handleGenerateInjection()}
+                                        disabled={generatingInjection || !manualInjectionTarget.trim()}
+                                        style={{
+                                            padding: '0 1.5rem',
+                                            background: 'var(--accent-gradient)',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            color: 'white',
+                                            fontWeight: '700',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            opacity: (generatingInjection || !manualInjectionTarget.trim()) ? 0.6 : 1,
+                                            boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)'
+                                        }}
+                                    >
+                                        {generatingInjection ? <RefreshCw size={18} className="spin" /> : <PenTool size={18} />}
+                                        Inject
+                                    </button>
+                                </div>
                             </div>
                         )}
 

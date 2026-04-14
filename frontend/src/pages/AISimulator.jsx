@@ -12,6 +12,11 @@ function AISimulator() {
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState(null)
     const [error, setError] = useState(null)
+    
+    // Live Proof State - RESTORED PHASE 4
+    const [validationResult, setValidationResult] = useState(null)
+    const [validating, setValidating] = useState(false)
+    const [validationError, setValidationError] = useState(null)
     const resultRef = useRef(null)
 
     // Scroll to results when they appear
@@ -41,6 +46,25 @@ function AISimulator() {
             setLoading(false)
         }
     }
+
+    const handleValidate = async () => {
+        if (!content.trim()) return;
+        setValidating(true);
+        setValidationError(null);
+        setValidationResult(null);
+        try {
+            const response = await axios.post('/api/validate-citation', {
+                content: content,
+                content_type: domain
+            });
+            setValidationResult(response.data);
+            // If validation is successful, we might want to scroll to it
+        } catch (err) {
+            setValidationError("Live Proof simulation failed. Backend might be warming up.");
+        } finally {
+            setValidating(false);
+        }
+    };
 
     return (
         <motion.div 
@@ -281,6 +305,85 @@ function AISimulator() {
                         {/* Shimmer Effect */}
                         {!loading && <div className="shimmer-effect" />}
                     </button>
+
+                    {/* Live Proof Validation Button - RESTORED PHASE 4 */}
+                    <button
+                        onClick={handleValidate}
+                        disabled={validating || !content.trim()}
+                        className="btn btn-outline"
+                        style={{ 
+                            width: '100%', 
+                            marginTop: '1rem',
+                            padding: '0.8rem', 
+                            fontSize: '0.95rem',
+                            borderRadius: '12px',
+                            borderColor: 'rgba(16, 185, 129, 0.4)',
+                            background: 'rgba(16, 185, 129, 0.05)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.75rem',
+                            color: 'var(--success)'
+                        }}
+                    >
+                        {validating ? (
+                            <RefreshCw size={18} className="spin" />
+                        ) : (
+                            <CheckCircle size={18} />
+                        )}
+                        <span>Run Live Extraction Proof</span>
+                    </button>
+
+                    {/* Validation Result Display */}
+                    {validationResult && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            style={{
+                                marginTop: '1.5rem',
+                                padding: '1.25rem',
+                                background: validationResult.threshold_met ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                                border: '1px solid ' + (validationResult.threshold_met ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'),
+                                borderRadius: '12px'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                {validationResult.threshold_met ? <Zap size={20} color="var(--success)" fill="currentColor" /> : <AlertTriangle size={20} color="var(--warning)" />}
+                                <span style={{ fontWeight: '800', color: validationResult.threshold_met ? 'var(--success)' : 'var(--warning)' }}>
+                                    {validationResult.threshold_met ? 'CITABLE STATUS REACHED' : 'EXTRACTION THRESHOLD MISSED'}
+                                </span>
+                            </div>
+                            <div style={{ fontSize: '2.5rem', fontWeight: '900', marginBottom: '0.5rem' }}>
+                                {validationResult.probability}%
+                            </div>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                Probability of this block being extracted as a primary source for the target query.
+                            </p>
+                            
+                            {validationResult.validation_factors?.length > 0 && (
+                                <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    {validationResult.validation_factors.map((factor, i) => (
+                                        <span key={i} style={{ 
+                                            padding: '0.2rem 0.5rem', 
+                                            background: 'rgba(255,255,255,0.05)', 
+                                            borderRadius: '4px', 
+                                            fontSize: '0.7rem',
+                                            color: 'var(--text-secondary)',
+                                            border: '1px solid rgba(255,255,255,0.1)'
+                                        }}>
+                                            {factor}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+
+                    {validationError && (
+                        <p style={{ color: 'var(--error)', fontSize: '0.8rem', marginTop: '0.75rem', textAlign: 'center' }}>
+                            {validationError}
+                        </p>
+                    )}
 
                     {error && (
                         <motion.div 

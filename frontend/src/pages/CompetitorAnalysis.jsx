@@ -11,6 +11,10 @@ function CompetitorAnalysis() {
     const [results, setResults] = useState(null)
     const [history, setHistory] = useState([])
     const [error, setError] = useState(null)
+    
+    // Target Discovery State - RESTORED PHASE 1
+    const [targetKeyword, setTargetKeyword] = useState('')
+    const [discovering, setDiscovering] = useState(false)
 
     useEffect(() => {
         fetchHistory()
@@ -100,6 +104,27 @@ function CompetitorAnalysis() {
         }
     }
 
+    const handleDiscover = async () => {
+        if (!targetKeyword.trim()) return;
+        setDiscovering(true);
+        setError(null);
+        try {
+            const response = await axios.post('/api/discover/competitors', {
+                keyword: targetKeyword,
+                niche: contentType
+            });
+            // Job-based discovery handled via feedback
+            if (response.data.job_id) {
+                // For this MVP discovery, we just alert success
+                alert("Discovery engine started. Top competitors will be automatically populated.");
+            }
+        } catch (err) {
+            setError("Discovery failed. Please enter competitors manually.");
+        } finally {
+            setDiscovering(false);
+        }
+    };
+
     const getScoreColor = (score) => {
         if (score >= 75) return '#10b981'
         if (score >= 50) return '#f59e0b'
@@ -138,6 +163,56 @@ function CompetitorAnalysis() {
                 <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', background: 'var(--accent-gradient)' }} />
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    {/* Target Keyword Discovery - RESTORED PHASE 1 */}
+                    <div style={{ background: 'rgba(59, 130, 246, 0.05)', padding: '1.5rem', borderRadius: '16px', border: '1px dashed rgba(59, 130, 246, 0.3)', marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                            <Sparkles size={18} color="var(--accent-primary)" />
+                            <span style={{ fontWeight: '800', fontSize: '0.9rem', color: 'var(--accent-primary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                                AI COMPETITOR DISCOVERY (AUTO-FLY)
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <input
+                                type="text"
+                                value={targetKeyword}
+                                onChange={(e) => setTargetKeyword(e.target.value)}
+                                placeholder="Enter your target keyword (e.g. 'Best CRM for Startups')"
+                                style={{
+                                    flex: 1,
+                                    padding: '0.8rem 1.1rem',
+                                    background: 'rgba(0,0,0,0.5)',
+                                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                                    borderRadius: '10px',
+                                    color: 'white',
+                                    fontSize: '0.95rem'
+                                }}
+                            />
+                            <button
+                                onClick={handleDiscover}
+                                disabled={discovering || !targetKeyword.trim()}
+                                style={{
+                                    padding: '0 1.5rem',
+                                    background: 'var(--accent-gradient)',
+                                    border: 'none',
+                                    borderRadius: '10px',
+                                    color: 'white',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    opacity: (discovering || !targetKeyword.trim()) ? 0.6 : 1
+                                }}
+                            >
+                                {discovering ? <RefreshCw size={18} className="spin" /> : <Zap size={18} fill="currentColor" />}
+                                Find Top Competitors
+                            </button>
+                        </div>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.75rem', marginLeft: '0.2rem' }}>
+                            Our engine will deep-scan search results to identify the high-authority pages currently capturing the extraction share.
+                        </p>
+                    </div>
+
                     {/* Your URL Field */}
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
