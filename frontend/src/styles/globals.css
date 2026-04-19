@@ -54,23 +54,27 @@
   --interior-decor-glow: rgba(59, 130, 246, 0.2);
 }
 
-body.dark-theme {
+.dark-theme {
   --bg-primary: #08080A;
   --bg-secondary: #0D0D12;
   --bg-tertiary: #0F0F15;
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
   --text-tertiary: #64748B;
+}
+
+/* Ensure background color is applied correctly */
+body.dark-theme, .dark-theme body {
   background-color: var(--bg-primary) !important;
 }
 
 /* Ensure aurora glows are vibrant in dark theme */
-body.dark-theme .aurora-container {
+.dark-theme .aurora-container {
   opacity: 1 !important;
   background: var(--bg-primary) !important;
 }
 
-body.dark-theme .aurora-blob {
+.dark-theme .aurora-blob {
   opacity: 0.4 !important;
   filter: blur(140px) !important;
 }
@@ -496,7 +500,7 @@ textarea:focus-visible {
   }
 }
 
-body.light-theme .sidebar-blob {
+.light-theme .sidebar-blob {
   opacity: 0.15;
   mix-blend-mode: multiply;
   filter: blur(80px);
@@ -513,7 +517,7 @@ body.light-theme .sidebar-blob {
   max-width: 90vw;
 }
 
-body.light-theme .topbar-dropdown {
+.light-theme .topbar-dropdown {
   background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
   box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.12), 0 10px 30px -15px rgba(0, 0, 0, 0.08) !important;
@@ -548,11 +552,11 @@ body.light-theme .topbar-dropdown [style*="background"]:hover {
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-body.light-theme .topbar-dropdown .dropdown-divider {
+.light-theme .topbar-dropdown .dropdown-divider {
   border-color: rgba(0, 0, 0, 0.12) !important;
 }
 
-body.light-theme {
+.light-theme {
   background: #FAFBFE !important;
   --bg-primary: #FFFFFF;
   --bg-secondary: #F8FAFC;

@@ -10,7 +10,7 @@
       (function() {
         try {
           var theme = localStorage.getItem('geo_theme') || 'dark';
-          document.body.classList.add(theme + '-theme');
+          document.documentElement.classList.add(theme + '-theme');
         } catch (e) {
           console.error('Theme initialization failed', e);
         }

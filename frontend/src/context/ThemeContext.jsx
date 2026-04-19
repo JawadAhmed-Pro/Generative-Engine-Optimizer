@@ -4,20 +4,20 @@ const ThemeContext = createContext()
 
 export function ThemeProvider({ children }) {
     const [theme, setTheme] = useState(() => {
-        // First check if body already has a class (applied by index.html)
-        if (document.body.classList.contains('light-theme')) return 'light';
-        if (document.body.classList.contains('dark-theme')) return 'dark';
+        // First check if html already has a class (applied by index.html)
+        if (document.documentElement.classList.contains('light-theme')) return 'light';
+        if (document.documentElement.classList.contains('dark-theme')) return 'dark';
         
         // Fallback to localStorage or default to dark
         return localStorage.getItem('geo_theme') || 'dark'
     })
 
     useEffect(() => {
-        // Apply theme class to body only if it's different from current
+        // Apply theme class to html only if it's different from current
         const currentClass = `${theme}-theme`;
-        if (!document.body.classList.contains(currentClass)) {
-            document.body.classList.remove('light-theme', 'dark-theme')
-            document.body.classList.add(currentClass)
+        if (!document.documentElement.classList.contains(currentClass)) {
+            document.documentElement.classList.remove('light-theme', 'dark-theme')
+            document.documentElement.classList.add(currentClass)
         }
 
         // Save to localStorage
