@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { PenTool, Lightbulb, Zap, Sparkles, Download, Copy, Check, Folder, Plus, X, Code2, Info as InfoIcon, History, Link as LinkIcon, TrendingUp, Target } from 'lucide-react'
+import { PenTool, Lightbulb, Zap, Sparkles, Download, Copy, Check, Folder, Plus, X, Code2, Info as InfoIcon, History, Link as LinkIcon, TrendingUp, Target, RefreshCw } from 'lucide-react'
 import axios from 'axios'
 import ResultsPanel from '../components/ResultsPanel'
 import ReactMarkdown from 'react-markdown'
@@ -368,12 +368,14 @@ function ContentOptimization() {
                 axios.post('/api/analyze-text', {
                     content: content,
                     title: activeTab === 'rewrite' ? "Original Draft" : "Topic Idea",
-                    content_type: contentType
+                    content_type: contentType,
+                    target_keyword: selectedKeyword || customKeyword || undefined
                 }),
                 axios.post('/api/optimize-content', {
                     content: content,
                     mode: activeTab, // 'rewrite' or 'generate'
-                    content_type: contentType
+                    content_type: contentType,
+                    target_keyword: selectedKeyword || customKeyword || undefined
                 })
             ])
 
@@ -1204,7 +1206,7 @@ function ContentOptimization() {
                             </div>
 
                             {viewMode === 'analysis' && analysisResults && (
-                                <ResultsPanel results={analysisResults} onReset={() => setAnalysisResults(null)} context="text" />
+                                <ResultsPanel results={analysisResults} onReset={() => updateOptimization({ analysisResults: null, optimizedContent: '' })} context="text" />
                             )}
 
                             {viewMode === 'result' && optimizedContent && (
@@ -1403,7 +1405,7 @@ function ContentOptimization() {
                                                 </div>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
                                                     <span style={{ color: 'var(--text-tertiary)' }}>{new Date(item.created_at).toLocaleDateString()}</span>
-                                                    {item.score && (
+                                                    {item.score != null && (
                                                         <div style={{
                                                             padding: '0.2rem 0.5rem',
                                                             borderRadius: '4px',
@@ -1411,7 +1413,7 @@ function ContentOptimization() {
                                                             color: item.score > 80 ? 'var(--success)' : 'var(--warning)',
                                                             fontWeight: '700'
                                                         }}>
-                                                            {item.score.toFixed(0)}%
+                                                            {Number(item.score).toFixed(0)}%
                                                         </div>
                                                     )}
                                                 </div>
@@ -1459,7 +1461,7 @@ function ContentOptimization() {
                             </div>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                                 <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--accent-primary)' }}>
-                                    {activeTab === 'schema' ? '98%' : (history.length > 0 ? (history.reduce((acc, curr) => acc + curr.score, 0) / history.length).toFixed(0) + '%' : '0%')}
+                                    {activeTab === 'schema' ? '98%' : (history.length > 0 ? (history.reduce((acc, curr) => acc + (curr.score || 0), 0) / history.length).toFixed(0) + '%' : '0%')}
                                 </span>
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                     {activeTab === 'schema' ? 'Standardized Output' : `tracked across ${history.length} runs`}

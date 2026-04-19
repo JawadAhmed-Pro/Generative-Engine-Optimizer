@@ -327,46 +327,58 @@ def get_history(
     current_user: dict = Depends(require_auth)
 ):
     """Get recent content items with their scores."""
-    from sqlalchemy import func
-    
-    # We join Project to filter by user_id
-    query = db.query(ContentItem).join(Project).filter(Project.user_id == current_user["id"])
-    
+    from sqlalchemy import or_
+
+    # Include items that belong to user's projects OR have no project (direct text analysis)
+    user_project_ids = [
+        p.id for p in db.query(Project).filter(Project.user_id == current_user["id"]).all()
+    ]
+
+    query = db.query(ContentItem).filter(
+        or_(
+            ContentItem.project_id.in_(user_project_ids),
+            ContentItem.project_id.is_(None)  # standalone items (no project assigned)
+        )
+    )
+
     # Filter by type
     if type == "url":
         query = query.filter(ContentItem.url.isnot(None))
     elif type == "text":
         query = query.filter(ContentItem.url.is_(None))
-    
+
     # Get recent items
     items = query.order_by(ContentItem.created_at.desc()).limit(limit).all()
-    
+
     result = []
     for item in items:
         # Get latest analysis for this item
         analysis = db.query(AnalysisResult).filter(
             AnalysisResult.content_item_id == item.id
         ).order_by(AnalysisResult.created_at.desc()).first()
-        
+
         score = None
         if analysis:
-            score = (
-                analysis.ai_visibility_score +
-                analysis.citation_worthiness_score +
-                analysis.semantic_coverage_score +
+            scores = [
+                analysis.ai_visibility_score,
+                analysis.citation_worthiness_score,
+                analysis.semantic_coverage_score,
                 analysis.technical_readability_score
-            ) / 4
-        
+            ]
+            valid_scores = [s for s in scores if s is not None]
+            if valid_scores:
+                score = sum(valid_scores) / len(valid_scores)
+
         result.append({
             "id": item.id,
             "title": item.title or (item.url[:50] if item.url else "Text Content"),
             "url": item.url,
             "type": "url" if item.url else "text",
-            "score": round(score, 1) if score else None,
+            "score": round(score, 1) if score is not None else None,
             "created_at": item.created_at.isoformat(),
             "project_id": item.project_id
         })
-    
+
     return {"items": result}
 
 
