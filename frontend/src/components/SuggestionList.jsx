@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
-import { Sparkles, Check, Loader2, ClipboardCheck } from 'lucide-react'
+import { Sparkles, Check, Loader2, ClipboardCheck, Circle, Lightbulb } from 'lucide-react'
 import { useAnalysisState } from '../context/AnalysisContext'
 
 function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
