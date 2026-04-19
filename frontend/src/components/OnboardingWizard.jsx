@@ -86,13 +86,13 @@ function OnboardingWizard({ onComplete }) {
     }
 
     return (
-        <div className="aurora-container" style={{
+        <div style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'var(--bg-secondary)',
+            background: 'var(--bg-primary)',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'center',
