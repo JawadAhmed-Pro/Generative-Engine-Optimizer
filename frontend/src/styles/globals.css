@@ -54,6 +54,27 @@
   --interior-decor-glow: rgba(59, 130, 246, 0.2);
 }
 
+body.dark-theme {
+  --bg-primary: #08080A;
+  --bg-secondary: #0D0D12;
+  --bg-tertiary: #0F0F15;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+  background-color: var(--bg-primary) !important;
+}
+
+/* Ensure aurora glows are vibrant in dark theme */
+body.dark-theme .aurora-container {
+  opacity: 1 !important;
+  background: var(--bg-primary) !important;
+}
+
+body.dark-theme .aurora-blob {
+  opacity: 0.4 !important;
+  filter: blur(140px) !important;
+}
+
 * {
   margin: 0;
   padding: 0;

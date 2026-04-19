@@ -101,9 +101,9 @@ function OnboardingWizard({ onComplete }) {
             overflowY: 'auto'
         }}>
             {/* Animated Aurora Blobs */}
-            <div className="aurora-blob aurora-blob-1" style={{ opacity: 0.15 }}></div>
-            <div className="aurora-blob aurora-blob-2" style={{ opacity: 0.1 }}></div>
-            <div className="aurora-blob aurora-blob-3" style={{ opacity: 0.15 }}></div>
+            <div className="aurora-blob aurora-blob-1" style={{ opacity: 0.15, pointerEvents: 'none' }}></div>
+            <div className="aurora-blob aurora-blob-2" style={{ opacity: 0.1, pointerEvents: 'none' }}></div>
+            <div className="aurora-blob aurora-blob-3" style={{ opacity: 0.15, pointerEvents: 'none' }}></div>
             {/* Background decoration */}
             <div style={{
                 position: 'absolute',
@@ -113,7 +113,8 @@ function OnboardingWizard({ onComplete }) {
                 height: '300px',
                 background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
                 borderRadius: '50%',
-                filter: 'blur(60px)'
+                filter: 'blur(60px)',
+                pointerEvents: 'none'
             }} />
             <div style={{
                 position: 'absolute',
@@ -123,7 +124,8 @@ function OnboardingWizard({ onComplete }) {
                 height: '400px',
                 background: 'radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, transparent 70%)',
                 borderRadius: '50%',
-                filter: 'blur(80px)'
+                filter: 'blur(80px)',
+                pointerEvents: 'none'
             }} />
 
             <div style={{
