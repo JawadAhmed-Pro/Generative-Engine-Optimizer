@@ -1,21 +1,23 @@
 import { ArrowUpRight, ArrowRight, ArrowDownRight } from 'lucide-react'
 
 function MetricCard({ title, score, description }) {
+    const safeScore = typeof score === 'number' && !isNaN(score) ? score : 0;
+
     const getScoreClass = (score) => {
         if (score >= 75) return 'score-high'
         if (score >= 50) return 'score-medium'
         return 'score-low'
     }
 
-    const getProgressColor = (score) => {
-        if (score >= 75) return 'var(--success)'
-        if (score >= 50) return 'var(--warning)'
+    const getProgressColor = (s) => {
+        if (s >= 75) return 'var(--success)'
+        if (s >= 50) return 'var(--warning)'
         return 'var(--error)'
     }
 
     const getIcon = () => {
-        if (score >= 75) return <ArrowUpRight size={18} />
-        if (score >= 50) return <ArrowRight size={18} />
+        if (safeScore >= 75) return <ArrowUpRight size={18} />
+        if (safeScore >= 50) return <ArrowRight size={18} />
         return <ArrowDownRight size={18} />
     }
 
@@ -24,7 +26,7 @@ function MetricCard({ title, score, description }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            borderTop: `1px solid ${getProgressColor(score)}`,
+            borderTop: `1px solid ${getProgressColor(safeScore)}`,
             height: '100%'
         }}>
             <div>
@@ -38,8 +40,8 @@ function MetricCard({ title, score, description }) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: getProgressColor(score),
-                        border: `1px solid ${getProgressColor(score)}44`
+                        color: getProgressColor(safeScore),
+                        border: `1px solid ${getProgressColor(safeScore)}44`
                     }}>
                         {getIcon()}
                     </div>
@@ -47,7 +49,7 @@ function MetricCard({ title, score, description }) {
 
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1rem' }}>
                     <span style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
-                        {Math.round(score)}
+                        {Math.round(safeScore)}
                     </span>
                     <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '500' }}>/ 100</span>
                 </div>
@@ -59,9 +61,9 @@ function MetricCard({ title, score, description }) {
                         className="progress-fill"
                         style={{
                             height: '100%',
-                            width: `${score}%`,
-                            background: getProgressColor(score),
-                            boxShadow: `0 0 10px ${getProgressColor(score)}22`,
+                            width: `${safeScore}%`,
+                            background: getProgressColor(safeScore),
+                            boxShadow: `0 0 10px ${getProgressColor(safeScore)}22`,
                             transition: 'width 1s ease-out'
                         }}
                     ></div>

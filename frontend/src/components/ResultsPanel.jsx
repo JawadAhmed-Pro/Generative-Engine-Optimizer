@@ -82,17 +82,17 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
     }
 
     const overallScore = Math.round(
-        (results.ai_visibility_score +
-            results.citation_worthiness_score +
-            results.semantic_coverage_score +
-            results.technical_readability_score) / 4
+        ((results.ai_visibility_score || 0) +
+            (results.citation_worthiness_score || 0) +
+            (results.semantic_coverage_score || 0) +
+            (results.technical_readability_score || 0)) / 4
     )
 
     // Extract new probability metrics if available, accounting for Pydantic wrapper mapping
     const rawProb = results.probability_metrics || (results.llm_scores && results.llm_scores.probability_metrics) || null;
     const probabilityMetrics = rawProb?.details || rawProb;
-    const scoreDelta = results.score_delta;
-    const prevCount = results.previous_analyses_count;
+    const scoreDelta = typeof results.score_delta === 'number' ? results.score_delta : 0;
+    const prevCount = results.previous_analyses_count || 0;
 
     // Helper to check if we have detailed new metrics
     const hasDetailedMetrics = results.llm_scores &&
@@ -251,22 +251,22 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     <>
                         <MetricCard
                             title={currentLabels.ai_visibility}
-                            score={results.ai_visibility_score}
+                            score={results.ai_visibility_score || 0}
                             description={context === 'text' ? "How well structured for AI understanding" : "How easily AI models can find and cite this content"}
                         />
                         <MetricCard
                             title={currentLabels.citation_worthiness}
-                            score={results.citation_worthiness_score}
+                            score={results.citation_worthiness_score || 0}
                             description={context === 'text' ? "Trust signals and expertise indicators" : "Likelihood of being referenced by AI as authoritative"}
                         />
                         <MetricCard
                             title={currentLabels.semantic_richness}
-                            score={results.semantic_coverage_score}
+                            score={results.semantic_coverage_score || 0}
                             description={context === 'text' ? "Vocabulary depth and user intent match" : "Depth and richness of topic coverage"}
                         />
                         <MetricCard
                             title={currentLabels.technical_readability}
-                            score={results.technical_readability_score}
+                            score={results.technical_readability_score || 0}
                             description={context === 'text' ? "Clarity, flow, and formatting" : "Structure, readability, and freshness signals"}
                         />
                     </>
