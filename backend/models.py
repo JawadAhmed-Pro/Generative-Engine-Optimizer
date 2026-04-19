@@ -207,6 +207,10 @@ class AnalysisResponse(BaseModel):
     intent_analysis: Optional[Dict[str, Any]] = None
     eeat_analysis: Optional[Dict[str, Any]] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Historical metadata
+    score_delta: Optional[float] = 0.0
+    previous_analyses_count: Optional[int] = 0
 
 
 class InsightRequest(BaseModel):

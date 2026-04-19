@@ -594,7 +594,7 @@ def get_analysis_by_item(
             "analyzed_at": analysis.created_at.isoformat(),
             "probability_metrics": probability_metrics,
             "historical_trend": historical_scores,
-            "score_delta": round(score_delta, 1) if score_delta != 0 else None,
+            "score_delta": round(score_delta, 1),
             "previous_analyses_count": len(history)
         },
         "insights": insights_data
@@ -1023,6 +1023,17 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     db.add(analysis_result)
     db.commit()
     
+    # Fetch history to calculate delta for the response
+    history = db.query(AnalysisResult).filter(
+        AnalysisResult.content_item_id == content_item_id
+    ).order_by(AnalysisResult.created_at.asc()).all()
+    
+    score_delta = 0
+    if len(history) > 1:
+        oldest_score = (history[0].ai_visibility_score + history[0].citation_worthiness_score + history[0].semantic_coverage_score + history[0].technical_readability_score) / 4
+        newest_score = (history[-1].ai_visibility_score + history[-1].citation_worthiness_score + history[-1].semantic_coverage_score + history[-1].technical_readability_score) / 4
+        score_delta = newest_score - oldest_score
+
     # Create response
     response = AnalysisResponse(
         content_item_id=content_item_id,
@@ -1033,7 +1044,9 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
         rule_based_scores=final_scores['rule_based_scores'],
         llm_scores=final_scores['llm_scores'],
         suggestions=final_scores['suggestions'],
-        timestamp=datetime.utcnow()
+        timestamp=datetime.utcnow(),
+        score_delta=round(score_delta, 1),
+        previous_analyses_count=len(history)
     )
     
     return response

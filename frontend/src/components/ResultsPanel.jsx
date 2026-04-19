@@ -139,11 +139,11 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
 
                 {probabilityMetrics ? (
                     <>
-                        <div className={`score-badge ${getScoreClass(probabilityMetrics.probability)}`} style={{ fontSize: '3.5rem', padding: '2rem', display: 'inline-block' }}>
-                            {probabilityMetrics.probability}%
+                        <div className={`score-badge ${getScoreClass(probabilityMetrics.probability || 0)}`} style={{ fontSize: '3.5rem', padding: '2rem', display: 'inline-block' }}>
+                            {probabilityMetrics.probability || 0}%
                         </div>
                         <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>
-                            Based on our research models, your content has a <strong>{probabilityMetrics.probability}%</strong> chance of being cited by AI engines as a source.
+                            Based on our research models, your content has a <strong>{probabilityMetrics.probability || 0}%</strong> chance of being cited by AI engines as a source.
                         </p>
                         <div style={{ fontSize: '0.85rem', color: 'var(--accent)', marginTop: '0.5rem' }}>
                             Industry Average: {probabilityMetrics?.competitor_average || 'N/A'}% | Confidence Interval: {probabilityMetrics?.confidence_interval?.low || 'N/A'}% - {probabilityMetrics?.confidence_interval?.high || 'N/A'}%
@@ -163,7 +163,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                 )}
 
                 {/* Progress Tracking Widget */}
-                {prevCount > 1 && scoreDelta !== undefined && (
+                {prevCount > 1 && typeof scoreDelta === 'number' && (
                     <div style={{
                         marginTop: '1.5rem',
                         background: 'var(--bg-tertiary)',
@@ -184,7 +184,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                         <div style={{ height: '30px', width: '1px', background: 'var(--card-border)' }}></div>
 
                         <div style={{ fontSize: '1.5rem', fontWeight: '700', color: scoreDelta > 0 ? 'var(--success)' : scoreDelta < 0 ? 'var(--error)' : 'var(--text-secondary)' }}>
-                            {scoreDelta > 0 ? '+' : ''}{scoreDelta.toFixed(1)} pts
+                            {scoreDelta > 0 ? '+' : ''}{(scoreDelta || 0).toFixed(1)} pts
                         </div>
 
                         {results.historical_trend && (

@@ -459,16 +459,16 @@ function CompetitorAnalysis() {
                                                 {results.user?.scores?.overall || 0}
                                             </td>
                                             <td style={{ padding: '1.5rem 1rem', textAlign: 'center', fontWeight: '700', color: getScoreColor(results.user?.scores?.ai_visibility || 0) }}>
-                                                {results.user?.scores?.ai_visibility?.toFixed(0) || 0}
+                                                {typeof results.user?.scores?.ai_visibility === 'number' ? results.user.scores.ai_visibility.toFixed(0) : 0}
                                             </td>
                                             <td style={{ padding: '1.5rem 1rem', textAlign: 'center', fontWeight: '700', color: getScoreColor(results.user?.scores?.citation_worthiness || 0) }}>
-                                                {results.user?.scores?.citation_worthiness?.toFixed(0) || 0}
+                                                {typeof results.user?.scores?.citation_worthiness === 'number' ? results.user.scores.citation_worthiness.toFixed(0) : 0}
                                             </td>
                                             <td style={{ padding: '1.5rem 1rem', textAlign: 'center', fontWeight: '700', color: getScoreColor(results.user?.scores?.semantic_coverage || 0) }}>
-                                                {results.user?.scores?.semantic_coverage?.toFixed(0) || 0}
+                                                {typeof results.user?.scores?.semantic_coverage === 'number' ? results.user.scores.semantic_coverage.toFixed(0) : 0}
                                             </td>
                                             <td style={{ padding: '1.5rem 1rem', textAlign: 'center', fontWeight: '700', color: getScoreColor(results.user?.scores?.technical_readability || 0) }}>
-                                                {results.user?.scores?.technical_readability?.toFixed(0) || 0}
+                                                {typeof results.user?.scores?.technical_readability === 'number' ? results.user.scores.technical_readability.toFixed(0) : 0}
                                             </td>
                                         </tr>
                                         {/* Competitor Rows */}
@@ -494,10 +494,10 @@ function CompetitorAnalysis() {
                                                         {getDiffIcon((results.user?.scores?.overall || 0) - (comp.scores?.overall || 0))}
                                                     </div>
                                                 </td>
-                                                <td style={{ padding: '1.25rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{comp.scores?.ai_visibility?.toFixed(0) || 0}</td>
-                                                <td style={{ padding: '1.25rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{comp.scores?.citation_worthiness?.toFixed(0) || 0}</td>
-                                                <td style={{ padding: '1.25rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{comp.scores?.semantic_coverage?.toFixed(0) || 0}</td>
-                                                <td style={{ padding: '1.25rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{comp.scores?.technical_readability?.toFixed(0) || 0}</td>
+                                                <td style={{ padding: '1.25rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{typeof comp.scores?.ai_visibility === 'number' ? comp.scores.ai_visibility.toFixed(0) : 0}</td>
+                                                <td style={{ padding: '1.25rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{typeof comp.scores?.citation_worthiness === 'number' ? comp.scores.citation_worthiness.toFixed(0) : 0}</td>
+                                                <td style={{ padding: '1.25rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{typeof comp.scores?.semantic_coverage === 'number' ? comp.scores.semantic_coverage.toFixed(0) : 0}</td>
+                                                <td style={{ padding: '1.25rem 1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{typeof comp.scores?.technical_readability === 'number' ? comp.scores.technical_readability.toFixed(0) : 0}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -662,9 +662,9 @@ function CompetitorAnalysis() {
                                         <td style={{ padding: '1rem', fontSize: '0.85rem' }}>{item.user_url?.substring(0, 45)}...</td>
                                         <td style={{ padding: '1rem', textAlign: 'center', fontWeight: '600' }}>{item.competitor_urls?.length || 0} Pages</td>
                                         <td style={{ padding: '1rem', textAlign: 'center', fontWeight: '800', color: getScoreColor(item.user_overall_score || 0) }}>
-                                            {item.user_overall_score?.toFixed(1) || '-'}
+                                            {typeof item.user_overall_score === 'number' ? item.user_overall_score.toFixed(1) : '-'}
                                         </td>
-                                        <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{item.competitor_avg_score?.toFixed(1) || '-'}</td>
+                                        <td style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>{typeof item.competitor_avg_score === 'number' ? item.competitor_avg_score.toFixed(1) : '-'}</td>
                                         <td style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>
                                             {new Date(item.created_at).toLocaleDateString()}
                                         </td>
