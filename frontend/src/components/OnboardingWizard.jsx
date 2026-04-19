@@ -28,7 +28,7 @@ const STEPS = [
         type: 'select',
         key: 'geo_default_domain',
         options: [
-            { value: 'education', label: 'Education', icon: <BookOpen size={24} />, desc: 'Courses, tutorials, academic' },
+            { value: 'educational', label: 'Education', icon: <BookOpen size={24} />, desc: 'Courses, tutorials, academic' },
             { value: 'ecommerce', label: 'E-commerce', icon: <ShoppingCart size={24} />, desc: 'Products, reviews, shopping' },
             { value: 'general', label: 'General / Blog', icon: <Globe size={24} />, desc: 'Articles, news, general content' }
         ]

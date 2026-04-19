@@ -3,11 +3,21 @@ import { createContext, useContext, useState, useCallback } from 'react'
 // Create context for persisting analysis state across navigation
 const AnalysisContext = createContext(null)
 
+// Normalize content_type values to match backend Pydantic schema
+// Backend accepts: 'general' | 'ecommerce' | 'educational'
+const VALID_CONTENT_TYPES = ['general', 'ecommerce', 'educational']
+const sanitizeContentType = (value) => {
+    if (VALID_CONTENT_TYPES.includes(value)) return value;
+    // Map common misspellings from old localStorage data
+    if (value === 'education') return 'educational';
+    return 'general'; // safe default
+}
+
 export function AnalysisProvider({ children }) {
     // Visibility Analysis state
     const [visibilityState, setVisibilityState] = useState({
         url: '',
-        contentType: localStorage.getItem('geo_default_domain') || 'general',
+        contentType: sanitizeContentType(localStorage.getItem('geo_default_domain') || 'general'),
         analysisResults: null,
         selectedProject: ''
     })
@@ -45,7 +55,7 @@ export function AnalysisProvider({ children }) {
     const clearVisibility = useCallback(() => {
         setVisibilityState({
             url: '',
-            contentType: localStorage.getItem('geo_default_domain') || 'general',
+            contentType: sanitizeContentType(localStorage.getItem('geo_default_domain') || 'general'),
             analysisResults: null,
             selectedProject: ''
         })
