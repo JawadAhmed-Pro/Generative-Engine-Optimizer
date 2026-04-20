@@ -166,6 +166,7 @@ class AnalyzeURLRequest(BaseModel):
     url: str = Field(..., pattern=r'^https?://')
     project_id: Optional[int] = None
     content_type: str = Field(default="general", pattern=r'^(general|ecommerce|educational)$')
+    target_keyword: Optional[str] = None
 
 
 class AnalyzeTextRequest(BaseModel):
@@ -173,6 +174,7 @@ class AnalyzeTextRequest(BaseModel):
     project_id: Optional[int] = None
     title: Optional[str] = None
     content_type: str = Field(default="general", pattern=r'^(general|ecommerce|educational)$')
+    target_keyword: Optional[str] = None
 
 
 class ScoreMetric(BaseModel):
@@ -228,6 +230,7 @@ class OptimizeContentRequest(BaseModel):
     content: str
     mode: str = 'rewrite' # 'rewrite' or 'generate'
     content_type: str = 'general'
+    target_keyword: Optional[str] = None
 
 
 class SimulateAIRequest(BaseModel):
@@ -275,4 +278,5 @@ class CompetitorCompareRequest(BaseModel):
     user_url: str = Field(..., pattern=r'^https?://')
     competitor_urls: List[str] = Field(..., min_length=1, max_length=5)
     content_type: str = Field(default="general", pattern=r'^(general|ecommerce|educational)$')
+    target_keyword: Optional[str] = None
 
