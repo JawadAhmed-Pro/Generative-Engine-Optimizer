@@ -544,10 +544,10 @@ def get_analysis_by_item(
     
     # Calculate overall score
     overall_score = (
-        analysis.ai_visibility_score +
-        analysis.citation_worthiness_score +
-        analysis.semantic_coverage_score +
-        analysis.technical_readability_score
+        (analysis.ai_visibility_score or 0) +
+        (analysis.citation_worthiness_score or 0) +
+        (analysis.semantic_coverage_score or 0) +
+        (analysis.technical_readability_score or 0)
     ) / 4
     
     # Fetch stored insights

@@ -10,12 +10,13 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
 
     const calculateOverallScore = () => {
         if (!results) return 0
-        return (
-            (results.ai_visibility_score +
-                results.citation_worthiness_score +
-                results.semantic_coverage_score +
-                results.technical_readability_score) / 4
-        ).toFixed(1)
+        const score = (
+            ((results.ai_visibility_score || 0) +
+                (results.citation_worthiness_score || 0) +
+                (results.semantic_coverage_score || 0) +
+                (results.technical_readability_score || 0)) / 4
+        )
+        return isNaN(score) ? 0 : parseFloat(score.toFixed(1))
     }
 
     const exportToPDF = async () => {

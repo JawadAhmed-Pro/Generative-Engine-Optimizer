@@ -81,10 +81,10 @@ function RAGInsights({ contentItemId, initialInsights = [] }) {
     }
 
     return (
-        <div className="glass-card" style={{ marginTop: '2rem' }}>
+        <div className="glass-card" style={{ marginTop: '2rem', maxWidth: '100%', overflow: 'hidden', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <Sparkles className="text-p" size={24} style={{ color: 'var(--primary)' }} />
-                <h2 style={{ fontFamily: 'inherit', fontSize: '1.5rem', margin: 0 }}>
+                <Sparkles size={24} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+                <h2 style={{ fontFamily: 'inherit', fontSize: '1.25rem', margin: 0 }}>
                     AI Strategic Insights
                 </h2>
             </div>
@@ -116,7 +116,7 @@ function RAGInsights({ contentItemId, initialInsights = [] }) {
                 </button>
             </div>
 
-            <div style={{ minHeight: '150px' }}>
+            <div style={{ minHeight: '150px', maxWidth: '100%', overflow: 'hidden' }}>
                 {loading && (!insights[activeTab] || activeTab === null) ? (
                     <div style={{
                         display: 'flex',
@@ -141,9 +141,13 @@ function RAGInsights({ contentItemId, initialInsights = [] }) {
                 ) : (
                     <div className="markdown-content" style={{
                         whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'anywhere',
                         lineHeight: '1.6',
                         color: 'var(--text-primary)',
-                        fontSize: '0.95rem'
+                        fontSize: '0.95rem',
+                        maxWidth: '100%',
+                        overflow: 'hidden'
                     }}>
                         {insights[activeTab]}
                     </div>
@@ -156,8 +160,8 @@ function RAGInsights({ contentItemId, initialInsights = [] }) {
 const tabStyle = (isActive) => ({
     background: 'none',
     border: 'none',
-    borderBottom: isActive ? '2px solid var(--primary)' : '2px solid transparent',
-    color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
+    borderBottom: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
+    color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
     padding: '0.75rem 1rem',
     cursor: 'pointer',
     display: 'flex',
@@ -166,7 +170,8 @@ const tabStyle = (isActive) => ({
     fontSize: '0.9rem',
     fontWeight: isActive ? '600' : '400',
     transition: 'all 0.2s ease',
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
+    flexShrink: 0
 })
 
 export default RAGInsights

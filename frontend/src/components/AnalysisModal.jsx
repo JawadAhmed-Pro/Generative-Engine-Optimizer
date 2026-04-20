@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, ExternalLink, Calendar, TrendingUp, FileText, Link as LinkIcon, AlertCircle, Download, Copy, Check } from 'lucide-react'
 import axios from 'axios'
 import { useToast } from './ToastProvider'
+import RAGInsights from './RAGInsights'
 
 function AnalysisModal({ itemId, onClose }) {
     const [data, setData] = useState(null)
@@ -253,7 +254,7 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
 
                         {/* Recommendations */}
                         {data.analysis.recommendations && data.analysis.recommendations.length > 0 && (
-                            <div>
+                            <div style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem' }}>Recommendations</h3>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                     {data.analysis.recommendations.map((rec, idx) => (
@@ -269,6 +270,14 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                                     ))}
                                 </div>
                             </div>
+                        )}
+
+                        {/* AI Strategic Insights */}
+                        {(data.id || data.content_item_id) && (
+                            <RAGInsights
+                                contentItemId={data.id || data.content_item_id}
+                                initialInsights={data.insights || []}
+                            />
                         )}
                     </>
                 )}
