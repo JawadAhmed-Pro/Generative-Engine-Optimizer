@@ -74,6 +74,7 @@ async def apply_rls():
         FOR ALL
         USING (
             current_setting('app.current_tenant', TRUE) = 'admin' OR
+            user_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::integer OR
             EXISTS (
                 SELECT 1 FROM projects 
                 WHERE projects.id = content_items.project_id 
@@ -90,9 +91,15 @@ async def apply_rls():
             current_setting('app.current_tenant', TRUE) = 'admin' OR
             EXISTS (
                 SELECT 1 FROM content_items
-                JOIN projects ON projects.id = content_items.project_id
                 WHERE content_items.id = analysis_results.content_item_id
-                AND projects.user_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::integer
+                AND (
+                    content_items.user_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::integer OR
+                    EXISTS (
+                        SELECT 1 FROM projects 
+                        WHERE projects.id = content_items.project_id 
+                        AND projects.user_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::integer
+                    )
+                )
             )
         );
         """
@@ -105,9 +112,15 @@ async def apply_rls():
             current_setting('app.current_tenant', TRUE) = 'admin' OR
             EXISTS (
                 SELECT 1 FROM content_items
-                JOIN projects ON projects.id = content_items.project_id
                 WHERE content_items.id = insights.content_item_id
-                AND projects.user_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::integer
+                AND (
+                    content_items.user_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::integer OR
+                    EXISTS (
+                        SELECT 1 FROM projects 
+                        WHERE projects.id = content_items.project_id 
+                        AND projects.user_id = NULLIF(current_setting('app.current_tenant', TRUE), '')::integer
+                    )
+                )
             )
         );
         """

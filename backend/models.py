@@ -43,7 +43,8 @@ class ContentItem(Base):
     __tablename__ = "content_items"
     
     id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey("projects.id"))
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     url = Column(String, nullable=True)
     content = Column(Text, nullable=False)
     title = Column(String, nullable=True)

@@ -113,6 +113,7 @@ function ContentOptimization() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [history, setHistory] = useState([])
+    const [loadingHistory, setLoadingHistory] = useState(false)
 
     // Create project inline
     const [showCreateProject, setShowCreateProject] = useState(false)
@@ -136,6 +137,33 @@ function ContentOptimization() {
             setHistory(response.data.items)
         } catch (error) {
             console.error('Failed to fetch history:', error)
+        }
+    }
+
+    const handleHistoryItemClick = async (itemId) => {
+        setLoadingHistory(true)
+        setError(null)
+        try {
+            const response = await axios.get(`/api/analysis/${itemId}`)
+            const data = response.data
+            
+            // Update context state
+            updateOptimization({
+                content: data.content,
+                analysisResults: data.analysis,
+                optimizedContent: null // Reset optimization on history load
+            })
+            
+            // Set view mode to analysis
+            setViewMode('analysis')
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+        } catch (err) {
+            console.error('Failed to load history item:', err)
+            setError('Failed to load historical data')
+        } finally {
+            setLoadingHistory(false)
         }
     }
 
@@ -1380,13 +1408,15 @@ function ContentOptimization() {
                                     .map(item => {
                                         const isSchema = item.title.toLowerCase().includes('schema') || item.title.toLowerCase().includes('json');
                                         return (
-                                            <div key={item.id} style={{
-                                                padding: '1.25rem 1.5rem',
-                                                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                                borderLeft: `2px solid ${isSchema ? 'var(--accent-secondary)' : 'var(--accent-primary)'}`
-                                            }} className="history-item">
+                                            <div key={item.id} 
+                                                onClick={() => handleHistoryItemClick(item.id)}
+                                                style={{
+                                                    padding: '1.25rem 1.5rem',
+                                                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s ease',
+                                                    borderLeft: `2px solid ${isSchema ? 'var(--accent-secondary)' : 'var(--accent-primary)'}`
+                                                }} className="history-item">
                                                 <div style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.4rem', color: 'var(--text-primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                         {item.title || 'Untitled Optimization'}

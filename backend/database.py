@@ -30,8 +30,25 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 def init_db():
-    """Initialize database tables synchronously."""
+    """Initialize database tables synchronously and ensure schema is up to date."""
     Base.metadata.create_all(bind=sync_engine)
+    
+    # Manual Migration for standalone user_id (Self-healing for Render/Deployment)
+    from sqlalchemy import text, inspect
+    inspector = inspect(sync_engine)
+    columns = [c['name'] for c in inspector.get_columns('content_items')]
+    
+    if 'user_id' not in columns:
+        print("Migrating: Adding user_id to content_items...")
+        with sync_engine.connect() as conn:
+            # Check DB type
+            if sync_engine.url.drivername.startswith('sqlite'):
+                # SQLite supports simple ADD COLUMN
+                conn.execute(text("ALTER TABLE content_items ADD COLUMN user_id INTEGER REFERENCES users(id)"))
+            else:
+                # PostgreSQL and others
+                conn.execute(text("ALTER TABLE content_items ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)"))
+            conn.commit()
 
 def get_db() -> Generator[Session, None, None]:
     """Base Dependency to get synchronous database session (No RLS)."""

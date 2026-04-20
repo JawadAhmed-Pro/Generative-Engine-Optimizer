@@ -336,7 +336,7 @@ def get_history(
     query = db.query(ContentItem).filter(
         or_(
             ContentItem.project_id.in_(user_project_ids),
-            ContentItem.project_id.is_(None)  # standalone items (no project assigned)
+            ContentItem.user_id == current_user["id"]  # Direct ownership check for standalone items
         )
     )
 
@@ -524,10 +524,15 @@ def get_analysis_by_item(
     current_user: dict = Depends(require_auth)
 ):
     """Get full analysis results for a content item."""
-    # Get content item and join Project to ensure ownership
-    item = db.query(ContentItem).join(Project).filter(
+    from sqlalchemy import or_
+    
+    # Get content item and ensure ownership (either via project or directly)
+    item = db.query(ContentItem).filter(
         ContentItem.id == item_id,
-        Project.user_id == current_user["id"]
+        or_(
+            ContentItem.user_id == current_user["id"],
+            db.query(Project).filter(Project.id == ContentItem.project_id, Project.user_id == current_user["id"]).exists()
+        )
     ).first()
     
     if not item:
@@ -615,7 +620,12 @@ def get_analysis_by_item(
 # Content Analysis
 @app.post("/api/analyze-url", response_model=AnalysisResponse)
 @limiter.limit("10/minute")
-async def analyze_url(request: Request, payload: AnalyzeURLRequest, db: Session = Depends(get_db)):
+async def analyze_url(
+    request: Request, 
+    payload: AnalyzeURLRequest, 
+    db: Session = Depends(get_tenant_session),
+    current_user: dict = Depends(require_auth)
+):
     """Analyze content from a URL."""
     start_time = time.time()
     
@@ -642,10 +652,9 @@ async def analyze_url(request: Request, payload: AnalyzeURLRequest, db: Session 
             meta['content_type'] = content_type
             content_item.content_metadata = meta
         else:
-            # Create new content item
-            extracted['metadata']['content_type'] = content_type
             content_item = ContentItem(
                 project_id=payload.project_id,
+                user_id=current_user["id"],  # Track ownership
                 url=payload.url,
                 content=extracted['content'],
                 title=extracted['title'],
@@ -710,7 +719,12 @@ async def analyze_url(request: Request, payload: AnalyzeURLRequest, db: Session 
 
 @app.post("/api/analyze-text", response_model=AnalysisResponse)
 @limiter.limit("10/minute")
-async def analyze_text(request: Request, payload: AnalyzeTextRequest, db: Session = Depends(get_db)):
+async def analyze_text(
+    request: Request, 
+    payload: AnalyzeTextRequest, 
+    db: Session = Depends(get_tenant_session),
+    current_user: dict = Depends(require_auth)
+):
     """Analyze direct text content."""
     start_time = time.time()
     
@@ -722,6 +736,7 @@ async def analyze_text(request: Request, payload: AnalyzeTextRequest, db: Sessio
         # Create content item
         content_item = ContentItem(
             project_id=payload.project_id,
+            user_id=current_user["id"], # Track ownership
             content=clean_content,
             title=clean_title,
             content_metadata={}
