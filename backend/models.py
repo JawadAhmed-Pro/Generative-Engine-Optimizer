@@ -256,6 +256,12 @@ class SimulateAIRequest(BaseModel):
     domain: str = 'education' # 'education' or 'ecommerce'
 
 
+class PromptDiscoveryRequest(BaseModel):
+    keyword: str
+    target_keyword: Optional[str] = None # Alias for keyword if sent that way
+    niche: Optional[str] = "general"
+
+
 class InjectRequest(BaseModel):
     context_text: str
     injection_target: str

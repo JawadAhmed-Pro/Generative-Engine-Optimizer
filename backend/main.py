@@ -22,7 +22,8 @@ from models import (
     HistoryResponse, HistoryItem, OptimizeContentRequest, SimulateAIRequest,
     User, UserCreate, UserLogin, UserResponse, Token,
     AnalyzeTextRequest, AnalyzeURLRequest, ExtractContentRequest, ExtractKeywordsRequest,
-    GenerateSchemaRequest, InjectRequest, ValidateCitationRequest
+    GenerateSchemaRequest, InjectRequest, ValidateCitationRequest,
+    CompetitorCompareRequest, CompetitorComparison, PromptDiscoveryRequest
 )
 import models
 from content_fetcher import ContentFetcher
@@ -958,7 +959,7 @@ async def extract_keywords(payload: ExtractKeywordsRequest = Body(...)):
 Content:
 {payload.content[:3000]}
 
-Content Type: {request.content_type}
+Content Type: {payload.content_type if hasattr(payload, 'content_type') else 'general'}
 
 Return a JSON object with:
 1. "primary_keyword": The single main keyword/phrase this content should rank for (3-5 words max)
@@ -1188,13 +1189,13 @@ async def _run_competitor_comparison(user_url, competitor_urls, keyword, niche, 
 @limiter.limit("5/minute")
 async def compare_competitors(
     request: Request,
-    payload: CompetitorCompareRequest, 
+    payload: CompetitorCompareRequest = Body(...), 
     current_user: dict = Depends(require_auth)
 ):
     """Dispatch competitor comparison to background job."""
     from database import AsyncSessionLocal
     
-    keyword = payload.niche if payload.niche else None
+    keyword = payload.target_keyword if payload.target_keyword else None
     try:
         job_id = await job_manager.submit_job(
             AsyncSessionLocal,
@@ -1204,7 +1205,7 @@ async def compare_competitors(
             user_url=payload.user_url,
             competitor_urls=payload.competitor_urls,
             keyword=keyword,
-            niche=payload.niche,
+            niche=getattr(payload, 'niche', 'general'),
             content_type=payload.content_type
         )
         return {"status": "pending", "job_id": job_id, "message": "Competitor analysis started"}
