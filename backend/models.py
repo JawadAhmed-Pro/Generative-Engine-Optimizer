@@ -161,6 +161,17 @@ class ContentItemCreate(BaseModel):
     content: Optional[str] = None
 
 
+class ExtractContentRequest(BaseModel):
+    url: str = Field(..., pattern=r'^https?://')
+    target_keyword: Optional[str] = None
+    project_id: Optional[int] = None
+
+
+class ExtractKeywordsRequest(BaseModel):
+    content: str
+    target_keyword: Optional[str] = None
+    project_id: Optional[int] = None
+
 
 class AnalyzeURLRequest(BaseModel):
     url: str = Field(..., pattern=r'^https?://')
@@ -170,7 +181,7 @@ class AnalyzeURLRequest(BaseModel):
 
 
 class AnalyzeTextRequest(BaseModel):
-    content: str = Field(..., min_length=10)
+    content: str
     project_id: Optional[int] = None
     title: Optional[str] = None
     content_type: str = Field(default="general", pattern=r'^(general|ecommerce|educational)$')
@@ -233,10 +244,27 @@ class OptimizeContentRequest(BaseModel):
     target_keyword: Optional[str] = None
 
 
+class GenerateSchemaRequest(BaseModel):
+    content: str
+    content_type: Optional[str] = None  # 'article', 'product', 'faq', 'howto', or None for auto-detect
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class SimulateAIRequest(BaseModel):
     query: str
     content: str
     domain: str = 'education' # 'education' or 'ecommerce'
+
+
+class InjectRequest(BaseModel):
+    context_text: str
+    injection_target: str
+    tone: str = "professional"
+
+
+class ValidateCitationRequest(BaseModel):
+    content: str
+    content_type: str = "general"
 
 
 # Authentication Schemas

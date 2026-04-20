@@ -1,9 +1,12 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, Body
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 import time
+import logging
 from datetime import datetime
 
 from config import settings
@@ -18,7 +21,8 @@ from models import (
     AnalysisResponse, InsightRequest, InsightResponse, Project, ContentItem, AnalysisResult, Insight,
     HistoryResponse, HistoryItem, OptimizeContentRequest, SimulateAIRequest,
     User, UserCreate, UserLogin, UserResponse, Token,
-    CompetitorCompareRequest, CompetitorComparison
+    AnalyzeTextRequest, AnalyzeURLRequest, ExtractContentRequest, ExtractKeywordsRequest,
+    GenerateSchemaRequest, InjectRequest, ValidateCitationRequest
 )
 import models
 from content_fetcher import ContentFetcher
@@ -84,6 +88,22 @@ aggregator = ScoreAggregator()
 rag_pipeline = RAGPipeline()
 probability_model = CitationProbabilityModel()
 discovery_engine = PromptDiscoveryEngine()
+# Configure internal logging for debugging
+app_logger = logging.getLogger("geo_app")
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Custom handler to debug 422 errors by logging details to console."""
+    error_details = exc.errors()
+    app_logger.error(f"Validation Error Detail: {error_details}")
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": error_details,
+            "message": "Validation failed. Check 'detail' for the specific field error."
+        },
+    )
+
 competitor_analyzer = CompetitorAnalyzer(
     content_fetcher=content_fetcher,
     rule_scorer=rule_scorer,
@@ -93,15 +113,12 @@ competitor_analyzer = CompetitorAnalyzer(
 )
 
 
-class ExtractContentRequest(BaseModel):
-    url: str
-
 @app.post("/api/extract-content")
-async def extract_content_from_url(request: ExtractContentRequest):
+async def extract_content_from_url(payload: ExtractContentRequest = Body(...)):
     """Extract raw content from a URL for the frontend editor."""
     try:
         # Use existing fetcher
-        content_data = await content_fetcher.fetch(request.url)
+        content_data = await content_fetcher.fetch(payload.url)
         return {
             "content": content_data['content'],
             "title": content_data.get('title', ''),
@@ -431,8 +448,6 @@ def list_projects(
     projects = db.query(Project).filter(Project.user_id == current_user["id"]).all()
     # Default array instead of returning 404
     return projects or []
-    projects = db.query(Project).all()
-    return projects
 
 
 @app.get("/api/projects/{project_id}", response_model=ProjectResponse)
@@ -622,7 +637,7 @@ def get_analysis_by_item(
 @limiter.limit("10/minute")
 async def analyze_url(
     request: Request, 
-    payload: AnalyzeURLRequest, 
+    payload: AnalyzeURLRequest = Body(...), 
     db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
@@ -721,7 +736,7 @@ async def analyze_url(
 @limiter.limit("10/minute")
 async def analyze_text(
     request: Request, 
-    payload: AnalyzeTextRequest, 
+    payload: AnalyzeTextRequest = Body(...), 
     db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
@@ -792,20 +807,20 @@ async def analyze_text(
 
 
 @app.post("/api/optimize-content")
-async def optimize_content(request: OptimizeContentRequest):
+async def optimize_content(payload: OptimizeContentRequest = Body(...)):
     """Generate or Rewrite content with GEO 'Action Layer'."""
     try:
-        if request.mode == 'rewrite':
-            result = await geo_optimizer.rewrite_to_inverted_pyramid(request.content)
+        if payload.mode == 'rewrite':
+            result = await geo_optimizer.rewrite_to_inverted_pyramid(payload.content)
             return result
-        elif request.mode == 'grounding':
-            result = await geo_optimizer.suggest_hard_grounding(request.content, request.content_type)
+        elif payload.mode == 'grounding':
+            result = await geo_optimizer.suggest_hard_grounding(payload.content, payload.content_type)
             return result
         else:
             optimized_text = await llm_scorer.optimize(
-                content=request.content,
-                mode=request.mode,
-                content_type=request.content_type
+                content=payload.content,
+                mode=payload.mode,
+                content_type=payload.content_type
             )
             return {"optimized_content": optimized_text}
     except Exception as e:
@@ -813,13 +828,13 @@ async def optimize_content(request: OptimizeContentRequest):
 
 
 @app.post("/api/simulate-ai")
-async def simulate_ai(request: SimulateAIRequest):
+async def simulate_ai(payload: SimulateAIRequest = Body(...)):
     """Simulate AI perception - test if AI would cite user content."""
     try:
         result = await llm_scorer.simulate_ai_response(
-            query=request.query,
-            content=request.content,
-            domain=request.domain
+            query=payload.query,
+            content=payload.content,
+            domain=payload.domain
         )
         return result
     except Exception as e:
@@ -886,22 +901,13 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 
 
-class GenerateSchemaRequest(BaseModel):
-    content: str
-    content_type: Optional[str] = None  # 'article', 'product', 'faq', 'howto', or None for auto-detect
-    metadata: Optional[Dict[str, Any]] = None
-
-
 @app.post("/api/generate-schema")
-def generate_schema(request: GenerateSchemaRequest):
+def generate_schema(payload: GenerateSchemaRequest = Body(...)):
     """
     Generate JSON-LD Schema.org markup for content.
     
     Args:
-        content: The text content to generate schema for
-        content_type: Optional type ('article', 'product', 'faq', 'howto')
-                     If not provided, auto-detects from content
-        metadata: Optional metadata (title, author, url, price, etc.)
+        payload: Content and metadata for schema generation
         
     Returns:
         schema_type: The detected/used schema type
@@ -909,17 +915,17 @@ def generate_schema(request: GenerateSchemaRequest):
         html_snippet: Ready-to-use HTML script tag
     """
     try:
-        # Auto-detect content type if not provided
-        if not request.content_type:
-            detected_type = schema_generator.detect_schema_type(request.content, request.metadata)
+        # Detected type or auto-detect
+        if not payload.content_type:
+            detected_type = schema_generator.detect_schema_type(payload.content, payload.metadata)
         else:
-            detected_type = request.content_type
+            detected_type = payload.content_type
         
         # Generate schema
         result = schema_generator.generate_schema(
-            content=request.content,
+            content=payload.content,
             content_type=detected_type,
-            metadata=request.metadata or {}
+            metadata=payload.metadata or {}
         )
         
         return {
@@ -931,14 +937,8 @@ def generate_schema(request: GenerateSchemaRequest):
         raise HTTPException(status_code=500, detail=f"Schema generation failed: {str(e)}")
 
 
-# Keyword Extraction
-class ExtractKeywordsRequest(BaseModel):
-    content: str
-    content_type: Optional[str] = "general"
-
-
 @app.post("/api/extract-keywords")
-async def extract_keywords(request: ExtractKeywordsRequest):
+async def extract_keywords(payload: ExtractKeywordsRequest = Body(...)):
     """
     Extract target keywords from content using LLM.
     
@@ -956,7 +956,7 @@ async def extract_keywords(request: ExtractKeywordsRequest):
         prompt = f"""Analyze this content and extract SEO target keywords.
 
 Content:
-{request.content[:3000]}
+{payload.content[:3000]}
 
 Content Type: {request.content_type}
 
@@ -1080,15 +1080,15 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
 
 # RAG Insights
 @app.post("/api/generate-insights", response_model=InsightResponse)
-def generate_insights(request: InsightRequest, db: Session = Depends(get_db)):
+def generate_insights(payload: InsightRequest = Body(...), db: Session = Depends(get_db)):
     """Generate RAG-powered insights."""
     # Get content item and analysis
-    content_item = db.query(ContentItem).filter(ContentItem.id == request.content_item_id).first()
+    content_item = db.query(ContentItem).filter(ContentItem.id == payload.content_item_id).first()
     if not content_item:
         raise HTTPException(status_code=440, detail="Content item not found")
     
     analysis = db.query(AnalysisResult).filter(
-        AnalysisResult.content_item_id == request.content_item_id
+        AnalysisResult.content_item_id == payload.content_item_id
     ).order_by(AnalysisResult.created_at.desc()).first()
     
     if not analysis:
@@ -1104,23 +1104,23 @@ def generate_insights(request: InsightRequest, db: Session = Depends(get_db)):
     
     # Generate insights
     insights = rag_pipeline.generate_insights(
-        request.content_item_id,
-        request.insight_type,
+        payload.content_item_id,
+        payload.insight_type,
         analysis_dict
     )
     
     # Save insight to DB
     new_insight = Insight(
-        content_item_id=request.content_item_id,
-        insight_type=request.insight_type,
+        content_item_id=payload.content_item_id,
+        insight_type=payload.insight_type,
         content=insights
     )
     db.add(new_insight)
     db.commit()
     
     return InsightResponse(
-        content_item_id=request.content_item_id,
-        insight_type=request.insight_type,
+        content_item_id=payload.content_item_id,
+        insight_type=payload.insight_type,
         insights=insights,
         timestamp=datetime.utcnow()
     )
@@ -1288,19 +1288,19 @@ class AutoFixRequest(BaseModel):
 
 @app.post("/api/auto-fix")
 async def auto_fix_content(
-    request: AutoFixRequest,
+    payload: AutoFixRequest = Body(...),
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_auth)
 ):
     """Applies a 'One-Click Fix' to content using LLM."""
     try:
         # Get content item
-        content_item = db.query(ContentItem).filter(ContentItem.id == request.content_item_id).first()
+        content_item = db.query(ContentItem).filter(ContentItem.id == payload.content_item_id).first()
         if not content_item:
             raise HTTPException(status_code=404, detail="Content not found")
             
         from geo_optimizer import geo_optimizer
-        result = await geo_optimizer.auto_fix(content_item.content, request.suggestion)
+        result = await geo_optimizer.auto_fix(content_item.content, payload.suggestion)
         
         # Save insight or just return
         return result
@@ -1331,10 +1331,10 @@ async def _run_discover_prompts(keyword, niche):
 
 @app.post("/api/discover-prompts")
 async def discover_prompts(
-    request: PromptDiscoveryRequest,
+    payload: PromptDiscoveryRequest = Body(...),
     current_user: dict = Depends(require_auth)
 ):
-    """Discover 'People Also Ask' and high-value AI prompts for a topic using Background Jobs."""
+    """Discovery Engine: Discover prompts for a keyword/niche."""
     from database import AsyncSessionLocal
     try:
         job_id = await job_manager.submit_job(
@@ -1342,51 +1342,42 @@ async def discover_prompts(
             "prompt_discovery",
             current_user["id"],
             _run_discover_prompts,
-            keyword=request.keyword,
-            niche=request.niche
+            keyword=payload.keyword,
+            niche=payload.niche
         )
         return {"status": "pending", "job_id": job_id, "message": "Discovery started"}
     except Exception as e:
         app_logger.error(f"Discovery Failed: {e}")
         raise HTTPException(status_code=500, detail=f"Prompt discovery failed: {str(e)}")
 
-class InjectRequest(BaseModel):
-    context_text: str
-    injection_target: str
-    tone: str = "professional"
-
 @app.post("/api/optimize/inject")
 async def generate_targeted_injection(
-    request: InjectRequest,
+    payload: InjectRequest = Body(...),
     current_user: dict = Depends(require_auth)
 ):
     """Generate a specific missing block for the Smart Injection Auto-Writer."""
     try:
         injected_markdown = await llm_scorer.generate_targeted_injection(
-            context_text=request.context_text,
-            injection_target=request.injection_target,
-            tone=request.tone
+            context_text=payload.context_text,
+            injection_target=payload.injection_target,
+            tone=payload.tone
         )
         return {"status": "success", "injection": injected_markdown}
     except Exception as e:
         app_logger.error(f"Targeted Injection Failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Injection generation failed.")
 
-class ValidateCitationRequest(BaseModel):
-    content: str
-    content_type: str = "general"
-
 @app.post("/api/validate-citation")
 async def validate_citation(
-    request: ValidateCitationRequest,
+    payload: ValidateCitationRequest = Body(...),
     current_user: dict = Depends(require_auth)
 ):
     """Run a live simulation to determine if the content crosses the 'Extraction Threshold'."""
     try:
         # Full pseudo-analysis for validation
-        extracted = {'content': request.content, 'content_type': request.content_type}
-        rule_scores = rule_scorer.analyze(request.content, extracted, request.content_type)
-        llm_scores_res = await llm_scorer.analyze(request.content, extracted)
+        extracted = {'content': payload.content, 'content_type': payload.content_type}
+        rule_scores = rule_scorer.analyze(payload.content, extracted, payload.content_type)
+        llm_scores_res = await llm_scorer.analyze(payload.content, extracted)
         final_scores = aggregator.aggregate(rule_scores, llm_scores_res)
         
         overall_score = (final_scores['ai_visibility_score'] + final_scores['citation_worthiness_score'] + final_scores['semantic_coverage_score'] + final_scores['technical_readability_score']) / 4
@@ -1395,7 +1386,7 @@ async def validate_citation(
             overall_score=overall_score,
             rule_scores=final_scores['rule_based_scores'],
             llm_scores=final_scores['llm_scores'],
-            content_type=request.content_type,
+            content_type=payload.content_type,
             engine="perplexity"
         )
         
