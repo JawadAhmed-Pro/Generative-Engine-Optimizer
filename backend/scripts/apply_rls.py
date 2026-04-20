@@ -25,7 +25,6 @@ async def apply_rls():
             "content_items", 
             "analysis_results", 
             "insights", 
-            "citation_trackings", 
             "competitor_comparisons",
             "analysis_jobs"
         ]
@@ -45,7 +44,6 @@ async def apply_rls():
             ("content_items_tenant_isolation", "content_items"),
             ("analysis_results_tenant_isolation", "analysis_results"),
             ("insights_tenant_isolation", "insights"),
-            ("citation_trackings_tenant_isolation", "citation_trackings"),
             ("competitor_comparisons_tenant_isolation", "competitor_comparisons"),
             ("analysis_jobs_tenant_isolation", "analysis_jobs"),
         ]
@@ -58,7 +56,7 @@ async def apply_rls():
                 
         # 3. CREATE robust matching policies
         # A. Direct `user_id` tables
-        direct_tables = ["projects", "citation_trackings", "competitor_comparisons", "analysis_jobs"]
+        direct_tables = ["projects", "competitor_comparisons", "analysis_jobs"]
         for t in direct_tables:
             sql = f"""
             CREATE POLICY {t}_tenant_isolation ON {t}

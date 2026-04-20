@@ -18,7 +18,7 @@ from models import (
     AnalysisResponse, InsightRequest, InsightResponse, Project, ContentItem, AnalysisResult, Insight,
     HistoryResponse, HistoryItem, OptimizeContentRequest, SimulateAIRequest,
     User, UserCreate, UserLogin, UserResponse, Token,
-    CitationTrackRequest, CompetitorCompareRequest, CitationTracking, CompetitorComparison
+    CitationTrackRequest, CompetitorCompareRequest, CompetitorComparison
 )
 import models
 from content_fetcher import ContentFetcher
@@ -27,7 +27,6 @@ from vector_store import VectorStore
 from scoring import RuleBasedScorer, LLMScorer, ScoreAggregator
 from rag import RAGPipeline
 from monitoring import MonitoringService
-from citation_tracker import CitationTracker
 from competitor_analyzer import CompetitorAnalyzer
 from probability_model import CitationProbabilityModel
 from discovery_engine import PromptDiscoveryEngine
@@ -1136,107 +1135,6 @@ def factory_reset(db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# ========================
-# Citation Tracking
-# ========================
-
-@app.post("/api/citation-track")
-@limiter.limit("5/minute")
-async def track_citations(
-    request: Request,
-    payload: CitationTrackRequest, 
-    db: Session = Depends(get_tenant_session),
-    current_user: dict = Depends(require_auth)
-):
-    """Track domain citations across AI platforms."""
-    try:
-        # Generate prompts if not provided
-        if payload.custom_prompts and len(payload.custom_prompts) > 0:
-            prompts = payload.custom_prompts[:10]  # Max 10 custom prompts
-        else:
-            prompts = citation_tracker.generate_test_prompts(
-                payload.domain, payload.niche, payload.brand_name
-            )
-
-        # Run citation tracking
-        results = await citation_tracker.track_citations(
-            domain=payload.domain,
-            prompts=prompts,
-            brand_name=payload.brand_name
-        )
-
-        # Save to database
-        tracking = CitationTracking(
-            user_id=current_user["id"],
-            domain=payload.domain,
-            brand_name=payload.brand_name,
-            niche=payload.niche,
-            platforms_checked=results["summary"]["platforms_checked"],
-            prompts_tested=results["summary"]["prompts_tested"],
-            total_citations=results["summary"]["total_citations"],
-            citation_rate=results["summary"]["overall_citation_rate"],
-            results=results
-        )
-        db.add(tracking)
-        db.commit()
-        db.refresh(tracking)
-
-        results["tracking_id"] = tracking.id
-        return results
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Citation tracking failed: {str(e)}")
-
-
-@app.get("/api/citation-history")
-def get_citation_history(
-    domain: str = None, 
-    limit: int = 10, 
-    db: Session = Depends(get_tenant_session),
-    current_user: dict = Depends(require_auth)
-):
-    """Get citation tracking history for current user."""
-    query = db.query(CitationTracking).filter(CitationTracking.user_id == current_user["id"])
-    if domain:
-        query = query.filter(CitationTracking.domain == domain)
-    
-    items = query.order_by(CitationTracking.created_at.desc()).limit(limit).all()
-    
-    return {
-        "items": [
-            {
-                "id": item.id,
-                "domain": item.domain,
-                "brand_name": item.brand_name,
-                "niche": item.niche,
-                "platforms_checked": item.platforms_checked,
-                "prompts_tested": item.prompts_tested,
-                "total_citations": item.total_citations,
-                "citation_rate": item.citation_rate,
-                "created_at": item.created_at.isoformat()
-            }
-            for item in items
-        ]
-    }
-
-
-@app.get("/api/citation-track/{tracking_id}")
-def get_citation_detail(
-    tracking_id: int, 
-    db: Session = Depends(get_tenant_session),
-    current_user: dict = Depends(require_auth)
-):
-    """Get detailed citation tracking results."""
-    tracking = db.query(CitationTracking).filter(
-        CitationTracking.id == tracking_id,
-        CitationTracking.user_id == current_user["id"]
-    ).first()
-    if not tracking:
-        raise HTTPException(status_code=404, detail="Tracking not found or access denied")
-    return tracking.results
 
 
 # ========================

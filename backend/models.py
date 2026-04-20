@@ -104,21 +104,6 @@ class APILog(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
-class CitationTracking(Base):
-    """Track citation results across AI platforms over time."""
-    __tablename__ = "citation_trackings"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    domain = Column(String, nullable=False)
-    brand_name = Column(String, nullable=True)
-    niche = Column(String, nullable=True)
-    platforms_checked = Column(Integer, default=0)
-    prompts_tested = Column(Integer, default=0)
-    total_citations = Column(Integer, default=0)
-    citation_rate = Column(Float, default=0.0)
-    results = Column(JSON, nullable=True)  # Full results JSON
-    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class CompetitorComparison(Base):
@@ -283,13 +268,6 @@ class Token(BaseModel):
     user: UserResponse
 
 
-# Citation Tracking Schemas
-class CitationTrackRequest(BaseModel):
-    """Request to track citations across AI platforms."""
-    domain: str = Field(..., min_length=3)
-    brand_name: Optional[str] = None
-    niche: str = Field(default="technology")
-    custom_prompts: Optional[List[str]] = None
 
 class CompetitorCompareRequest(BaseModel):
     """Request to compare against competitors."""
