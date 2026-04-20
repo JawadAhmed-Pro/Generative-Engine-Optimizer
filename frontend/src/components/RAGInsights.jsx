@@ -61,18 +61,32 @@ function RAGInsights({ contentItemId, initialInsights = [] }) {
     // Landing view with buttons
     if (!activeTab && !loading) {
         return (
-            <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '2.5rem', display: 'flex', gap: '1.25rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button
                     className="btn btn-primary"
                     onClick={() => handleTabChange('explanation')}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.6rem',
+                        padding: '0.875rem 1.75rem',
+                        boxShadow: '0 4px 15px rgba(59, 130, 246, 0.2)'
+                    }}
                 >
                     <Lightbulb size={18} /> Get Analysis Explanation
                 </button>
                 <button
                     className="btn btn-outline"
                     onClick={() => handleTabChange('recommendations')}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.6rem',
+                        padding: '0.875rem 1.75rem',
+                        borderColor: 'rgba(16, 185, 129, 0.4)',
+                        background: 'rgba(16, 185, 129, 0.05)',
+                        color: 'var(--success)'
+                    }}
                 >
                     <List size={18} /> Generate Strategic Plan
                 </button>
