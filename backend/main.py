@@ -18,7 +18,7 @@ from models import (
     AnalysisResponse, InsightRequest, InsightResponse, Project, ContentItem, AnalysisResult, Insight,
     HistoryResponse, HistoryItem, OptimizeContentRequest, SimulateAIRequest,
     User, UserCreate, UserLogin, UserResponse, Token,
-    CitationTrackRequest, CompetitorCompareRequest, CompetitorComparison
+    CompetitorCompareRequest, CompetitorComparison
 )
 import models
 from content_fetcher import ContentFetcher
