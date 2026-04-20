@@ -412,8 +412,8 @@ function ContentOptimization() {
                 optimizedContent: optimizationRes.data.optimized_content
             })
 
-            // Auto switch to result view if generating
-            if (activeTab === 'generate') setViewMode('result')
+            // Auto switch to result view if generating or rewriting
+            if (activeTab === 'generate' || activeTab === 'rewrite') setViewMode('result')
 
             fetchHistory()
         } catch (err) {

@@ -117,6 +117,10 @@ function CompetitorAnalysis() {
             if (response.data.job_id) {
                 // For this MVP discovery, we just alert success
                 alert("Discovery engine started. Top competitors will be automatically populated.");
+            } else if (response.data.competitors && response.data.competitors.length > 0) {
+                setCompetitorUrls(response.data.competitors);
+            } else {
+                setError("No competitors found for this keyword.");
             }
         } catch (err) {
             setError("Discovery failed. Please enter competitors manually.");

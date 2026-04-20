@@ -119,7 +119,7 @@ async def extract_content_from_url(payload: ExtractContentRequest = Body(...)):
     """Extract raw content from a URL for the frontend editor."""
     try:
         # Use existing fetcher
-        content_data = await content_fetcher.fetch(payload.url)
+        content_data = await content_fetcher.async_fetch_url(payload.url)
         return {
             "content": content_data['content'],
             "title": content_data.get('title', ''),
@@ -1350,6 +1350,28 @@ async def discover_prompts(
     except Exception as e:
         app_logger.error(f"Discovery Failed: {e}")
         raise HTTPException(status_code=500, detail=f"Prompt discovery failed: {str(e)}")
+
+
+@app.post("/api/discover/competitors")
+async def discover_competitors(
+    payload: PromptDiscoveryRequest = Body(...),
+    current_user: dict = Depends(require_auth)
+):
+    """Discovery Engine: Find top competitor URLs for a keyword."""
+    try:
+        from search_service import SearchService
+        search_service = SearchService()
+        competitors = search_service.get_top_competitors(payload.keyword)
+        
+        return {
+            "success": True,
+            "keyword": payload.keyword,
+            "competitors": competitors,
+            "message": "Competitors discovered successfully" if competitors else "No competitors found for this keyword."
+        }
+    except Exception as e:
+        app_logger.error(f"Competitor Discovery Failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Competitor discovery failed: {str(e)}")
 
 @app.post("/api/optimize/inject")
 async def generate_targeted_injection(
