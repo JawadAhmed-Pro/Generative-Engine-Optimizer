@@ -517,11 +517,11 @@ def get_project_items(
         score = None
         if latest:
             score = (
-                latest.ai_visibility_score + 
-                latest.citation_worthiness_score + 
-                latest.semantic_coverage_score + 
-                latest.technical_readability_score
-            ) / 4
+                latest.citation_worthiness_score * 0.4 +
+                latest.ai_visibility_score * 0.3 + 
+                latest.semantic_coverage_score * 0.2 + 
+                latest.technical_readability_score * 0.1
+            )
         
         result.append({
             "id": item.id,
@@ -563,13 +563,13 @@ def get_analysis_by_item(
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found")
     
-    # Calculate overall score
+    # Calculate overall score (Weighted GEO Model)
     overall_score = (
-        (analysis.ai_visibility_score or 0) +
-        (analysis.citation_worthiness_score or 0) +
-        (analysis.semantic_coverage_score or 0) +
-        (analysis.technical_readability_score or 0)
-    ) / 4
+        (analysis.citation_worthiness_score or 0) * 0.4 +
+        (analysis.ai_visibility_score or 0) * 0.3 +
+        (analysis.semantic_coverage_score or 0) * 0.2 +
+        (analysis.technical_readability_score or 0) * 0.1
+    )
     
     # Fetch stored insights
     stored_insights = db.query(Insight).filter(
@@ -596,7 +596,7 @@ def get_analysis_by_item(
     historical_scores = [
         {
             "date": h.created_at.isoformat(),
-            "score": (h.ai_visibility_score + h.citation_worthiness_score + h.semantic_coverage_score + h.technical_readability_score) / 4
+            "score": (h.citation_worthiness_score * 0.4 + h.ai_visibility_score * 0.3 + h.semantic_coverage_score * 0.2 + h.technical_readability_score * 0.1)
         }
         for h in history
     ]
@@ -1049,8 +1049,15 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     detection_context['target_keyword'] = extracted.get('target_keyword', '')
 
     # Calculate initial probability baseline
+    current_overall = (
+        final_scores['citation_worthiness_score'] * 0.4 +
+        final_scores['ai_visibility_score'] * 0.3 + 
+        final_scores['semantic_coverage_score'] * 0.2 + 
+        final_scores['technical_readability_score'] * 0.1
+    )
+    
     prob_calc = probability_model.calculate_probability(
-        overall_score=(final_scores['ai_visibility_score'] + final_scores['citation_worthiness_score'] + final_scores['semantic_coverage_score'] + final_scores['technical_readability_score']) / 4,
+        overall_score=current_overall,
         rule_scores=final_scores['rule_based_scores'],
         llm_scores=detection_context,
         content_type=extracted.get('content_type', 'general'),
@@ -1084,8 +1091,8 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     
     score_delta = 0
     if len(history) > 1:
-        oldest_score = (history[0].ai_visibility_score + history[0].citation_worthiness_score + history[0].semantic_coverage_score + history[0].technical_readability_score) / 4
-        newest_score = (history[-1].ai_visibility_score + history[-1].citation_worthiness_score + history[-1].semantic_coverage_score + history[-1].technical_readability_score) / 4
+        oldest_score = (history[0].citation_worthiness_score * 0.4 + history[0].ai_visibility_score * 0.3 + history[0].semantic_coverage_score * 0.2 + history[0].technical_readability_score * 0.1)
+        newest_score = (history[-1].citation_worthiness_score * 0.4 + history[-1].ai_visibility_score * 0.3 + history[-1].semantic_coverage_score * 0.2 + history[-1].technical_readability_score * 0.1)
         score_delta = newest_score - oldest_score
 
     # Create response
@@ -1430,7 +1437,12 @@ async def validate_citation(
         llm_scores_res = await llm_scorer.analyze(payload.content, extracted)
         final_scores = aggregator.aggregate(rule_scores, llm_scores_res)
         
-        overall_score = (final_scores['ai_visibility_score'] + final_scores['citation_worthiness_score'] + final_scores['semantic_coverage_score'] + final_scores['technical_readability_score']) / 4
+        overall_score = (
+            final_scores['citation_worthiness_score'] * 0.4 +
+            final_scores['ai_visibility_score'] * 0.3 + 
+            final_scores['semantic_coverage_score'] * 0.2 + 
+            final_scores['technical_readability_score'] * 0.1
+        )
         
         prob_calc = probability_model.calculate_probability(
             overall_score=overall_score,

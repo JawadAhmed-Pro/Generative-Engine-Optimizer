@@ -1,11 +1,8 @@
-from typing import Dict, Any, Optional, List
-import os
-from config import settings
-from google import genai
-import requests
+import aiohttp
 import json
 import asyncio
-import aiohttp
+import re
+import time
 from logger import app_logger
 
 class LLMScorer:
@@ -23,46 +20,40 @@ class LLMScorer:
     
     async def analyze(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Perform LLM-powered content analysis using Groq (primary) or Gemini (backup).
-        
-        Args:
-            content: The text content to analyze
-            metadata: Additional metadata about the content (including content_type)
-            
-        Returns:
-            Dictionary of LLM-based scores
+        Perform LLM-powered content analysis with high resilience.
         """
-        # Truncate content if too long (keep first 3000 words)
+        # 1. Deterministic Slice for Intent Alignment (First 100 words)
         words = content.split()
-        if len(words) > 3000:
-            content_sample = ' '.join(words[:3000]) + "..."
-        else:
-            content_sample = content
+        intent_slice = ' '.join(words[:100])
+        content_sample = ' '.join(words[:3000]) if len(words) > 3000 else content
         
-        scores = {}
         content_type = metadata.get('content_type', 'general')
-        
-        # Try Groq First (Primary)
-        if self.groq_api_key:
-            try:
-                app_logger.debug("Using Groq API for analysis (PRIMARY)...")
-                scores['llm'] = await self._analyze_with_groq(content_sample, metadata)
-                return scores['llm']
-            except Exception as e:
-                app_logger.error(f"Groq API failed: {str(e)}")
-                # Fall through to Gemini
-        
-        # Gemini analysis (Backup)
-        if hasattr(self, 'gemini_client') and self.gemini_client:
-            try:
-                app_logger.debug("Using Gemini API for analysis (BACKUP)...")
-                scores['gemini'] = await self._analyze_with_gemini(content_sample, metadata)
-                return scores['gemini']
-            except Exception as e:
-                app_logger.error(f"Gemini API failed: {str(e)}")
-                return self._get_default_scores(content_type)
-        else:
+        query = metadata.get('target_keyword', 'General Topic')
+
+        # 2. Parallel Resilience Pattern (Try Groq, fallback to Gemini)
+        try:
+            # We wrap the whole logic in a retry helper
+            return await self._execute_with_retry(content_sample, intent_slice, query, metadata)
+        except Exception as e:
+            app_logger.error(f"All LLM Analysis attempts failed: {e}")
             return self._get_default_scores(content_type)
+
+    async def _execute_with_retry(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any], retries: int = 2) -> Dict[str, Any]:
+        for attempt in range(retries + 1):
+            try:
+                # Primary: Groq
+                if self.groq_api_key:
+                    return await self._analyze_with_groq(content, intent_slice, query, metadata)
+                
+                # Secondary: Gemini
+                if hasattr(self, 'gemini_client') and self.gemini_client:
+                    return await self._analyze_with_gemini(content, intent_slice, query, metadata)
+            except Exception as e:
+                if attempt == retries: raise e
+                wait_time = (attempt + 1) * 2
+                app_logger.warning(f"LLM attempt {attempt+1} failed, retrying in {wait_time}s... Error: {e}")
+                await asyncio.sleep(wait_time)
+        return self._get_default_scores(metadata.get('content_type', 'general'))
 
     async def optimize(self, content: str, mode: str, content_type: str) -> str:
         """
@@ -318,9 +309,9 @@ Generate a comprehensive article (1500-2500 words) following ALL the requirement
 Return ONLY the Markdown content. Do not include any preamble, explanation, or meta-commentary. Start directly with the article title as # H1.
 """
 
-    async def _analyze_with_groq(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_with_groq(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze content using Groq API."""
-        prompt = self._create_geo_prompt(content, metadata)
+        prompt = self._create_geo_prompt(content, intent_slice, query, metadata)
         
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
@@ -358,9 +349,9 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
         app_logger.debug(f"Groq Response (first 200 chars): {response_text[:200]}")
         return self._parse_llm_response(response_text, metadata.get('content_type', 'general'))
 
-    async def _analyze_with_gemini(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_with_gemini(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze content using Gemini API (Async)."""
-        prompt = self._create_geo_prompt(content, metadata)
+        prompt = self._create_geo_prompt(content, intent_slice, query, metadata)
         app_logger.debug(f"Calling Gemini API...")
         try:
             from google.genai import types
@@ -380,7 +371,7 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
             app_logger.error(f"Gemini API FAILED: {str(e)}")
             raise
 
-    def _create_geo_prompt(self, content: str, metadata: Dict[str, Any]) -> str:
+    def _create_geo_prompt(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any]) -> str:
         """Create a prompt for GEO analysis based on content type."""
         title = metadata.get('title', 'Untitled')
         content_type = metadata.get('content_type', 'general')
@@ -463,37 +454,32 @@ Provide response in this EXACT JSON format:
 }
 """
 
-        return base_prompt + metrics_prompt + "\n\nEvaluate objectively. Your 'suggestions' list MUST have 3-5 items. Each item MUST include an impact prefix like 'High Impact:', 'Medium Impact:', or 'Critical Impact:' based on the 2025 GEO research weights."
-    
+        # Add Intent Alignment specific instruction
+        intent_instruction = f"""
+### INTENT ALIGNMENT GATE (Binary Check):
+Evaluate ONLY this 100-word intro slice against the query "{query}":
+"{intent_slice}"
+Does it directly answer the user's intent? (Boolean).
+"""
+        return base_prompt + metrics_prompt + intent_instruction + "\n\nEvaluate objectively. Your 'suggestions' list MUST have 3-5 items. Each item MUST include an impact prefix like 'High Impact:', 'Medium Impact:', or 'Critical Impact:' based on the 2025 GEO research weights."
+
+    def _extract_json(self, text: str) -> str:
+        """Robustly extract JSON block from conversational LLM output."""
+        # Try finding JSON block in markdown
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            return match.group(0)
+        return text
+
     def _parse_llm_response(self, response_text: str, content_type: str) -> Dict[str, Any]:
-        """Parse LLM response into structured scores."""
+        """Parse LLM response with high resilience."""
         try:
-            text = response_text.strip()
-            
-            # Try finding JSON block in markdown
-            if "```json" in text:
-                text = text.split("```json")[1].split("```")[0].strip()
-            elif "```" in text:
-                text = text.split("```")[1].strip()
-            
-            # Extract JSON from first { to last }
-            json_start = text.find('{')
-            json_end = text.rfind('}') + 1
-            
-            if json_start >= 0 and json_end > json_start:
-                json_str = text[json_start:json_end]
-                data = json.loads(json_str)
-                if "true" in response_text[:50].lower() or "false" in response_text[:50].lower():
-                    app_logger.debug("Successfully parsed LLM response")
-                return data
-                
+            json_str = self._extract_json(response_text)
+            data = json.loads(json_str)
+            return data
         except Exception as e:
-            app_logger.error(f"Failed to parse LLM response: {str(e)}")
-            app_logger.error(f"Response text (first 500 chars): {response_text[:500]}")
-        
-        # Raise an exception rather than silently returning defaults
-        # This allows the caller loop to gracefully fallback to Gemini!
-        raise ValueError("Response was not a valid parsable JSON object.")
+            app_logger.error(f"Failed to parse LLM response: {e}")
+            raise ValueError("Invalid JSON response from LLM")
     
     def _get_default_scores(self, content_type: str) -> Dict[str, Any]:
         """Return default scores checks."""

@@ -1,5 +1,6 @@
 import aiohttp
 import json
+import re
 from typing import Dict, Any, List
 from config import settings
 from logger import app_logger
@@ -179,6 +180,18 @@ class GEOOptimizer:
         """
         return await self._call_llm(prompt)
 
+    def _extract_json(self, text: str) -> Dict[str, Any]:
+        """Robustly extract JSON block from conversational LLM output."""
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            try:
+                # Basic cleaning for common LLM artifacts
+                json_str = match.group(0)
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                app_logger.error(f"JSON Parse Error from LLM: {text[:200]}")
+        return {}
+
     async def _call_llm(self, prompt: str) -> Dict[str, Any]:
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
@@ -198,8 +211,19 @@ class GEOOptimizer:
                 async with session.post(url, headers=headers, json=payload) as resp:
                     if resp.status == 200:
                         data = await resp.json()
-                        return json.loads(data["choices"][0]["message"]["content"])
+                        response_text = data["choices"][0]["message"]["content"]
+                        result = self._extract_json(response_text)
+                        
+                        # Fallback for missing keys
+                        if not result and "optimized_content" in prompt:
+                            return {
+                                "optimized_content": "Error: Could not parse LLM response.",
+                                "changes_made": ["Analysis failed"],
+                                "geo_lift_estimate": "0%"
+                            }
+                        return result
                     else:
+                        app_logger.error(f"LLM Error: {resp.status}")
                         return {"error": f"LLM Error: {resp.status}"}
         except Exception as e:
             app_logger.error(f"GEO Optimizer LLM Call Failed: {e}")

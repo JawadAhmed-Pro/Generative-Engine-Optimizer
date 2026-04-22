@@ -15,160 +15,125 @@ class ScoreAggregator:
         llm_scores: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Combine scores. 
-        Note: `llm_scores` now contains the specific 7 or 12 metrics from the LLM.
+        Combine scores using the Gated Scoring Architecture (60% Rule / 40% LLM).
         """
-        # --- Extract LLM Metrics (with defaults) ---
-        semantic_richness = llm_scores.get('semantic_richness', 50)
-        user_intent = llm_scores.get('user_intent_alignment', 50)
-        structural_integrity = llm_scores.get('structural_integrity', 50)
-        ai_formatting = llm_scores.get('ai_friendly_formatting', 50)
-        content_authority = llm_scores.get('content_authority', 50)
-        linkability = llm_scores.get('internal_linkability', 50)
-        readability_ux = llm_scores.get('readability_ux', 50)
+        # --- Normalize LLM Metrics (Default to 50 if missing) ---
+        llm_metrics = {
+            'semantic_richness': llm_scores.get('semantic_richness', 50),
+            'user_intent': llm_scores.get('user_intent_alignment', 50),
+            'structural_integrity': llm_scores.get('structural_integrity', 50),
+            'ai_formatting': llm_scores.get('ai_friendly_formatting', 50),
+            'content_authority': llm_scores.get('content_authority', 50),
+            'linkability': llm_scores.get('internal_linkability', 50),
+            'readability_ux': llm_scores.get('readability_ux', 50),
+            'experience': llm_scores.get('experience_score', 50),
+            'expertise': llm_scores.get('expertise_score', 50),
+            'authoritativeness': llm_scores.get('authoritativeness_score', 50),
+            'trustworthiness': llm_scores.get('trustworthiness_score', 50)
+        }
         
-        # --- Extract New Functional Metrics ---
-        primary_intent = llm_scores.get('primary_intent', 'Informational')
-        experience_score = llm_scores.get('experience_score', 50)
-        expertise_score = llm_scores.get('expertise_score', 50)
-        authoritativeness_score = llm_scores.get('authoritativeness_score', 50)
-        trustworthiness_score = llm_scores.get('trustworthiness_score', 50)
-        
-        # --- Rule-Based Metrics ---
+        # --- Extract Rule-Based Metrics (The Gated Baseline) ---
         rb_structure = rule_based_scores.get('structure', {}).get('score', 50)
-        rb_keywords = rule_based_scores.get('keywords', {}).get('score', 50)
         rb_keywords = rule_based_scores.get('keywords', {}).get('score', 50)
         rb_authority = rule_based_scores.get('authority', {}).get('score', 50)
         rb_readability = rule_based_scores.get('readability', {}).get('score', 50)
-
-        # --- E-E-A-T Hybrid Scoring & Fine-Tuning ---
-        # Inject rule-based signals into pillar scores
+        rb_schema = rule_based_scores.get('schema', {}).get('score', 50)
+        
         auth_details = rule_based_scores.get('authority', {}).get('details', {})
         
-        # 1. Hybrid Trust: LLM Subjective + Rule-based Citations/Facts
-        # Boost up to 20% from rule-based objective evidence
+        # --- Pillar 1: AI Visibility (Structural & Schema Integrity) ---
+        # Gated by: rb_structure and rb_schema
+        visibility_baseline = (rb_structure * 0.7) + (rb_schema * 0.3)
+        visibility_refinement = (llm_metrics['ai_formatting'] * 0.5) + (llm_metrics['structural_integrity'] * 0.5)
+        ai_visibility_score = min(max((visibility_baseline * 0.6) + (visibility_refinement * 0.4), 0), 100)
+        
+        # --- Pillar 2: Citation Worthiness (Trust, Authority, EEAT) ---
+        # Gated by: rb_authority (citations, stats, expert mentions)
         trust_booster = min((auth_details.get('citations', 0) * 5) + (auth_details.get('fact_density', 0) * 10), 20)
-        hybrid_trust = min(trustworthiness_score * 0.8 + trust_booster, 100)
+        hybrid_trust = min(llm_metrics['trustworthiness'] * 0.8 + trust_booster, 100)
         
-        # 2. Hybrid Expertise: LLM Subjective + Rule-based Credential Detection
         expertise_booster = min((auth_details.get('expert_mentions', 0) * 10), 20)
-        hybrid_expertise = min(expertise_score * 0.8 + expertise_booster, 100)
+        hybrid_expertise = min(llm_metrics['expertise'] * 0.8 + expertise_booster, 100)
         
-        # 3. Weighted Overall EEAT (The "SEO Significance" calculation)
-        # Trust is 40%, Expertise 25%, Authoritativeness 20%, Experience 15%
         overall_eeat = (
             hybrid_trust * 0.40 +
             hybrid_expertise * 0.25 +
-            authoritativeness_score * 0.20 +
-            experience_score * 0.15
-        )
-
-        # --- Mapping New Metrics to Old DB Columns ---
-        
-        # 1. AI Visibility Score
-        # Maps to: AI-Friendly Formatting, Structural Integrity, Schema/Formatting
-        ai_visibility_score = (
-            ai_formatting * 0.45 +
-            structural_integrity * 0.45 +
-            rb_structure * 0.1
+            llm_metrics['authoritativeness'] * 0.20 +
+            llm_metrics['experience'] * 0.15
         )
         
-        # 2. Citation Worthiness Score
-        # Maps to: Content Authority, Internal Linking, Reviews (if ecom)
-        citation_worthiness_score = (
-            content_authority * 0.4 +
-            linkability * 0.2 +
-            overall_eeat * 0.3 + 
-            rb_authority * 0.1
-        )
-        # Adjust for ecommerce if present
-        if 'review_presence' in llm_scores:
-             citation_worthiness_score = (
-                content_authority * 0.4 +
-                linkability * 0.2 +
-                llm_scores['review_presence'] * 0.3 + 
-                rb_authority * 0.1
-            )
+        # Citation Gate
+        citation_baseline = rb_authority
+        citation_refinement = (llm_metrics['content_authority'] * 0.5) + (overall_eeat * 0.5)
+        citation_worthiness_score = min(max((citation_baseline * 0.6) + (citation_refinement * 0.4), 0), 100)
 
-        # 3. Semantic Coverage Score
-        # Maps to: Semantic Richness, User Intent, Product Data (if ecom)
-        semantic_coverage_score = (
-            semantic_richness * 0.5 +
-            user_intent * 0.4 +
-            rb_keywords * 0.1
-        )
+        # --- Pillar 3: Semantic Coverage (Keyword Relevance & Information Gain) ---
+        # Gated by: rb_keywords
+        semantic_baseline = rb_keywords
+        semantic_refinement = (llm_metrics['semantic_richness'] * 0.6) + (llm_metrics['user_intent'] * 0.4)
+        semantic_coverage_score = min(max((semantic_baseline * 0.6) + (semantic_refinement * 0.4), 0), 100)
+
+        # --- Pillar 4: Technical Readability (UX & Flow) ---
+        # Gated by: rb_readability
+        readability_baseline = rb_readability
+        readability_refinement = llm_metrics['readability_ux']
+        technical_readability_score = min(max((readability_baseline * 0.7) + (readability_refinement * 0.3), 0), 100)
+
+        # --- E-commerce Specialization (Overrides) ---
         if 'product_data_completeness' in llm_scores:
-             semantic_coverage_score = (
-                semantic_richness * 0.35 +
-                user_intent * 0.35 +
-                llm_scores['product_data_completeness'] * 0.2 + 
-                rb_keywords * 0.1
-            )
-
-        # 4. Technical Readability Score
-        # Maps to: Readability & UX, CTA (if ecom)
-        technical_readability_score = (
-            readability_ux * 0.8 +
-            rb_readability * 0.2
-        )
-        if 'cta_clarity' in llm_scores:
-            technical_readability_score = (
-                readability_ux * 0.6 +
-                llm_scores['cta_clarity'] * 0.3 +
-                rb_readability * 0.1
-            )
+            # Re-weight Semantic Coverage for Ecom
+            ecom_data = llm_scores.get('product_data_completeness', 50)
+            semantic_coverage_score = min(max((semantic_coverage_score * 0.7) + (ecom_data * 0.3), 0), 100)
+        
+        if 'review_presence' in llm_scores:
+            # Re-weight Citation for Ecom
+            ecom_reviews = llm_scores.get('review_presence', 50)
+            citation_worthiness_score = min(max((citation_worthiness_score * 0.7) + (ecom_reviews * 0.3), 0), 100)
             
         # --- Formatting for API Response ---
-        # Only include details that actually exist in the LLM response
-        
         ai_details = {
-            'ai_friendly_formatting': ai_formatting,
-            'structural_integrity': structural_integrity,
+            'ai_friendly_formatting': llm_metrics['ai_formatting'],
+            'structural_integrity': llm_metrics['structural_integrity'],
+            'rule_structure_score': rb_structure,
+            'rule_schema_score': rb_schema
         }
-        if 'product_schema' in llm_scores:
-             ai_details['product_schema'] = llm_scores['product_schema']
-
+        
         citation_details = {
-            'content_authority': content_authority,
-            'internal_linkability': linkability,
+            'content_authority': llm_metrics['content_authority'],
+            'rule_authority_score': rb_authority,
+            'citations_found': auth_details.get('citations', 0),
+            'facts_density': auth_details.get('fact_density', 0)
         }
-        if 'review_presence' in llm_scores:
-            citation_details['review_presence'] = llm_scores['review_presence']
-
+        
         semantic_details = {
-            'semantic_richness': semantic_richness,
-            'user_intent_alignment': user_intent,
+            'semantic_richness': llm_metrics['semantic_richness'],
+            'user_intent_alignment': llm_metrics['user_intent'],
+            'rule_keyword_score': rb_keywords
         }
-        if 'product_data_completeness' in llm_scores:
-            semantic_details['product_data_completeness'] = llm_scores['product_data_completeness']
-        if 'inventory_shipping' in llm_scores:
-            semantic_details['inventory_shipping'] = llm_scores['inventory_shipping']
-
+        
         readability_details = {
-            'readability_ux': readability_ux,
+            'readability_ux': llm_metrics['readability_ux'],
+            'rule_readability_score': rb_readability
         }
-        if 'cta_clarity' in llm_scores:
-            readability_details['cta_clarity'] = llm_scores['cta_clarity']
-
         
         formatted_llm_scores_response = {
             'ai_visibility': {
-                'score': ai_formatting,
+                'score': llm_metrics['ai_formatting'],
                 'details': ai_details,
                 'suggestions': []
             },
             'citation_worthiness': {
-                'score': content_authority,
+                'score': llm_metrics['content_authority'],
                 'details': citation_details,
                 'suggestions': []
             },
             'semantic_richness': {
-                'score': semantic_richness,
+                'score': llm_metrics['semantic_richness'],
                 'details': semantic_details,
                 'suggestions': []
             },
             'technical_readability': {
-                'score': readability_ux,
+                'score': llm_metrics['readability_ux'],
                 'details': readability_details,
                 'suggestions': []
             }
