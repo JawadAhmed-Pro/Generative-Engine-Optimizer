@@ -25,13 +25,23 @@ class CitationProbabilityModel:
         Recognizes 'evergreen' educational content to avoid unfair decay penalties.
         """
         # 0. CATEGORY AUTO-DETECTION (Internal)
-        # If 'general' but looks scientific, treat as educational
         detected_category = content_type
+        
+        # Extract metadata for detection
+        content_text = llm_scores.get('raw_content', '').lower()
+        target_kw = llm_scores.get('target_keyword', '').lower()
+        llm_authority = llm_scores.get('citation_worthiness', {}).get('score', 0)
+        
         if content_type == 'general':
-            scientific_keywords = ['algorithm', 'classification', 'neural', 'theory', 'mathematics', 'foundation', 'research', 'deep learning']
-            # Access text if available in llm_scores (mocked here or passed in)
-            # For now, we assume it's scientific if authority scores are high
-            if rule_scores.get('authority', {}).get('score', 0) > 70:
+            scientific_keywords = ['algorithm', 'classification', 'neural', 'theory', 'mathematics', 'foundation', 'research', 'deep learning', 'science', 'academic']
+            
+            # Detect based on keyword presence in text or target keyword
+            has_sci_kw = any(kw in content_text for kw in scientific_keywords) or any(kw in target_kw for kw in scientific_keywords)
+            
+            # Detect based on high authority signals (LLM or Rule-based)
+            is_highly_authoritative = llm_authority > 75 or rule_scores.get('authority', {}).get('score', 0) > 70
+            
+            if has_sci_kw or is_highly_authoritative:
                 detected_category = 'educational'
 
         # 1. BASE PROBABILITY CALIBRATION
@@ -83,16 +93,20 @@ class CitationProbabilityModel:
         auth_data = rule_scores.get('authority', {}).get('details', {})
         expert_mentions = auth_data.get('expert_mentions', 0)
         
+        # Bridge the gap: If LLM says highly authoritative but rule missed specific quotes
+        if expert_mentions == 0 and llm_authority > 80 and detected_category == 'educational':
+            expert_mentions = 1.5 # Hybrid credit for expert-level quality
+
         if expert_mentions > 0:
             # Education gets 2x the lift from authority vs Commerce
             auth_lift = 1.2 + (expert_mentions * 0.1) if detected_category == 'educational' else 1.1 + (expert_mentions * 0.05)
-            auth_lift = min(1.6, auth_lift)
+            auth_lift = min(1.65, auth_lift)
             multiplier_total *= auth_lift
             factors.append({
                 "factor": "Authoritative Depth",
                 "impact": f"+{int((auth_lift-1)*100)}%",
                 "type": "positive",
-                "description": "Expert citations are the strongest signal for academic citation."
+                "description": "Expert signals or high academic authority detected."
             })
 
         # 4. DATA & STATS

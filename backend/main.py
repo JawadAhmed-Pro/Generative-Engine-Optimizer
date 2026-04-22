@@ -1022,11 +1022,16 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     # Aggregate scores
     final_scores = aggregator.aggregate(rule_scores, llm_scores)
     
+    # Add context for probability auto-detection
+    detection_context = final_scores['llm_scores'].copy()
+    detection_context['raw_content'] = content
+    detection_context['target_keyword'] = extracted.get('target_keyword', '')
+
     # Calculate initial probability baseline
     prob_calc = probability_model.calculate_probability(
         overall_score=(final_scores['ai_visibility_score'] + final_scores['citation_worthiness_score'] + final_scores['semantic_coverage_score'] + final_scores['technical_readability_score']) / 4,
         rule_scores=final_scores['rule_based_scores'],
-        llm_scores=final_scores['llm_scores'],
+        llm_scores=detection_context,
         content_type=extracted.get('content_type', 'general')
     )
     
