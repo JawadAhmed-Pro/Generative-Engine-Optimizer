@@ -178,6 +178,7 @@ class AnalyzeURLRequest(BaseModel):
     project_id: Optional[int] = None
     content_type: str = Field(default="general", pattern=r'^(general|ecommerce|educational)$')
     target_keyword: Optional[str] = None
+    engine: Optional[str] = Field(default="perplexity", pattern=r'^(perplexity|chatgpt|google_sge)$')
 
 
 class AnalyzeTextRequest(BaseModel):
@@ -186,6 +187,7 @@ class AnalyzeTextRequest(BaseModel):
     title: Optional[str] = None
     content_type: str = Field(default="general", pattern=r'^(general|ecommerce|educational)$')
     target_keyword: Optional[str] = None
+    engine: Optional[str] = Field(default="perplexity", pattern=r'^(perplexity|chatgpt|google_sge)$')
 
 
 class ScoreMetric(BaseModel):
@@ -242,6 +244,15 @@ class OptimizeContentRequest(BaseModel):
     mode: str = 'rewrite' # 'rewrite' or 'generate'
     content_type: str = 'general'
     target_keyword: Optional[str] = None
+
+
+class OptimizeRAGPayloadRequest(BaseModel):
+    content: str
+    target_keyword: str
+
+
+class OptimizeEntitySchemaRequest(BaseModel):
+    content: str
 
 
 class GenerateSchemaRequest(BaseModel):

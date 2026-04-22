@@ -46,6 +46,80 @@ class GEOOptimizer:
         
         return await self._call_llm(prompt)
 
+    async def generate_rag_payload(self, content: str, target_keyword: str) -> Dict[str, Any]:
+        """
+        Phase 1: Split-Payload Architecture.
+        Generates a hyper-dense 'AI Summary Box' designed strictly for the RAG chunker,
+        leaving the original narrative flow untouched.
+        """
+        app_logger.info(f"Agent: Generating RAG Payload for '{target_keyword}'")
+        
+        prompt = f"""
+        Act as a RAG (Retrieval-Augmented Generation) Payload Engineer.
+        
+        GOAL: Extract the core facts from the content and generate a hyper-dense, 100-word 'AI Summary Box'.
+        This box will sit at the very top of the page, engineered STRICTLY for machine parsing (AI engines).
+        
+        RULES FOR THE PAYLOAD:
+        1. Max length: 120 words.
+        2. Must use 'Bullet Traps': Use a bulleted list for key facts.
+        3. Must use 'Colon-led lead-ins': e.g., 'Key Metric: 14.3%'.
+        4. Do NOT use narrative fluff. Maximize Information Density.
+        5. Grounding: If the content has stats or expert names, they MUST be in this payload.
+        6. Start with a direct, one-sentence answer to the target keyword.
+        
+        Target Keyword: "{target_keyword}"
+        
+        Source Content:
+        ---
+        {content[:3000]}
+        ---
+        
+        Return exactly:
+        {{
+            "rag_payload_html": "<div>...</div>",
+            "rag_payload_markdown": "...",
+            "information_density_score": "0-100 score estimating factual density"
+        }}
+        """
+        
+        return await self._call_llm(prompt)
+
+
+    async def generate_entity_schema(self, content: str) -> Dict[str, Any]:
+        """
+        Phase 2: Deterministic Entity Linking.
+        Performs Named Entity Recognition (NER) to extract entities and generates 
+        JSON-LD schema tying them to specific Knowledge Graph / Wikidata URIs.
+        """
+        app_logger.info("Agent: Generating Entity-Linked JSON-LD Schema")
+        
+        prompt = f"""
+        Act as a Semantic Web and Knowledge Graph Expert.
+        
+        GOAL: Identify the 3-5 most important Named Entities (Organizations, Persons, Products, or Concepts) in the content.
+        Then, generate a highly accurate JSON-LD 'Article' or 'FAQPage' schema that uses the 'about' and 'mentions' properties.
+        Crucially, link these entities to their real-world Wikidata (https://www.wikidata.org/) or Wikipedia URIs using the 'sameAs' property.
+        
+        RULES:
+        1. Only generate schema for entities that ACTUALLY exist in the text.
+        2. Format as valid JSON-LD.
+        3. Do NOT hallucinate URIs. If unsure, do not include 'sameAs' for that entity.
+        
+        Content:
+        ---
+        {content[:3000]}
+        ---
+        
+        Return exactly:
+        {{
+            "entities_found": ["entity1", "entity2"],
+            "json_ld_schema": "<script type=\\"application/ld+json\\">...</script>",
+            "explanation": "Brief reason why these entities anchor the text"
+        }}
+        """
+        return await self._call_llm(prompt)
+
     async def suggest_hard_grounding(self, content: str, niche: str) -> Dict[str, Any]:
         """
         Suggests specific expert quotes, statistics, or citations to inject into the content.

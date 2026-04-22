@@ -134,6 +134,31 @@ class CitationProbabilityModel:
                 "description": "Valid schema allows AI to parse facts without hallucination risk."
             })
 
+        # Phase 3: ENGINE-SPECIFIC RECALIBRATION (Dynamic RSS Thresholds)
+        if engine == "perplexity":
+            # Perplexity heavily favors explicit facts and citations
+            if stats >= 3 or expert_mentions >= 1:
+                perplexity_lift = 1.25
+                multiplier_total *= perplexity_lift
+                factors.append({"factor": "Perplexity Density Bias", "impact": "+25%", "type": "positive", "description": "High factual density aligns with Perplexity retrieval algorithms."})
+        
+        elif engine == "chatgpt":
+            # ChatGPT heavily favors readability and conversational flow (Semantic Richness)
+            readability_data = rule_scores.get('readability', {})
+            flesch_score = readability_data.get('details', {}).get('flesch_score', 0)
+            if 60 <= flesch_score <= 80:
+                gpt_lift = 1.15
+                multiplier_total *= gpt_lift
+                factors.append({"factor": "ChatGPT Flow Bias", "impact": "+15%", "type": "positive", "description": "Conversational readability matches OpenAI's synthesis preference."})
+                
+        elif engine == "google_sge":
+            # Google relies on traditional PageRank and strict technical SEO as pre-filters
+            has_schema = len(schema_types) > 0
+            if not has_schema:
+                sge_penalty = 0.70
+                multiplier_total *= sge_penalty
+                factors.append({"factor": "Google Pre-Filter Penalty", "impact": "-30%", "type": "negative", "description": "Missing schema fails Google's technical pre-retrieval filters."})
+
         # 6. FINAL AGGREGATION
         final_prob = base_prob * multiplier_total
         final_prob = max(1.0, min(98.5, final_prob))

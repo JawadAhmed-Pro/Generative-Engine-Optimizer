@@ -345,6 +345,19 @@ class RuleBasedScorer:
              target_schema = "Product (Mandatory)" if content_type == 'ecommerce' else "Article, FAQPage, or HowTo"
              suggestions.append(f"Missing Schema.org markup (Critical Impact: Highly Recommended for AI Visibility)")
         
+        # Phase 2: Deterministic Entity Linking (Knowledge Graph Anchoring)
+        schema_raw_str = str(schema_data.get('raw', '')).lower()
+        if 'sameas' in schema_raw_str or '"sameas"' in schema_raw_str:
+            score += 20
+            details['has_same_as_entities'] = True
+            suggestions.insert(0, "✅ Excellent: 'sameAs' entity linking detected. High confidence retrieval signal.")
+        else:
+            suggestions.append("Add 'sameAs' schema properties pointing to Wikidata/Wikipedia to anchor entities (High Impact)")
+            
+        if 'about' in schema_raw_str or 'mentions' in schema_raw_str:
+            score += 15
+            details['has_about_mentions'] = True
+            
         # Check for semantic HTML in headings
         headings = metadata.get('headings', {})
         if headings:

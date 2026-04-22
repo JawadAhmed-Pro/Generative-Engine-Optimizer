@@ -696,7 +696,7 @@ async def analyze_url(
             print(f"Warning: Vector storage failed (this is OK): {str(e)}")
         
         # Perform analysis
-        analysis = await perform_analysis(extracted['content'], extracted, db, content_item.id)
+        analysis = await perform_analysis(extracted['content'], extracted, db, content_item.id, engine=payload.engine)
         
         # Log metrics
         latency_ms = (time.time() - start_time) * 1000
@@ -780,7 +780,7 @@ async def analyze_text(
             'headings': {},
             'schema': {}
         }
-        analysis = await perform_analysis(clean_content, extracted, db, content_item.id)
+        analysis = await perform_analysis(clean_content, extracted, db, content_item.id, engine=payload.engine)
         
         # Log metrics
         latency_ms = (time.time() - start_time) * 1000
@@ -826,6 +826,26 @@ async def optimize_content(payload: OptimizeContentRequest = Body(...)):
             return {"optimized_content": optimized_text}
     except Exception as e:
          raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/optimize/rag-payload")
+async def optimize_rag_payload(payload: OptimizeRAGPayloadRequest = Body(...)):
+    """Generate a hyper-dense AI Summary Box for RAG chunkers."""
+    try:
+        result = await geo_optimizer.generate_rag_payload(payload.content, payload.target_keyword)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/optimize/entity-schema")
+async def optimize_entity_schema(payload: OptimizeEntitySchemaRequest = Body(...)):
+    """Generate JSON-LD schema with specific entity anchoring."""
+    try:
+        result = await geo_optimizer.generate_entity_schema(payload.content)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/simulate-ai")
@@ -1011,7 +1031,7 @@ Return ONLY the JSON object, no other text."""
         }
 
 
-async def perform_analysis(content: str, extracted: dict, db: Session, content_item_id: int) -> AnalysisResponse:
+async def perform_analysis(content: str, extracted: dict, db: Session, content_item_id: int, engine: str = "perplexity") -> AnalysisResponse:
     """Perform complete GEO analysis."""
     # Rule-based scoring
     rule_scores = rule_scorer.analyze(content, extracted, extracted.get('content_type', 'general'))
@@ -1032,7 +1052,8 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
         overall_score=(final_scores['ai_visibility_score'] + final_scores['citation_worthiness_score'] + final_scores['semantic_coverage_score'] + final_scores['technical_readability_score']) / 4,
         rule_scores=final_scores['rule_based_scores'],
         llm_scores=detection_context,
-        content_type=extracted.get('content_type', 'general')
+        content_type=extracted.get('content_type', 'general'),
+        engine=engine
     )
     
     # Format probability_metrics to match the ScoreMetric pydantic schema before saving

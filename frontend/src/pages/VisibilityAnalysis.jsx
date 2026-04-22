@@ -21,6 +21,7 @@ function VisibilityAnalysis() {
     const [error, setError] = useState(null)
     const [history, setHistory] = useState([])
     const [selectedProject, setSelectedProject] = useState(projectFromUrl || contextProject || '')
+    const [targetEngine, setTargetEngine] = useState('perplexity')
 
     // Create project state
     const [showCreateProject, setShowCreateProject] = useState(false)
@@ -87,7 +88,8 @@ function VisibilityAnalysis() {
             const response = await axios.post('/api/analyze-url', {
                 url: url,
                 content_type: contentType,
-                project_id: selectedProject ? parseInt(selectedProject) : null
+                project_id: selectedProject ? parseInt(selectedProject) : null,
+                engine: targetEngine
             })
             updateVisibility({ analysisResults: response.data })
             fetchHistory() // Refresh history
@@ -214,6 +216,41 @@ function VisibilityAnalysis() {
                                         : contentType === 'educational'
                                         ? "Enter the URL of the academic article or educational resource to audit its authority in LLM training sets."
                                         : "Enter the product listing URL to analyze its referral probability in AI shopping assistants."}
+                                </div>
+                            </div>
+
+                            {/* Target Engine Group */}
+                            <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--card-border)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                                    <Target size={18} color="var(--accent-primary)" />
+                                    <span style={{ fontWeight: '700', fontSize: '0.95rem', letterSpacing: '0.02em' }}>Target Engine</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    {[
+                                        { id: 'perplexity', label: 'Perplexity AI', desc: 'Focus: Facts & Citations' },
+                                        { id: 'chatgpt', label: 'ChatGPT Search', desc: 'Focus: Conversational Flow' },
+                                        { id: 'google_sge', label: 'Google SGE', desc: 'Focus: SEO Pre-Filters' }
+                                    ].map(engine => (
+                                        <div 
+                                            key={engine.id}
+                                            onClick={() => setTargetEngine(engine.id)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '1rem',
+                                                border: targetEngine === engine.id ? '1px solid var(--accent-primary)' : '1px solid var(--card-border)',
+                                                background: targetEngine === engine.id ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-tertiary)',
+                                                borderRadius: '8px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '0.25rem'
+                                            }}
+                                        >
+                                            <span style={{ fontWeight: '600', color: targetEngine === engine.id ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{engine.label}</span>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{engine.desc}</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
