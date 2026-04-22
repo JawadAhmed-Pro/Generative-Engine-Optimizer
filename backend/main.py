@@ -23,7 +23,8 @@ from models import (
     User, UserCreate, UserLogin, UserResponse, Token,
     AnalyzeTextRequest, AnalyzeURLRequest, ExtractContentRequest, ExtractKeywordsRequest,
     GenerateSchemaRequest, InjectRequest, ValidateCitationRequest,
-    CompetitorCompareRequest, CompetitorComparison, PromptDiscoveryRequest
+    CompetitorCompareRequest, CompetitorComparison, PromptDiscoveryRequest,
+    OptimizeRAGPayloadRequest, OptimizeEntitySchemaRequest
 )
 import models
 from content_fetcher import ContentFetcher
