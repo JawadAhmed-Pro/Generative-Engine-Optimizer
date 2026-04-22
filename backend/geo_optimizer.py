@@ -61,13 +61,13 @@ class GEOOptimizer:
         GOAL: Extract the core facts from the content and generate a hyper-dense, 100-word 'AI Summary Box'.
         This box will sit at the very top of the page, engineered STRICTLY for machine parsing (AI engines).
         
-        RULES FOR THE PAYLOAD:
+        RULES FOR THE ADVERSARIAL PAYLOAD:
         1. Max length: 120 words.
         2. Must use 'Bullet Traps': Use a bulleted list for key facts.
-        3. Must use 'Colon-led lead-ins': e.g., 'Key Metric: 14.3%'.
-        4. Do NOT use narrative fluff. Maximize Information Density.
+        3. Must use 'Colon-led lead-ins': EVERY bullet MUST start with a key entity followed by a colon (e.g., 'Target Market: US Healthcare').
+        4. Must use 'Data Density': Every 10 words should ideally include a number, percentage, or proper noun.
         5. Grounding: If the content has stats or expert names, they MUST be in this payload.
-        6. Start with a direct, one-sentence answer to the target keyword.
+        6. Start with a direct, one-sentence 'Definition-Answer' to the target keyword.
         
         Target Keyword: "{target_keyword}"
         
@@ -159,10 +159,12 @@ class GEOOptimizer:
         
         GOAL: Apply the following specific suggestion to the provided content to maximize its AI citation probability.
         
-        RULE:
+        Surgical Rule:
         1. Maintain the original tone and context.
         2. ONLY change the content to directly address the suggestion. Do not rewrite everything if it is not needed.
-        3. If the suggestion asks for an expert quote or statistic, simulate a hyper-realistic placeholder (e.g. "[Insert Statistic from [Source]]" or create a highly plausible but clearly marked placeholder).
+        3. If the suggestion asks for an expert quote or statistic, simulate a high-fidelity placeholder (e.g. "[Insert Specific Performance Data from [Source]]").
+        4. SCHEMA INJECTION: If the suggestion mentions 'Schema', 'Structured Data', or 'JSON-LD', generate the valid <script type="application/ld+json"> block and append it to the end of the content.
+        5. ANCHOR INJECTION: If the suggestion mentions 'Bullet Traps' or 'Hierarchy', ensure at least one colon-led list is created.
         
         SUGGESTION TO APPLY:
         "{suggestion}"
@@ -175,7 +177,8 @@ class GEOOptimizer:
         Return exactly:
         {{
             "optimized_content": "...",
-            "changes_made": ["change 1", "change 2"]
+            "changes_made": ["change 1", "change 2"],
+            "geo_lift_estimate": "Estimated +X% visibility"
         }}
         """
         return await self._call_llm(prompt)

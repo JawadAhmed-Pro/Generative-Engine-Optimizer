@@ -159,9 +159,47 @@ class CitationProbabilityModel:
                 multiplier_total *= sge_penalty
                 factors.append({"factor": "Google Pre-Filter Penalty", "impact": "-30%", "type": "negative", "description": "Missing schema fails Google's technical pre-retrieval filters."})
 
-        # 6. FINAL AGGREGATION
-        final_prob = base_prob * multiplier_total
-        final_prob = max(1.0, min(98.5, final_prob))
+        # Phase 4: DETERMINISTIC GATE FLOOR (Mathematical Floor)
+        # If the hard-gated baseline is failed, probability must decay
+        rb_authority = rule_scores.get('authority', {}).get('score', 0)
+        rb_structure = rule_scores.get('structure', {}).get('score', 0)
+        
+        gate_penalty = 1.0
+        if rb_authority < 25:
+            # Fact Gate Failed
+            gate_penalty *= 0.4
+            factors.append({
+                "factor": "Fact-Density Gate Failure",
+                "impact": "-60%",
+                "type": "negative",
+                "description": "Critical: Content lacks verifiable statistics or expert grounding required for AI search extraction."
+            })
+        
+        if rb_structure < 30:
+            # Structure Gate Failed
+            gate_penalty *= 0.5
+            factors.append({
+                "factor": "Structural Integrity Failure",
+                "impact": "-50%",
+                "type": "negative",
+                "description": "AI engines penalize content without clear hierarchy or semantic formatting (H1/H2/Lists)."
+            })
+
+        # Calculate Final Probability
+        final_prob = base_prob * multiplier_total * gate_penalty
+        
+        # Absolute Floor for zero-fact content
+        if rb_authority == 0 and rb_structure < 20:
+            final_prob = min(final_prob, 5.0)
+
+        # Final Cap
+        final_prob = max(1.0, min(95.0, final_prob))
+        
+        # Calculate Confidence Score (based on data completeness)
+        confidence = 0.5
+        if stats > 0: confidence += 0.2
+        if expert_mentions > 0: confidence += 0.2
+        if len(schema_types) > 0: confidence += 0.1
         
         # Competitor average calibrated to the niche
         competitor_base = {"educational": 45, "ecommerce": 20, "general": 30}.get(detected_category, 30)
@@ -170,7 +208,8 @@ class CitationProbabilityModel:
         return {
             "probability": round(final_prob, 1),
             "base_probability": round(base_prob, 1),
-            "multiplier": round(multiplier_total, 2),
+            "confidence_score": round(min(1.0, confidence), 2),
+            "multiplier": round(multiplier_total * gate_penalty, 2),
             "factors": factors,
             "engine": engine,
             "category": detected_category,
