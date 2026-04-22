@@ -18,111 +18,115 @@ class CitationProbabilityModel:
         rule_scores: Dict[str, Any], 
         llm_scores: Dict[str, Any],
         content_type: str = "general",
-        engine: str = "perplexity" # Default to perplexity behavior
+        engine: str = "perplexity"
     ) -> Dict[str, Any]:
         """
-        Calculate final citation probability based on the target AI engine's behavior.
-        Engines: 'perplexity', 'chatgpt', 'gemini'
+        Calculates citation probability with department-specific logic.
+        Recognizes 'evergreen' educational content to avoid unfair decay penalties.
         """
-        # 1. Start with base probability derived from the overall GEO score
+        # 0. CATEGORY AUTO-DETECTION (Internal)
+        # If 'general' but looks scientific, treat as educational
+        detected_category = content_type
+        if content_type == 'general':
+            scientific_keywords = ['algorithm', 'classification', 'neural', 'theory', 'mathematics', 'foundation', 'research', 'deep learning']
+            # Access text if available in llm_scores (mocked here or passed in)
+            # For now, we assume it's scientific if authority scores are high
+            if rule_scores.get('authority', {}).get('score', 0) > 70:
+                detected_category = 'educational'
+
+        # 1. BASE PROBABILITY CALIBRATION
         if overall_score < 40:
-            base_prob = overall_score * 0.3
+            base_prob = overall_score * 0.4
         elif overall_score < 75:
-            base_prob = 12 + ((overall_score - 40) * 1.2)
+            base_prob = 16 + ((overall_score - 40) * 1.3)
         else:
-            base_prob = 54 + ((overall_score - 75) * 1.8)
+            base_prob = 61 + ((overall_score - 75) * 1.5)
             
-        base_prob = max(1.0, min(85.0, base_prob))
+        base_prob = max(1.0, min(90.0, base_prob))
 
         factors: List[Dict[str, Any]] = []
         multiplier_total = 1.0
 
-        # ENGINE WEIGHTING ADAPTATION (2026 CALIBRATION)
-        weights = {
-            "perplexity": {"freshness": 1.5, "grounding": 1.0, "structure": 1.0},
-            "chatgpt": {"freshness": 0.8, "grounding": 1.3, "structure": 1.4},
-            "gemini": {"freshness": 0.7, "grounding": 1.5, "structure": 1.1}
+        # 2. DEPARTMENT-SPECIFIC DECAY SENSITIVITY
+        # Research shows AI search treats educational facts as 'Evergreen'
+        decay_config = {
+            "educational": {"penalty_weight": 0.15, "label": "Academic Evergreen"},
+            "ecommerce": {"penalty_weight": 0.75, "label": "Commercial Recency"},
+            "general": {"penalty_weight": 0.40, "label": "Standard Information"}
         }
-        engine_weights = weights.get(engine, weights["perplexity"])
-
-        # SCHEMA & STRUCTURE (High priority for ChatGPT)
-        schema_data = rule_scores.get('schema', {})
-        schema_types = schema_data.get('details', {}).get('schema_types', [])
-        has_faq = 'FAQPage' in schema_types
         
-        if has_faq:
-            # ChatGPT loves FAQ schema for quick extraction
-            faq_lift = 1.6 * engine_weights["structure"]
-            multiplier_total *= faq_lift
-            factors.append({
-                "factor": "FAQ Schema Lift",
-                "impact": f"+{int((faq_lift-1)*100)}% lift",
-                "type": "positive",
-                "description": f"AI search ({engine}) uses schema for direct extractions."
-            })
-            
-        # EXPERT QUOTATIONS (Critical for Gemini)
-        authority_data = rule_scores.get('authority', {})
-        has_expert_quotes = authority_data.get('details', {}).get('expert_mentions', 0) > 0
-        if has_expert_quotes:
-            expert_lift = 1.35 * engine_weights["grounding"]
-            multiplier_total *= expert_lift
-            factors.append({
-                "factor": "Expert Authority",
-                "impact": f"+{int((expert_lift-1)*100)}% lift",
-                "type": "positive",
-                "description": "Expert citations significantly boost Gemini's extraction confidence."
-            })
-
-        # VERIFIABLE DATA & STATISTICS (High for Grounding engines)
-        stat_count = authority_data.get('details', {}).get('statistics', 0)
-        if stat_count >= 5:
-            stat_lift = 1.3 * engine_weights["grounding"]
-            multiplier_total *= stat_lift
-            factors.append({
-                "factor": "Empirical Data",
-                "impact": f"+{int((stat_lift-1)*100)}% lift",
-                "type": "positive",
-                "description": "Verifiable stats are the highest-impact signal for AI search citation."
-            })
-
-        # FRESHNESS / CONTENT DECAY (Core for Perplexity)
+        config = decay_config.get(detected_category, decay_config["general"])
         freshness_data = rule_scores.get('freshness', {})
         has_recent_date = freshness_data.get('details', {}).get('has_update_info', False)
-        
-        if not has_recent_date:
-             if content_type == 'education':
-                 decay_multiplier = 0.85 
-                 impact_label = "-15% penalty"
-                 desc = "Foundation facts persist, but lack of update still hurts trust."
-             else:
-                 # Apply engine weighting to decay
-                 decay_val = 0.63 * engine_weights["freshness"]
-                 decay_multiplier = max(0.1, 1.0 - decay_val)
-                 impact_label = f"-{int(decay_val*100)}% penalty"
-                 desc = f"{engine.title()} heavily deprioritizes legacy content (>180 days)."
 
-             multiplier_total *= decay_multiplier
-             factors.append({
-                "factor": "Content Decay",
-                "impact": impact_label,
-                "type": "negative",
-                "description": desc
-             })
-        else:
+        if not has_recent_date:
+            # Multiplier calculation: 1.0 - (base_penalty * engine_sensitivity)
+            engine_freshness_weight = {
+                "perplexity": 1.2, # Perplexity loves news
+                "chatgpt": 0.8,    # GPT is more static-friendly
+                "gemini": 1.0      # Gemini is balanced
+            }.get(engine, 1.0)
+            
+            penalty = config["penalty_weight"] * engine_freshness_weight
+            decay_multiplier = max(0.2, 1.0 - penalty) # Floor at 0.2
+            
+            multiplier_total *= decay_multiplier
             factors.append({
-                "factor": "Freshness Optimization",
-                "impact": "High Retention",
-                "type": "positive",
-                "description": "Recent 2025/26 updates are prioritized."
+                "factor": f"{config['label']} Penalty",
+                "impact": f"-{int(penalty*100)}%",
+                "type": "negative",
+                "description": f"{detected_category.title()} content values recency differently. " + 
+                               ("Legacy status hurts less for foundational topics." if detected_category == 'educational' else "Outdated info heavily penalizes commerce.")
             })
 
-        # Final average based calculation
-        final_prob = base_prob * multiplier_total
-        final_prob = max(1.0, min(99.0, final_prob))
+        # 3. AUTHORITY & DEPTH LIFTS (High impact for Education)
+        auth_data = rule_scores.get('authority', {}).get('details', {})
+        expert_mentions = auth_data.get('expert_mentions', 0)
         
-        # Generate competitor average for comparison
-        competitor_avg = max(15.0, final_prob * 0.6)
+        if expert_mentions > 0:
+            # Education gets 2x the lift from authority vs Commerce
+            auth_lift = 1.2 + (expert_mentions * 0.1) if detected_category == 'educational' else 1.1 + (expert_mentions * 0.05)
+            auth_lift = min(1.6, auth_lift)
+            multiplier_total *= auth_lift
+            factors.append({
+                "factor": "Authoritative Depth",
+                "impact": f"+{int((auth_lift-1)*100)}%",
+                "type": "positive",
+                "description": "Expert citations are the strongest signal for academic citation."
+            })
+
+        # 4. DATA & STATS
+        stats = auth_data.get('statistics', 0)
+        if stats >= 3:
+            stat_lift = 1.25
+            multiplier_total *= stat_lift
+            factors.append({
+                "factor": "Empirical Weight",
+                "impact": "+25%",
+                "type": "positive",
+                "description": "Verifiable numbers increase extraction confidence."
+            })
+
+        # 5. SCHEMA (High impact for Commerce)
+        schema_data = rule_scores.get('schema', {}).get('details', {})
+        schema_types = schema_data.get('schema_types', [])
+        if 'Product' in schema_types or 'FAQPage' in schema_types:
+            schema_lift = 1.4 if detected_category == 'ecommerce' else 1.2
+            multiplier_total *= schema_lift
+            factors.append({
+                "factor": "Structured Extraction",
+                "impact": f"+{int((schema_lift-1)*100)}%",
+                "type": "positive",
+                "description": "Valid schema allows AI to parse facts without hallucination risk."
+            })
+
+        # 6. FINAL AGGREGATION
+        final_prob = base_prob * multiplier_total
+        final_prob = max(1.0, min(98.5, final_prob))
+        
+        # Competitor average calibrated to the niche
+        competitor_base = {"educational": 45, "ecommerce": 20, "general": 30}.get(detected_category, 30)
+        competitor_avg = max(competitor_base, final_prob * 0.7)
 
         return {
             "probability": round(final_prob, 1),
@@ -130,9 +134,10 @@ class CitationProbabilityModel:
             "multiplier": round(multiplier_total, 2),
             "factors": factors,
             "engine": engine,
+            "category": detected_category,
             "competitor_average": round(competitor_avg, 1),
             "confidence_interval": {
-                "low": max(1, round(final_prob * 0.85, 1)),
-                "high": min(99, round(final_prob * 1.15, 1))
+                "low": max(1, round(final_prob * 0.9, 1)),
+                "high": min(99, round(final_prob * 1.1, 1))
             }
         }
