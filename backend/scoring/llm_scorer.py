@@ -415,7 +415,7 @@ Provide response in this EXACT JSON format:
     "visual_descriptions": <int>,
     "unique_value_prop": <int>,
     "explanation": "<summary string>",
-    "top_suggestion": "<string>"
+    "suggestions": ["<impact_prefix>: <suggestion_string>", "..."]
 }
 """
         else:
@@ -459,11 +459,11 @@ Provide response in this EXACT JSON format:
     "authoritativeness_score": <int>,
     "trustworthiness_score": <int>,
     "explanation": "<summary string>",
-    "top_suggestion": "<string>"
+    "suggestions": ["<impact_prefix>: <suggestion_string>", "..."]
 }
 """
 
-        return base_prompt + metrics_prompt + "\n\nEvaluate objectively. Your 'top_suggestion' MUST include an impact prefix like 'High Impact:', 'Medium Impact:', or 'Critical Impact:' based on the 2025 GEO research weights."
+        return base_prompt + metrics_prompt + "\n\nEvaluate objectively. Your 'suggestions' list MUST have 3-5 items. Each item MUST include an impact prefix like 'High Impact:', 'Medium Impact:', or 'Critical Impact:' based on the 2025 GEO research weights."
     
     def _parse_llm_response(self, response_text: str, content_type: str) -> Dict[str, Any]:
         """Parse LLM response into structured scores."""
@@ -511,7 +511,7 @@ Provide response in this EXACT JSON format:
             "authoritativeness_score": 50,
             "trustworthiness_score": 50,
             "explanation": "Analysis failed. Using default scores.",
-            "top_suggestion": "Retry analysis."
+            "suggestions": ["Retry analysis."]
         }
         
         if content_type == 'ecommerce':

@@ -63,6 +63,16 @@ class RuleBasedScorer:
         else:
              suggestions.append("Add H3 subheadings for deeper semantic structure")
         
+        # Heading scanability (Medium)
+        long_headings = [h for level in headings.values() for h in level if len(h.split()) > 12]
+        if long_headings:
+            suggestions.append("Shorten long headings to 4-10 words for better scanability")
+        
+        # TOC for long content (Medium)
+        word_count = len(content.split())
+        if word_count > 1000 and "table of contents" not in content.lower() and "contents" not in content.lower():
+            suggestions.append("Add a Table of Contents to improve navigation for long-form content")
+        
         # Analyze paragraphs (Adaptive Splitting)
         # 1. Try splitting by double newline (standard)
         paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
@@ -149,18 +159,19 @@ class RuleBasedScorer:
                 score -= 20
                 suggestions.append("Add more technical attributes (target 10-15 specs)")
         else:
-            # Check for summary/introduction
-            first_para = paragraphs[0] if paragraphs else ""
-            if len(first_para.split()) >= 30:
-                score += 15
-                details['has_intro'] = True
-            else:
-                suggestions.append("Add a comprehensive introduction paragraph (30+ words)")
+            suggestions.append("Add a comprehensive introduction paragraph (30+ words)")
+        
+        # Paragraph Variety (Medium)
+        para_lengths = [len(p.split()) for p in paragraphs]
+        if len(para_lengths) > 3:
+            std_dev = (sum((x - avg_para_words)**2 for x in para_lengths) / len(para_lengths))**0.5
+            if std_dev < 10:
+                suggestions.append("Vary paragraph lengths to improve visual rhythm and engagement")
         
         return {
             'score': min(score, 100),
             'details': details,
-            'suggestions': suggestions[:3]
+            'suggestions': suggestions
         }
     
     def _analyze_keywords(self, content: str) -> Dict[str, Any]:
@@ -215,10 +226,22 @@ class RuleBasedScorer:
             else:
                 suggestions.append(f"Keyword density too high ({density:.1f}%). Reduce repetition.")
         
+        # Topic in H2 (Medium)
+        # Simple heuristic: see if the most frequent word (non-stopword) is in an H2
+        if headings.get('h2') and word_freq:
+            most_freq_word = word_freq.most_common(1)[0][0]
+            if not any(most_freq_word in h.lower() for h in headings['h2']):
+                suggestions.append(f"Include your main topic ({most_freq_word}) in at least one H2 subheading")
+        
+        # Bolded Keywords (Medium)
+        bold_pattern = r'\*\*.*?\*\*|__.*?__|<strong>.*?<\/strong>|<b>.*?<\/b>'
+        if not re.search(bold_pattern, content):
+            suggestions.append("Bold important terms or keywords to help AI and humans scan the content")
+            
         return {
             'score': min(score, 100),
             'details': details,
-            'suggestions': suggestions[:3]
+            'suggestions': suggestions
         }
     
     def _analyze_authority(self, content: str, metadata: Dict[str, Any], content_type: str) -> Dict[str, Any]:
@@ -277,6 +300,14 @@ class RuleBasedScorer:
         else:
             suggestions.append("Include inline source citations (e.g., [1] or according to Study X) (Medium Impact: +31% Lift)")
         
+        # Outbound Authority Links (Medium)
+        outbound_links = metadata.get('links', [])
+        authority_links = [l for l in outbound_links if any(ext in l.lower() for ext in ['.gov', '.edu', '.org', 'wikipedia.org', 'reuters.com', 'bloomberg.com'])]
+        if len(authority_links) == 0 and len(outbound_links) > 0:
+            suggestions.append("Link to high-authority external sources (.edu, .gov) to bolster credibility")
+        elif len(outbound_links) == 0:
+            suggestions.append("Add outbound links to authoritative external references (Medium Impact)")
+        
         # 4. Content Type Specifics (Ecom Trust)
         if content_type == 'ecommerce':
             review_words = ['review', 'rating', 'stars', 'customer says']
@@ -292,10 +323,15 @@ class RuleBasedScorer:
             else:
                  suggestions.append("Add author attribution to establish expertise")
 
+        # Call to Action (Medium)
+        cta_words = ['contact', 'subscribe', 'buy', 'learn more', 'get started', 'sign up', 'download', 'order', 'click']
+        if not any(w in content.lower() for w in cta_words):
+            suggestions.append("Add a clear Call to Action (CTA) to guide the next user step")
+            
         return {
             'score': min(score, 100),
             'details': details,
-            'suggestions': suggestions[:3]
+            'suggestions': suggestions
         }
     
     def _analyze_schema(self, metadata: Dict[str, Any], content_type: str) -> Dict[str, Any]:
@@ -367,7 +403,7 @@ class RuleBasedScorer:
         return {
             'score': min(score, 100),
             'details': details,
-            'suggestions': suggestions[:3]
+            'suggestions': suggestions
         }
     
     def _analyze_freshness(self, content: str) -> Dict[str, Any]:
@@ -398,7 +434,7 @@ class RuleBasedScorer:
         return {
             'score': min(score, 100),
             'details': details,
-            'suggestions': suggestions[:2]
+            'suggestions': suggestions
         }
     
     def _analyze_readability(self, content: str) -> Dict[str, Any]:
@@ -459,8 +495,14 @@ class RuleBasedScorer:
         else:
             suggestions.append("Consider using more active voice for punchier content")
         
+        # Transition words (Medium)
+        transitions = ['however', 'furthermore', 'moreover', 'consequently', 'therefore', 'additionally', 'similarly', 'conversely', 'notably', 'specifically']
+        transition_count = sum(1 for t in transitions if t in content.lower())
+        if transition_count < 5:
+            suggestions.append("Use more transition words (e.g., 'Moreover', 'Specifically') to improve logical flow")
+            
         return {
             'score': min(score, 100),
             'details': details,
-            'suggestions': suggestions[:3]
+            'suggestions': suggestions
         }

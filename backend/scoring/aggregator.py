@@ -174,26 +174,47 @@ class ScoreAggregator:
             }
         }
 
-        # Collect Suggestions
-        suggestions = []
-        if 'top_suggestion' in llm_scores and llm_scores['top_suggestion']:
-             suggestions.append({
-                'text': llm_scores['top_suggestion'],
+        # Collect Suggestions (Balanced Strategy: 4 LLM + 4 Rule-Based)
+        final_suggestions = []
+        
+        # 1. LLM Suggestions (High Priority AI Opportunities)
+        llm_suggestion_items = llm_scores.get('suggestions', [])
+        # Fallback for old 'top_suggestion' if still coming from some cached path
+        if not llm_suggestion_items and llm_scores.get('top_suggestion'):
+            llm_suggestion_items = [llm_scores['top_suggestion']]
+            
+        for s in llm_suggestion_items[:4]:
+            final_suggestions.append({
+                'text': s,
                 'category': 'AI Opportunity',
                 'priority': 'HIGH',
                 'source': 'llm'
             })
              
-        # Add rule based suggestions
+        # 2. Rule-Based Suggestions (Medium Priority Structural Fixes)
+        # We limit these so they don't drown out the LLM insights
+        rule_suggestions = []
         for metric_name, metric_data in rule_based_scores.items():
             if isinstance(metric_data, dict) and 'suggestions' in metric_data:
                 for s in metric_data['suggestions']:
-                    suggestions.append({
+                    # Auto-detect priority from string
+                    priority = 'MEDIUM'
+                    if 'critical' in s.lower() or 'high impact' in s.lower() or 'mandatory' in s.lower():
+                        priority = 'HIGH'
+                    elif 'medium' in s.lower():
+                        priority = 'MEDIUM'
+                    elif 'low' in s.lower():
+                        priority = 'LOW'
+                        
+                    rule_suggestions.append({
                         'text': s,
                         'category': metric_name.title(),
-                        'priority': 'MEDIUM',
+                        'priority': priority,
                         'source': 'rule'
                     })
+        
+        # Add up to 4 rule-based suggestions to the final list
+        final_suggestions.extend(rule_suggestions[:4])
 
         return {
             'ai_visibility_score': round(ai_visibility_score, 1),
@@ -202,7 +223,7 @@ class ScoreAggregator:
             'technical_readability_score': round(technical_readability_score, 1),
             'rule_based_scores': rule_based_scores,
             'llm_scores': formatted_llm_scores_response,
-            'suggestions': suggestions[:8],
+            'suggestions': final_suggestions,
             'intent_analysis': {
                 'primary_intent': primary_intent,
                 'alignment_score': user_intent
