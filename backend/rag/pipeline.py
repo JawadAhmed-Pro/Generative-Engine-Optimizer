@@ -1,8 +1,7 @@
 from typing import List, Dict, Any
 from vector_store import VectorStore
 from config import settings
-# import google.generativeai as genai # Removed Gemini dependency
-import requests
+import aiohttp
 import json
 
 
@@ -19,7 +18,7 @@ class RAGPipeline:
             self.model = None
             self.api_key = None
     
-    def generate_insights(
+    async def generate_insights(
         self,
         content_item_id: int,
         insight_type: str,
@@ -27,14 +26,6 @@ class RAGPipeline:
     ) -> str:
         """
         Generate insights using RAG.
-        
-        Args:
-            content_item_id: ID of the content item
-            insight_type: Type of insight ('explanation', 'recommendations', 'rewrite')
-            analysis_results: The analysis results for context
-            
-        Returns:
-            Generated insights as text
         """
         if not self.api_key:
             return "Groq API key not configured. Please add GROQ_API_KEY to .env file."
@@ -47,11 +38,11 @@ class RAGPipeline:
         
         # Generate based on type
         if insight_type == 'explanation':
-            return self._generate_explanation(context)
+            return await self._generate_explanation(context)
         elif insight_type == 'recommendations':
-            return self._generate_recommendations(context)
+            return await self._generate_recommendations(context)
         elif insight_type == 'rewrite':
-            return self._generate_rewrite(context)
+            return await self._generate_rewrite(context)
         else:
             return "Unknown insight type"
     
@@ -81,8 +72,8 @@ GEO Scores:
 """
         return context
     
-    def _generate_content(self, prompt: str) -> str:
-        """Helper to call Groq API."""
+    async def _generate_content(self, prompt: str) -> str:
+        """Helper to call Groq API asynchronously."""
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -97,15 +88,18 @@ GEO Scores:
         }
         
         try:
-            response = requests.post(url, json=payload, headers=headers)
-            if response.status_code == 200:
-                return response.json()['choices'][0]['message']['content']
-            else:
-                return f"Error from Groq: {response.text}"
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json=payload, headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return data['choices'][0]['message']['content']
+                    else:
+                        text = await response.text()
+                        return f"Error from Groq: {text}"
         except Exception as e:
             return f"Error calling Groq: {str(e)}"
     
-    def _generate_explanation(self, context: str) -> str:
+    async def _generate_explanation(self, context: str) -> str:
         """Generate explanation for why scores are what they are."""
         prompt = f"""{context}
 
@@ -116,9 +110,9 @@ Focus on:
 2. What's holding the scores back
 3. Key areas for improvement"""
         
-        return self._generate_content(prompt)
+        return await self._generate_content(prompt)
     
-    def _generate_recommendations(self, context: str) -> str:
+    async def _generate_recommendations(self, context: str) -> str:
         """Generate prioritized action items."""
         prompt = f"""{context}
 
@@ -131,9 +125,9 @@ Format as a numbered list. Each recommendation should:
 
 Prioritize high-impact changes first."""
         
-        return self._generate_content(prompt)
+        return await self._generate_content(prompt)
     
-    def _generate_rewrite(self, context: str) -> str:
+    async def _generate_rewrite(self, context: str) -> str:
         """Generate content rewrite suggestions."""
         prompt = f"""{context}
 
@@ -150,4 +144,4 @@ Focus on:
 - Adding semantic richness
 - Enhancing structure"""
         
-        return self._generate_content(prompt)
+        return await self._generate_content(prompt)

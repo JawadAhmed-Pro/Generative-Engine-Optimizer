@@ -604,8 +604,15 @@ def get_analysis_by_item(
     # Calculate delta if there is history
     score_delta = 0
     if len(history) > 1:
-        oldest_score = (history[0].ai_visibility_score + history[0].citation_worthiness_score + history[0].semantic_coverage_score + history[0].technical_readability_score) / 4
-        newest_score = (history[-1].ai_visibility_score + history[-1].citation_worthiness_score + history[-1].semantic_coverage_score + history[-1].technical_readability_score) / 4
+        def get_weighted(h):
+            return (
+                (h.citation_worthiness_score or 0) * 0.4 +
+                (h.ai_visibility_score or 0) * 0.3 +
+                (h.semantic_coverage_score or 0) * 0.2 +
+                (h.technical_readability_score or 0) * 0.1
+            )
+        oldest_score = get_weighted(history[0])
+        newest_score = get_weighted(history[-1])
         score_delta = newest_score - oldest_score
 
     return {
@@ -647,8 +654,8 @@ async def analyze_url(
     start_time = time.time()
     
     try:
-        # Fetch content
-        extracted = content_fetcher.fetch_url(payload.url)
+        # Fetch content (Async)
+        extracted = await content_fetcher.async_fetch_url(payload.url)
         
         # Check if URL already exists in this project
         content_item = db.query(ContentItem).filter(
@@ -1115,12 +1122,12 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
 
 # RAG Insights
 @app.post("/api/generate-insights", response_model=InsightResponse)
-def generate_insights(payload: InsightRequest = Body(...), db: Session = Depends(get_db)):
+async def generate_insights(payload: InsightRequest = Body(...), db: Session = Depends(get_db)):
     """Generate RAG-powered insights."""
     # Get content item and analysis
     content_item = db.query(ContentItem).filter(ContentItem.id == payload.content_item_id).first()
     if not content_item:
-        raise HTTPException(status_code=440, detail="Content item not found")
+        raise HTTPException(status_code=404, detail="Content item not found")
     
     analysis = db.query(AnalysisResult).filter(
         AnalysisResult.content_item_id == payload.content_item_id
@@ -1138,7 +1145,7 @@ def generate_insights(payload: InsightRequest = Body(...), db: Session = Depends
     }
     
     # Generate insights
-    insights = rag_pipeline.generate_insights(
+    insights = await rag_pipeline.generate_insights(
         payload.content_item_id,
         payload.insight_type,
         analysis_dict

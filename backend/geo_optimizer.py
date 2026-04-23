@@ -185,15 +185,28 @@ class GEOOptimizer:
 
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """Robustly extract JSON block from conversational LLM output."""
-        match = re.search(r'\{.*\}', text, re.DOTALL)
-        if match:
-            try:
-                # Basic cleaning for common LLM artifacts
-                json_str = match.group(0)
-                return json.loads(json_str)
-            except json.JSONDecodeError:
-                app_logger.error(f"JSON Parse Error from LLM: {text[:200]}")
-        return {}
+        try:
+            # 1. Try to find JSON in markdown blocks
+            if "```" in text:
+                blocks = text.split("```")
+                for block in blocks:
+                    if block.strip().startswith("json"):
+                        block = block.strip()[4:]
+                    try:
+                        return json.loads(block.strip())
+                    except:
+                        continue
+
+            # 2. Try re.search for curly braces
+            match = re.search(r'\{.*\}', text, re.DOTALL)
+            if match:
+                return json.loads(match.group(0))
+            
+            # 3. Try parsing the whole thing
+            return json.loads(text.strip())
+        except Exception as e:
+            app_logger.error(f"JSON Extraction Failed in Optimizer: {e}")
+            return {}
 
     async def _call_llm(self, prompt: str) -> Dict[str, Any]:
         url = "https://api.groq.com/openai/v1/chat/completions"
