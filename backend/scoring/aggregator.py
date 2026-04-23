@@ -181,6 +181,13 @@ class ScoreAggregator:
         # Add up to 4 rule-based suggestions to the final list
         final_suggestions.extend(rule_suggestions[:4])
 
+        # Final Intent and EEAT data extraction
+        primary_intent = llm_scores.get('primary_intent', 'Informational')
+        user_intent_val = llm_metrics['user_intent']
+        experience_score = llm_metrics['experience']
+        authoritativeness_score = llm_metrics['authoritativeness']
+        trustworthiness_score = llm_metrics['trustworthiness']
+
         return {
             'ai_visibility_score': round(ai_visibility_score, 1),
             'citation_worthiness_score': round(citation_worthiness_score, 1),
@@ -191,7 +198,7 @@ class ScoreAggregator:
             'suggestions': final_suggestions,
             'intent_analysis': {
                 'primary_intent': primary_intent,
-                'alignment_score': user_intent
+                'alignment_score': user_intent_val
             },
             'eeat_analysis': {
                 'experience': experience_score,
