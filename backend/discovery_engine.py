@@ -4,6 +4,7 @@ from typing import List, Dict, Any
 from config import settings
 from google import genai
 import json
+import re
 from logger import app_logger
 
 class PromptDiscoveryEngine:
@@ -16,6 +17,18 @@ class PromptDiscoveryEngine:
             self.gemini_client = None
             
         self.groq_api_key = settings.GROQ_API_KEY
+
+    def _extract_json(self, text: str) -> Any:
+        """Robustly extract JSON block from conversational LLM output."""
+        # Find the first [ or { and the last ] or }
+        match = re.search(r'(\[|\{).*(\]|\})', text, re.DOTALL)
+        if match:
+            try:
+                json_str = match.group(0)
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                app_logger.error(f"JSON Parse Error in Discovery: {text[:200]}")
+        return None
 
     async def discover_prompts(self, keyword: str, niche: str) -> Dict[str, Any]:
         """
@@ -107,14 +120,11 @@ class PromptDiscoveryEngine:
                 async with session.post(url, headers=headers, json=payload) as response:
                     if response.status == 200:
                         data = await response.json()
-                        content = data["choices"][0]["message"]["content"].strip()
-                        # Clean if it wrapped in markdown
-                        if content.startswith('```json'):
-                            content = content[7:-3].strip()
-                        elif content.startswith('```'):
-                            content = content[3:-3].strip()
-                            
-                        return json.loads(content)
+                        content = data["choices"][0]["message"]["content"]
+                        result = self._extract_json(content)
+                        if result is not None:
+                            return result
+                        return self._fallback_prompts(keyword, niche)
                     else:
                         app_logger.error(f"Groq Discovery Error: {response.status}")
                         return self._fallback_prompts(keyword, niche)
@@ -148,15 +158,11 @@ class PromptDiscoveryEngine:
                 model=settings.GEMINI_MODEL,
                 contents=prompt
             )
-            content = response.text.strip()
-            
-            # Clean if it wrapped in markdown
-            if '```json' in content:
-                content = content.split('```json')[1].split('```')[0].strip()
-            elif '```' in content:
-                content = content.split('```')[1].split('```')[0].strip()
-                
-            return json.loads(content)
+            content = response.text
+            result = self._extract_json(content)
+            if result is not None:
+                return result
+            return self._fallback_prompts(keyword, niche)
         except Exception as e:
             app_logger.error(f"Gemini Discovery Failed: {e}")
             return self._fallback_prompts(keyword, niche)
@@ -217,9 +223,11 @@ class PromptDiscoveryEngine:
                  async with session.post(url, headers=headers, json=payload) as resp:
                      if resp.status == 200:
                          data = await resp.json()
-                         sim = json.loads(data["choices"][0]["message"]["content"].strip())
-                         sim['prompt'] = p
-                         simulation_results.append(sim)
+                         content = data["choices"][0]["message"]["content"]
+                         sim = self._extract_json(content)
+                         if sim:
+                             sim['prompt'] = p
+                             simulation_results.append(sim)
 
         return {
             "simulation_runs": simulation_results,
