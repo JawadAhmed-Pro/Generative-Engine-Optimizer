@@ -42,20 +42,27 @@ class LLMScorer:
             app_logger.error(f"All LLM Analysis attempts failed: {e}")
             return self._get_default_scores(content_type)
 
-    async def _execute_with_retry(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any], retries: int = 2) -> Dict[str, Any]:
+    async def _execute_with_retry(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any], retries: int = 1) -> Dict[str, Any]:
         for attempt in range(retries + 1):
             try:
-                # Primary: Groq
+                # 1. Primary: Groq (Low Latency)
                 if self.groq_api_key:
-                    return await self._analyze_with_groq(content, intent_slice, query, metadata)
+                    try:
+                        return await self._analyze_with_groq(content, intent_slice, query, metadata)
+                    except Exception as e:
+                        app_logger.warning(f"Groq failed on attempt {attempt+1}, failing over to Gemini... Error: {e}")
                 
-                # Secondary: Gemini
+                # 2. Secondary: Gemini (High Intelligence / Fallback)
                 if hasattr(self, 'gemini_client') and self.gemini_client:
-                    return await self._analyze_with_gemini(content, intent_slice, query, metadata)
+                    try:
+                        return await self._analyze_with_gemini(content, intent_slice, query, metadata)
+                    except Exception as e:
+                        app_logger.error(f"Gemini also failed on attempt {attempt+1}: {e}")
+                
             except Exception as e:
                 if attempt == retries: raise e
-                wait_time = (attempt + 1) * 2
-                app_logger.warning(f"LLM attempt {attempt+1} failed, retrying in {wait_time}s... Error: {e}")
+                wait_time = 2 # Fixed small wait
+                app_logger.warning(f"LLM failover cycle {attempt+1} failed, retrying in {wait_time}s...")
                 await asyncio.sleep(wait_time)
         return self._get_default_scores(metadata.get('content_type', 'general'))
 
@@ -192,7 +199,8 @@ INSTRUCTIONS:
             ]
         }
         
-        async with aiohttp.ClientSession() as session:
+        timeout = aiohttp.ClientTimeout(total=20)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, json=payload, headers=headers) as response:
                 if response.status != 200:
                     text = await response.text()
@@ -341,7 +349,8 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
             "temperature": 0.1
         }
         
-        async with aiohttp.ClientSession() as session:
+        timeout = aiohttp.ClientTimeout(total=25)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, json=payload, headers=headers) as response:
                 if response.status != 200:
                     text = await response.text()
