@@ -3,6 +3,7 @@ import json
 import asyncio
 import re
 import time
+import requests
 from typing import Dict, Any, List, Optional
 from config import settings
 from google import genai
@@ -190,12 +191,14 @@ INSTRUCTIONS:
                 {"role": "user", "content": prompt}
             ]
         }
-        def run_request():
-            return requests.post(url, json=payload, headers=headers)
-        response = await asyncio.to_thread(run_request)
-        if response.status_code != 200:
-            raise Exception(f"API Error {response.status_code}: {response.text}")
-        return response.json()['choices'][0]['message']['content']
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload, headers=headers) as response:
+                if response.status != 200:
+                    text = await response.text()
+                    raise Exception(f"API Error {response.status}: {text}")
+                data = await response.json()
+                return data['choices'][0]['message']['content']
 
     def _create_optimization_prompt(self, content: str, mode: str, content_type: str) -> str:
         """Create a detailed prompt that aligns with GEO scoring metrics."""
@@ -322,7 +325,6 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
             "Content-Type": "application/json"
         }
         
-        # Groq requires messages format natively compatible with OpenAI
         payload = {
             "model": settings.GROQ_MODEL,
             "response_format": {"type": "json_object"},
@@ -339,18 +341,16 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
             "temperature": 0.1
         }
         
-        def run_request():
-            return requests.post(url, json=payload, headers=headers)
-            
-        response = await asyncio.to_thread(run_request)
-        
-        if response.status_code != 200:
-            raise Exception(f"Groq API Error {response.status_code}: {response.text}")
-            
-        raw_result = response.json()
-        response_text = raw_result['choices'][0]['message']['content']
-        app_logger.debug(f"Groq Response (first 200 chars): {response_text[:200]}")
-        return self._parse_llm_response(response_text, metadata.get('content_type', 'general'))
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload, headers=headers) as response:
+                if response.status != 200:
+                    text = await response.text()
+                    raise Exception(f"Groq API Error {response.status}: {text}")
+                
+                data = await response.json()
+                response_text = data['choices'][0]['message']['content']
+                app_logger.debug(f"Groq Response (first 200 chars): {response_text[:200]}")
+                return self._parse_llm_response(response_text, metadata.get('content_type', 'general'))
 
     async def _analyze_with_gemini(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze content using Gemini API (Async)."""
