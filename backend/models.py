@@ -138,6 +138,19 @@ class AnalysisJob(Base):
     completed_at = Column(DateTime, nullable=True)
 
 
+class ContentVersion(Base):
+    """Store versions of optimized content."""
+    __tablename__ = "content_versions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    content_item_id = Column(Integer, ForeignKey("content_items.id"))
+    content = Column(Text, nullable=False)
+    version_label = Column(String, nullable=True) # e.g. "Authority Boost v1"
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    content_item = relationship("ContentItem")
+
+
 # Pydantic Request/Response Models
 class ProjectCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
@@ -241,9 +254,13 @@ class HistoryResponse(BaseModel):
 
 class OptimizeContentRequest(BaseModel):
     content: str
-    mode: str = 'rewrite' # 'rewrite' or 'generate'
-    content_type: str = 'general'
+    content_item_id: Optional[int] = None
+    strategy: str = 'general' # 'authority_boost', 'ai_answer', 'semantic_expansion', 'concise', 'technical'
+    tone: str = 'professional' # 'professional', 'conversational', 'technical', 'persuasive'
+    audience: str = 'intermediate' # 'beginner', 'intermediate', 'expert'
+    strength: int = 50 # 1-100
     target_keyword: Optional[str] = None
+    content_type: str = 'general'
 
 
 class OptimizeRAGPayloadRequest(BaseModel):
@@ -282,6 +299,15 @@ class InjectRequest(BaseModel):
 class ValidateCitationRequest(BaseModel):
     content: str
     content_type: str = "general"
+
+
+class DiagnosticMetrics(BaseModel):
+    intent_match_score: float
+    readability_score: float
+    entity_coverage_pct: float
+    content_depth_score: float
+    redundancy_detection: List[str]
+    geo_potential_score: float
 
 
 # Authentication Schemas

@@ -18,7 +18,7 @@ from models import AnalysisJob
 
 from models import (
     ProjectCreate, ProjectResponse, AnalyzeURLRequest, AnalyzeTextRequest,
-    AnalysisResponse, InsightRequest, InsightResponse, Project, ContentItem, AnalysisResult, Insight,
+    AnalysisResponse, InsightRequest, InsightResponse, Project, ContentItem, AnalysisResult, Insight, ContentVersion,
     HistoryResponse, HistoryItem, OptimizeContentRequest, SimulateAIRequest,
     User, UserCreate, UserLogin, UserResponse, Token,
     AnalyzeTextRequest, AnalyzeURLRequest, ExtractContentRequest, ExtractKeywordsRequest,
@@ -1327,6 +1327,8 @@ def get_comparison_detail(
 class AutoFixRequest(BaseModel):
     content_item_id: int
     suggestion: str
+    strategy: Optional[str] = 'general'
+    tone: Optional[str] = 'professional'
 
 @app.post("/api/auto-fix")
 async def auto_fix_content(
@@ -1342,13 +1344,91 @@ async def auto_fix_content(
             raise HTTPException(status_code=404, detail="Content not found")
             
         from geo_optimizer import geo_optimizer
-        result = await geo_optimizer.auto_fix(content_item.content, payload.suggestion)
+        result = await geo_optimizer.auto_fix(
+            content_item.content, 
+            payload.suggestion,
+            strategy=getattr(payload, 'strategy', 'general'),
+            tone=getattr(payload, 'tone', 'professional')
+        )
         
-        # Save insight or just return
+        # Save version
+        new_version = ContentVersion(
+            content_item_id=payload.content_item_id,
+            content=result["optimized_content"],
+            version_label=f"Auto-Fix: {payload.suggestion[:30]}..."
+        )
+        db.add(new_version)
+        db.commit()
+        
         return result
     except Exception as e:
         app_logger.error(f"Auto Fix Failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/analyze-diagnostics", response_model=DiagnosticMetrics)
+async def analyze_diagnostics(
+    payload: Dict[str, str] = Body(...),
+    current_user: dict = Depends(require_auth)
+):
+    """Real-time diagnostic layer for the optimization workbench."""
+    try:
+        content = payload.get("content", "")
+        if not content:
+            raise HTTPException(status_code=400, detail="Content is required")
+            
+        from geo_optimizer import geo_optimizer
+        diagnostics = await geo_optimizer.get_diagnostics(content)
+        return diagnostics
+    except Exception as e:
+        app_logger.error(f"Diagnostics Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SnippetOptimizeRequest(BaseModel):
+    snippet: str
+    full_context: str
+    action: str # 'expand', 'simplify', 'authoritative', 'answer_format'
+
+@app.post("/api/optimize-snippet")
+async def optimize_snippet(
+    payload: SnippetOptimizeRequest = Body(...),
+    current_user: dict = Depends(require_auth)
+):
+    """Surgical optimization for a selected text block."""
+    try:
+        from geo_optimizer import geo_optimizer
+        result = await geo_optimizer.optimize_snippet(
+            payload.snippet, 
+            payload.full_context, 
+            payload.action
+        )
+        return result
+    except Exception as e:
+        app_logger.error(f"Snippet Optimization Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/content-versions/{content_item_id}")
+async def get_content_versions(
+    content_item_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Retrieve version history for a content item."""
+    versions = db.query(ContentVersion).filter(
+        ContentVersion.content_item_id == content_item_id
+    ).order_by(ContentVersion.created_at.desc()).all()
+    
+    return [
+        {
+            "id": v.id,
+            "content": v.content,
+            "version_label": v.version_label,
+            "created_at": v.created_at.isoformat()
+        }
+        for v in versions
+    ]
 
 
 class PromptDiscoveryRequest(BaseModel):

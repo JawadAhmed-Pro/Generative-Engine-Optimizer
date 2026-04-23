@@ -112,8 +112,15 @@ function ContentOptimization() {
     const [projects, setProjects] = useState([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
-    const [history, setHistory] = useState([])
     const [loadingHistory, setLoadingHistory] = useState(false)
+    const [diagnostics, setDiagnostics] = useState(null)
+    const [loadingDiagnostics, setLoadingDiagnostics] = useState(false)
+    const [optimizationStrategy, setOptimizationStrategy] = useState('general')
+    const [optimizationTone, setOptimizationTone] = useState('professional')
+    const [optimizationAudience, setOptimizationAudience] = useState('intermediate')
+    const [optimizationStrength, setOptimizationStrength] = useState(50)
+    const [showSplitView, setShowSplitView] = useState(false)
+    const [selection, setSelection] = useState({ text: '', top: 0, left: 0, visible: false })
 
     // Create project inline
     const [showCreateProject, setShowCreateProject] = useState(false)
@@ -327,9 +334,62 @@ function ContentOptimization() {
             if (content.length > 200 && !keywords && activeTab !== 'schema') {
                 handleExtractKeywords()
             }
+            if (content.length > 100 && activeTab !== 'schema') {
+                fetchDiagnostics()
+            }
         }, 1500) // 1.5 second debounce
         return () => clearTimeout(timer)
     }, [content])
+
+    const fetchDiagnostics = async () => {
+        if (loadingDiagnostics) return
+        setLoadingDiagnostics(true)
+        try {
+            const response = await axios.post('/api/analyze-diagnostics', { content })
+            setDiagnostics(response.data)
+        } catch (err) {
+            console.error('Diagnostics failed:', err)
+        } finally {
+            setLoadingDiagnostics(false)
+        }
+    }
+
+    const handleTextSelection = (e) => {
+        const sel = window.getSelection()
+        const text = sel.toString().trim()
+        if (text && text.length > 10) {
+            const range = sel.getRangeAt(0)
+            const rect = range.getBoundingClientRect()
+            setSelection({
+                text,
+                top: rect.top + window.scrollY - 40,
+                left: rect.left + window.scrollX + rect.width / 2,
+                visible: true
+            })
+        } else {
+            setSelection(prev => ({ ...prev, visible: false }))
+        }
+    }
+
+    const handleSnippetAction = async (action) => {
+        setLoading(true)
+        setSelection(prev => ({ ...prev, visible: false }))
+        try {
+            const response = await axios.post('/api/optimize-snippet', {
+                snippet: selection.text,
+                full_context: content,
+                action: action
+            })
+            if (response.data.optimized_content) {
+                const newContent = content.replace(selection.text, response.data.optimized_content)
+                updateOptimization({ content: newContent })
+            }
+        } catch (err) {
+            alert('Snippet optimization failed')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const handleGenerateInjection = async (target = null) => {
         const targetToUse = target || manualInjectionTarget;
@@ -440,11 +500,12 @@ function ContentOptimization() {
                     content_type: contentType,
                     target_keyword: selectedKeyword || customKeyword || undefined
                 }),
-                axios.post('/api/optimize-content', {
+                axios.post('/api/auto-fix', {
                     content: content,
-                    mode: activeTab, // 'rewrite' or 'generate'
-                    content_type: contentType,
-                    target_keyword: selectedKeyword || customKeyword || undefined
+                    suggestion: "Perform " + optimizationStrategy + " optimization for " + optimizationAudience + " audience in a " + optimizationTone + " tone.",
+                    strategy: optimizationStrategy,
+                    tone: optimizationTone,
+                    content_item_id: null // Will be assigned if saved later
                 })
             ])
 
@@ -454,7 +515,10 @@ function ContentOptimization() {
             })
 
             // Auto switch to result view if generating or rewriting
-            if (activeTab === 'generate' || activeTab === 'rewrite') setViewMode('result')
+            if (activeTab === 'generate' || activeTab === 'rewrite') {
+                setViewMode('result')
+                setShowSplitView(true)
+            }
 
             fetchHistory()
         } catch (err) {
@@ -533,6 +597,44 @@ function ContentOptimization() {
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
                 {/* Left Column - Input */}
                 <div>
+                    {/* Diagnostic Bar */}
+                    {diagnostics && activeTab !== 'schema' && (
+                        <div className="glass-card animate-fade-in" style={{
+                            marginBottom: '1rem',
+                            padding: '1rem 1.5rem',
+                            background: 'rgba(15, 23, 42, 0.6)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                            display: 'flex',
+                            gap: '1.5rem',
+                            alignItems: 'center',
+                            overflowX: 'auto'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Intent Match</div>
+                                <div style={{ fontSize: '1rem', fontWeight: '800', color: diagnostics.intent_match_score > 70 ? 'var(--success)' : 'var(--warning)' }}>{diagnostics.intent_match_score}%</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Readability</div>
+                                <div style={{ fontSize: '1rem', fontWeight: '800', color: diagnostics.readability_score > 70 ? 'var(--success)' : 'var(--warning)' }}>{diagnostics.readability_score}%</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Entity Coverage</div>
+                                <div style={{ fontSize: '1rem', fontWeight: '800', color: diagnostics.entity_coverage_pct > 70 ? 'var(--success)' : 'var(--warning)' }}>{diagnostics.entity_coverage_pct}%</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>GEO Potential</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--accent-primary)', textShadow: '0 0 10px rgba(59, 130, 246, 0.5)' }}>{diagnostics.geo_potential_score}%</div>
+                            </div>
+                            {diagnostics.redundancy_detection?.length > 0 && (
+                                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.3rem 0.75rem', borderRadius: '100px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                                    <InfoIcon size={14} color="#ef4444" />
+                                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444' }}>{diagnostics.redundancy_detection.length} Redundancies Found</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <div className="depth-card" style={{ padding: '1.5rem' }}>
                         <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -626,6 +728,7 @@ function ContentOptimization() {
                                 ref={contentRef}
                                 value={content}
                                 onChange={(e) => updateOptimization({ content: e.target.value })}
+                                onMouseUp={handleTextSelection}
                                 placeholder={activeTab === 'generate'
                                     ? "Enter your topic, key points, or content idea here. We will generate a comprehensive, high-ranking article..."
                                     : "Paste your existing draft here. We will restructure it, enhance E-E-A-T signals, and optimize for query intent..."
@@ -648,6 +751,38 @@ function ContentOptimization() {
                                     display: activeTab === 'schema' ? 'none' : 'block'
                                 }}
                             />
+
+                            {/* Floating Toolbar */}
+                            {selection.visible && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: `${selection.top}px`,
+                                    left: `${selection.left}px`,
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 1000,
+                                    background: '#0a0a0f',
+                                    border: '1px solid var(--accent-primary)',
+                                    borderRadius: '8px',
+                                    padding: '4px',
+                                    display: 'flex',
+                                    gap: '4px',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                                    animation: 'pop-in 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                                }}>
+                                    <button onClick={() => handleSnippetAction('expand')} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem', gap: '4px' }}>
+                                        <Plus size={12} /> Expand
+                                    </button>
+                                    <button onClick={() => handleSnippetAction('simplify')} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem', gap: '4px' }}>
+                                        <X size={12} /> Simplify
+                                    </button>
+                                    <button onClick={() => handleSnippetAction('authoritative')} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem', gap: '4px' }}>
+                                        <Target size={12} /> Authority
+                                    </button>
+                                    <button onClick={() => handleSnippetAction('answer_format')} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem', gap: '4px' }}>
+                                        <Sparkles size={12} /> AI Answer
+                                    </button>
+                                </div>
+                            )}
                             {content && activeTab === 'generate' && !analysisResults && (
                                 <div style={{
                                     position: 'absolute',
@@ -1496,6 +1631,80 @@ function ContentOptimization() {
 
                 {/* Right Column - Sidebar */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    {/* Strategy Controls */}
+                    {activeTab !== 'schema' && (
+                        <div className="depth-card" style={{ padding: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                                <Target size={18} color="var(--accent-primary)" />
+                                <span style={{ fontSize: '1rem', fontWeight: '800' }}>Optimization Strategy</span>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: '700' }}>CORE STRATEGY</label>
+                                    <select 
+                                        value={optimizationStrategy}
+                                        onChange={(e) => setOptimizationStrategy(e.target.value)}
+                                        style={inputStyle}
+                                    >
+                                        <option value="general">General GEO (Standard)</option>
+                                        <option value="authority_boost">Authority & Grounding</option>
+                                        <option value="ai_answer_mode">AI Answer Mode (Direct)</option>
+                                        <option value="semantic_expansion">Semantic Expansion</option>
+                                        <option value="technical">Technical / Expert Deep-Dive</option>
+                                        <option value="concise">Extreme Conciseness</option>
+                                    </select>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: '700' }}>TONE</label>
+                                        <select 
+                                            value={optimizationTone}
+                                            onChange={(e) => setOptimizationTone(e.target.value)}
+                                            style={inputStyle}
+                                        >
+                                            <option value="professional">Professional</option>
+                                            <option value="conversational">Conversational</option>
+                                            <option value="technical">Technical</option>
+                                            <option value="persuasive">Persuasive</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: '700' }}>AUDIENCE</label>
+                                        <select 
+                                            value={optimizationAudience}
+                                            onChange={(e) => setOptimizationAudience(e.target.value)}
+                                            style={inputStyle}
+                                        >
+                                            <option value="beginner">Beginner</option>
+                                            <option value="intermediate">Intermediate</option>
+                                            <option value="expert">Expert</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                        <label style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: '700' }}>STRENGTH</label>
+                                        <span style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', fontWeight: '800' }}>{optimizationStrength}%</span>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        min="1" 
+                                        max="100" 
+                                        value={optimizationStrength}
+                                        onChange={(e) => setOptimizationStrength(parseInt(e.target.value))}
+                                        style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
+                                    />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                                        <span style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)' }}>Light</span>
+                                        <span style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)' }}>Aggressive</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     {/* History Panel */}
                     <div className="depth-card" style={{ padding: '0', overflow: 'hidden' }}>
                         <div style={{

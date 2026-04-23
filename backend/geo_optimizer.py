@@ -12,29 +12,41 @@ class GEOOptimizer:
         self.groq_api_key = settings.GROQ_API_KEY
         self.gemini_api_key = settings.GEMINI_API_KEY
 
-    async def rewrite_to_inverted_pyramid(self, content: str, query: str = "") -> Dict[str, Any]:
+    async def rewrite(self, content: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50) -> Dict[str, Any]:
         """
-        Rewrites the introduction/answer section to follow the Inverted Pyramid structure.
-        Ensures a direct, concise answer (75-120 words) occurs early.
+        Advanced strategy-based rewrite.
         """
-        app_logger.info("Agent: Rewriting content to Inverted Pyramid structure")
+        app_logger.info(f"Agent: Rewriting content using strategy: {strategy}")
+        
+        strength_desc = "Lightly polish" if strength < 30 else "Moderately optimize" if strength < 70 else "Aggressively rewrite"
+        
+        strategy_prompts = {
+            "authority_boost": "Focus on adding expert authority, citations, and data-driven grounding. Use authoritative terminology.",
+            "ai_answer_mode": "Force an Inverted Pyramid structure. Ensure a bolded, direct answer appears in the first 75 words.",
+            "semantic_expansion": "Identify missing sub-topics and semantic entities. Expand the content to cover these gaps.",
+            "concise": "Remove all fluff and redundant phrases. Focus on extreme information density.",
+            "technical": "Increase technical depth and use domain-specific jargon suitable for an expert audience."
+        }
+        
+        strategy_instruction = strategy_prompts.get(strategy, "Optimize for AI search visibility and citation probability.")
         
         prompt = f"""
         Act as a GEO (Generative Engine Optimization) Content Optimizer.
         
-        GOAL: Rewrite the following content to maximize citation probability in AI search (Perplexity/ChatGPT).
+        STRATEGY: {strategy.upper()}
+        INSTRUCTION: {strategy_instruction}
+        TONE: {tone}
+        AUDIENCE: {audience}
+        INTENSITY: {strength_desc} ({strength}/100)
         
-        RULES:
-        1. Use the 'Inverted Pyramid': Put the most important answer in the first 100 words.
-        2. Keep the answer between 75-120 words for optimal RAG chunk extraction.
-        3. Use objective, grounding-heavy language.
-        4. Maintain the original meaning but remove 'narrative fluff' or slow build-ups.
-        
-        Original Query (if any): "{query}"
+        TASK:
+        1. Rewrite the following content to align with the chosen strategy and tone.
+        2. Maintain the core meaning but significantly improve the "GEO potential".
+        3. Use {strength_desc} approach - do not deviate more than necessary from the source unless high intensity is requested.
         
         Content to Rewrite:
         ---
-        {content[:3000]}
+        {content[:4000]}
         ---
         
         Return exactly:
@@ -142,29 +154,29 @@ class GEOOptimizer:
         2. Suggest 3 'Hard Grounding' injections (e.g., 'Add a stat about X', 'Cite a study from Y').
         
         Return JSON:
-        {{
-            "suggestions": [
-        }}
+        {
+            "suggestions": ["Add a statistic about X from a reputable source", "Cite an expert in niche Y", "Include a case study summary"]
+        }
         """
         return await self._call_llm(prompt)
 
-    async def auto_fix(self, content: str, suggestion: str) -> Dict[str, Any]:
+    async def auto_fix(self, content: str, suggestion: str, strategy: str = 'general', tone: str = 'professional') -> Dict[str, Any]:
         """
-        Automatically fixes a specific paragraph or text block based on a provided suggestion.
+        Automatically fixes content based on a suggestion, respecting strategy and tone.
         """
         app_logger.info(f"Agent: Auto-fixing content based on suggestion: {suggestion}")
         
         prompt = f"""
         Act as a GEO (Generative Engine Optimization) Content Optimizer.
         
-        GOAL: Apply the following specific suggestion to the provided content to maximize its AI citation probability.
+        GOAL: Apply the following specific suggestion to the provided content.
+        STRATEGY: {strategy}
+        TONE: {tone}
         
         Surgical Rule:
-        1. Maintain the original tone and context.
-        2. ONLY change the content to directly address the suggestion. Do not rewrite everything if it is not needed.
-        3. If the suggestion asks for an expert quote or statistic, simulate a high-fidelity placeholder (e.g. "[Insert Specific Performance Data from [Source]]").
-        4. SCHEMA INJECTION: If the suggestion mentions 'Schema', 'Structured Data', or 'JSON-LD', generate the valid <script type="application/ld+json"> block and append it to the end of the content.
-        5. ANCHOR INJECTION: If the suggestion mentions 'Bullet Traps' or 'Hierarchy', ensure at least one colon-led list is created.
+        1. Maintain the original tone and context unless specified.
+        2. ONLY change the content to directly address the suggestion.
+        3. If requesting an expert quote or statistic, simulate a high-fidelity placeholder (e.g. "[Insert Specific Performance Data from [Source]]").
         
         SUGGESTION TO APPLY:
         "{suggestion}"
@@ -179,6 +191,63 @@ class GEOOptimizer:
             "optimized_content": "...",
             "changes_made": ["change 1", "change 2"],
             "geo_lift_estimate": "Estimated +X% visibility"
+        }}
+        """
+        return await self._call_llm(prompt)
+
+    async def get_diagnostics(self, content: str) -> Dict[str, Any]:
+        """
+        Real-time diagnostic analysis for the intelligence layer.
+        """
+        app_logger.info("Agent: Running real-time diagnostics")
+        
+        prompt = f"""
+        Act as a GEO (Generative Engine Optimization) Diagnostic Engine.
+        
+        Analyze the following content for AI search compatibility.
+        
+        Content:
+        ---
+        {content[:2000]}
+        ---
+        
+        Return exactly:
+        {{
+            "intent_match_score": 0-100,
+            "readability_score": 0-100,
+            "entity_coverage_pct": 0-100,
+            "content_depth_score": 0-100,
+            "redundancy_detection": ["issue 1", "issue 2"],
+            "geo_potential_score": 0-100
+        }}
+        """
+        return await self._call_llm(prompt)
+
+    async def optimize_snippet(self, snippet: str, full_context: str, action: str) -> Dict[str, Any]:
+        """
+        Surgically optimizes a specific snippet within its context.
+        """
+        app_logger.info(f"Agent: Surgically optimizing snippet with action: {action}")
+        
+        prompt = f"""
+        Act as a GEO (Generative Engine Optimization) Surgical Editor.
+        
+        TASK: {action.upper()} this specific snippet.
+        
+        FULL CONTEXT (for reference):
+        ---
+        {full_context[:2000]}
+        ---
+        
+        SNIPPET TO OPTIMIZE:
+        ---
+        {snippet}
+        ---
+        
+        Return exactly:
+        {{
+            "optimized_content": "...",
+            "explanation": "Why this change helps GEO"
         }}
         """
         return await self._call_llm(prompt)
