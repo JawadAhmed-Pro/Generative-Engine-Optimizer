@@ -21,7 +21,7 @@ class RuleBasedScorer:
         """
         scores = {
             'structure': self._analyze_structure(content, metadata, content_type),
-            'keywords': self._analyze_keywords(content),
+            'keywords': self._analyze_keywords(content, metadata),
             'authority': self._analyze_authority(content, metadata, content_type),
             'schema': self._analyze_schema(metadata, content_type),
             'freshness': self._analyze_freshness(content),
@@ -174,11 +174,12 @@ class RuleBasedScorer:
             'suggestions': suggestions
         }
     
-    def _analyze_keywords(self, content: str) -> Dict[str, Any]:
+    def _analyze_keywords(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze keyword usage and optimization."""
         score = 0
         suggestions = []
         details = {}
+        headings = metadata.get('headings', {})
         
         words = content.lower().split()
         word_count = len(words)
