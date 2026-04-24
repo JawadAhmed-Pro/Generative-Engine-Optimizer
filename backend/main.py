@@ -76,7 +76,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -813,6 +813,7 @@ async def analyze_text(
             latency_ms=latency_ms,
             error_message=str(e)
         )
+        db.rollback() # Ensure transaction is cleared on error
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1113,9 +1114,8 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     actual_rate = live_results["actual_citation_rate"]
     
     # NEW: Grounding Audit (Identify missing stats/facts)
-    from geo_optimizer import GEOOptimizer
-    optimizer = GEOOptimizer()
-    grounding_audit = await optimizer.suggest_hard_grounding(content, extracted.get('content_type', 'general'))
+    # Optimization: Use global singleton geo_optimizer instead of re-instantiating (prevents duplicate spacy loads)
+    grounding_audit = await geo_optimizer.suggest_hard_grounding(content, extracted.get('content_type', 'general'))
     missing_citations = grounding_audit.get('suggestions', [])
     if isinstance(missing_citations, str):
         missing_citations = [missing_citations]
@@ -1158,9 +1158,22 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     ).order_by(AnalysisResult.created_at.asc()).all()
     
     score_delta = 0
+    newest_score = current_overall # Default fallback for first-time analysis
+    
     if len(history) > 1:
-        oldest_score = (history[0].citation_worthiness_score * 0.4 + history[0].ai_visibility_score * 0.3 + history[0].semantic_coverage_score * 0.2 + history[0].technical_readability_score * 0.1)
-        newest_score = (history[-1].citation_worthiness_score * 0.4 + history[-1].ai_visibility_score * 0.3 + history[-1].semantic_coverage_score * 0.2 + history[-1].technical_readability_score * 0.1)
+        # Null-safe calculation for historical scores
+        h0_vis = history[0].ai_visibility_score or 0
+        h0_cit = history[0].citation_worthiness_score or 0
+        h0_sem = history[0].semantic_coverage_score or 0
+        h0_tec = history[0].technical_readability_score or 0
+        
+        h_last_vis = history[-1].ai_visibility_score or 0
+        h_last_cit = history[-1].citation_worthiness_score or 0
+        h_last_sem = history[-1].semantic_coverage_score or 0
+        h_last_tec = history[-1].technical_readability_score or 0
+
+        oldest_score = (h0_cit * 0.4 + h0_vis * 0.3 + h0_sem * 0.2 + h0_tec * 0.1)
+        newest_score = (h_last_cit * 0.4 + h_last_vis * 0.3 + h_last_sem * 0.2 + h_last_tec * 0.1)
         score_delta = newest_score - oldest_score
 
     # Create response
@@ -1436,6 +1449,7 @@ async def auto_fix_content(
         
         return result
     except Exception as e:
+        db.rollback() # Ensure transaction is cleared on error
         app_logger.error(f"Auto Fix Failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

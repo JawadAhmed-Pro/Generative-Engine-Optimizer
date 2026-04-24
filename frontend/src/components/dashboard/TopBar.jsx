@@ -57,7 +57,16 @@ function TopBar({ onMenuToggle, isMobile }) {
                 
                 {!hideBackButton && (
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => {
+                            // If we are deep in a module, go back in history
+                            // If we are at the root of a module, go to dashboard
+                            const parts = location.pathname.split('/').filter(Boolean)
+                            if (parts.length <= 2) {
+                                navigate('/app')
+                            } else {
+                                navigate(-1)
+                            }
+                        }}
                         className="btn-back-global"
                         title="Back"
                         style={{

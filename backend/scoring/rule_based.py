@@ -292,11 +292,12 @@ class RuleBasedScorer:
             stat_count = len(fact_entities)
             details['nlp_entities_found'] = stat_count
             
-        except ImportError:
-            # Fallback to Regex if spaCy is not installed
+        except Exception as e:
+            # Fallback to Regex if spaCy is not installed or model fails to load
             number_pattern = r'\b\d+(?:\.\d+)?%|\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:percent|million|billion|thousand)\b|\b(19|20)\d{2}\b'
             stat_count = len(re.findall(number_pattern, content))
             details['regex_statistics'] = stat_count
+            details['nlp_error'] = str(e)
 
         # Fact density per 200 words
         fact_density = stat_count / max(word_count / 200, 1)

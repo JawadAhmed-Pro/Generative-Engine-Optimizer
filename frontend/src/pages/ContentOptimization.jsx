@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import html2canvas from 'html2canvas'
 import { useAnalysisState } from '../context/AnalysisContext'
+import { useToast } from '../components/ToastProvider'
 
 const TableWithCopy = ({ children }) => {
     const tableRef = useRef(null)
@@ -107,6 +108,7 @@ function ContentOptimization() {
     // Use context for persistent state
     const { optimizationState, updateOptimization } = useAnalysisState()
     const { content, activeTab, contentType, analysisResults, optimizedContent } = optimizationState
+    const toast = useToast()
 
     // Local-only state
     const [selectedProject, setSelectedProject] = useState(projectFromUrl || '')
@@ -265,7 +267,7 @@ function ContentOptimization() {
                 }
             }
         } catch (err) {
-            alert('Failed to import content: ' + (err.response?.data?.detail || err.message))
+            toast.error('Failed to import content: ' + (err.response?.data?.detail || err.message))
         } finally {
             setImportLoading(false)
         }
@@ -388,7 +390,7 @@ function ContentOptimization() {
                 updateOptimization({ content: newContent })
             }
         } catch (err) {
-            alert('Snippet optimization failed')
+            toast.error('Snippet optimization failed')
         } finally {
             setLoading(false)
         }
@@ -412,7 +414,7 @@ function ContentOptimization() {
                 setManualInjectionTarget('');
             }
         } catch (err) {
-            alert("Failed to generate targeted injection.");
+            toast.error("Failed to generate targeted injection.")
         } finally {
             setGeneratingInjection(false);
         }
@@ -473,7 +475,9 @@ function ContentOptimization() {
             })
             setSchemaResult(response.data)
         } catch (err) {
-            setError(err.response?.data?.detail || 'Schema generation failed')
+            const msg = err.response?.data?.detail || err.message || 'Schema generation failed'
+            setError(msg)
+            toast.error(msg)
         } finally {
             setSchemaLoading(false)
         }
@@ -526,7 +530,9 @@ function ContentOptimization() {
             fetchHistory()
         } catch (err) {
             console.error(err)
-            setError(err.message || 'Optimization failed')
+            const msg = err.response?.data?.detail || err.message || 'Optimization failed'
+            setError(msg)
+            toast.error(msg)
         } finally {
             setLoading(false)
         }
