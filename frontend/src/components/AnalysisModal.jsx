@@ -3,6 +3,7 @@ import { X, ExternalLink, Calendar, TrendingUp, FileText, Link as LinkIcon, Aler
 import axios from 'axios'
 import { useToast } from './ToastProvider'
 import RAGInsights from './RAGInsights'
+import SuggestionList from './SuggestionList'
 
 function AnalysisModal({ itemId, onClose }) {
     const [data, setData] = useState(null)
@@ -253,23 +254,12 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                         )}
 
                         {/* Recommendations */}
-                        {data.analysis.recommendations && data.analysis.recommendations.length > 0 && (
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem' }}>Recommendations</h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    {data.analysis.recommendations.map((rec, idx) => (
-                                        <div key={idx} style={{
-                                            background: 'rgba(59, 130, 246, 0.1)',
-                                            padding: '0.75rem 1rem',
-                                            borderRadius: '6px',
-                                            fontSize: '0.875rem',
-                                            borderLeft: '3px solid var(--accent-primary)'
-                                        }}>
-                                            {rec}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                        {data.analysis.suggestions_detailed && data.analysis.suggestions_detailed.length > 0 && (
+                            <SuggestionList 
+                                suggestions={data.analysis.suggestions_detailed}
+                                contentItemId={data.id}
+                                rawContent={data.analysis.raw_content || ""}
+                            />
                         )}
 
                         {/* AI Strategic Insights */}

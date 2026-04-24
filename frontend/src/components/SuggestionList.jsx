@@ -12,6 +12,7 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
         setFixingId(id)
         try {
             const response = await axios.post('/api/auto-fix', {
+                content_item_id: contentItemId,
                 content: rawContent,
                 suggestion: suggestionText
             })

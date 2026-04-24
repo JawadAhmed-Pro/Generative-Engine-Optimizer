@@ -229,7 +229,7 @@ class GEOOptimizer:
         {content[:3000]}
         ---
         
-        Return exactly:
+        Return in valid JSON format exactly as follows:
         {{
             "entities_found": ["entity1", "entity2"],
             "json_ld_schema": "<script type=\"application/ld+json\">...</script>",
@@ -258,7 +258,7 @@ class GEOOptimizer:
         1. Identify where this content lacks specific data or expert authority.
         2. Suggest 3 'Hard Grounding' injections (e.g., 'Add a stat about X', 'Cite a study from Y').
         
-        Return JSON:
+        Return the result in valid JSON format exactly as follows:
         {{
             "suggestions": ["Add a statistic about X from a reputable source", "Cite an expert in niche Y", "Include a case study summary"]
         }}
@@ -293,7 +293,7 @@ class GEOOptimizer:
         {content[:3000]}
         ---
         
-        Return exactly:
+        Return the response in valid JSON format exactly as follows:
         {{
             "optimized_content": "...",
             "changes_made": ["change 1", "change 2"],
@@ -318,7 +318,7 @@ class GEOOptimizer:
         {content[:2000]}
         ---
         
-        Return exactly:
+        Return the diagnostics in valid JSON format exactly as follows:
         {{
             "intent_match_score": 0-100,
             "readability_score": 0-100,
@@ -433,7 +433,7 @@ class GEOOptimizer:
         {snippet}
         ---
         
-        Return exactly:
+        Return the optimized content in valid JSON format exactly as follows:
         {{
             "optimized_content": "...",
             "explanation": "Why this change helps GEO"

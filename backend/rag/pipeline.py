@@ -53,7 +53,7 @@ class RAGPipeline:
     ) -> str:
         """Build context from chunks and scores."""
         # Extract content snippets
-        content_snippets = [chunk['content'] for chunk in chunks[:5]]  # Top 5 chunks
+        content_snippets = [chunk['content'] for chunk in chunks[:8]]  # Top 8 chunks
         
         # Extract scores
         ai_vis = analysis_results.get('ai_visibility_score', 0)
@@ -61,10 +61,10 @@ class RAGPipeline:
         semantic = analysis_results.get('semantic_coverage_score', 0)
         readability = analysis_results.get('technical_readability_score', 0)
         
-        context = f"""Content Snippets:
-{chr(10).join(f"- {snippet[:200]}..." for snippet in content_snippets)}
+        context = f"""Content Snippets (Internal Context):
+{chr(10).join(f"- {snippet[:500]}..." for snippet in content_snippets)}
 
-GEO Scores:
+GEO Audit Scores:
 - AI Search Visibility: {ai_vis}/100
 - Citation Worthiness: {citation}/100
 - Semantic Coverage: {semantic}/100
@@ -82,7 +82,7 @@ GEO Scores:
         payload = {
             "model": self.model,
             "messages": [
-                {"role": "system", "content": "You are a generic engine optimization expert."},
+                {"role": "system", "content": "You are a world-class Generative Engine Optimization (GEO) strategist. Your goal is to help content creators optimize their articles to be cited by AI search engines like Perplexity, ChatGPT, and Google SGE. Use a professional, data-driven, and highly strategic tone. Reference specific GEO principles like 'Answer Directness', 'Entity Anchoring', and 'Information Density'."},
                 {"role": "user", "content": prompt}
             ]
         }

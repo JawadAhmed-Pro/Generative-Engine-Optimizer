@@ -632,6 +632,8 @@ def get_analysis_by_item(
             "llm_feedback": analysis.llm_scores.get('top_suggestion', '') if analysis.llm_scores else None,
             "rule_details": analysis.rule_based_scores,
             "recommendations": [s.get('text', str(s)) for s in (analysis.suggestions or [])[:8]],
+            "suggestions_detailed": analysis.suggestions,
+            "raw_content": item.content,
             "analyzed_at": analysis.created_at.isoformat(),
             "probability_metrics": probability_metrics,
             "historical_trend": historical_scores,
@@ -1192,6 +1194,7 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
         llm_scores=final_scores['llm_scores'],
         suggestions=final_scores['suggestions'],
         timestamp=datetime.utcnow(),
+        raw_content=content,
         score_delta=round(score_delta, 1),
         previous_analyses_count=len(history)
     )
