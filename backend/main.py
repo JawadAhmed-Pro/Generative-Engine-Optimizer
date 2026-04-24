@@ -1117,6 +1117,10 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     optimizer = GEOOptimizer()
     grounding_audit = await optimizer.suggest_hard_grounding(content, extracted.get('content_type', 'general'))
     missing_citations = grounding_audit.get('suggestions', [])
+    if isinstance(missing_citations, str):
+        missing_citations = [missing_citations]
+    elif not isinstance(missing_citations, list):
+        missing_citations = []
     
     predicted_score = prob_calc.get('probability', 0.0)
     error_gap = predicted_score - actual_rate

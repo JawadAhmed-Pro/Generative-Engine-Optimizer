@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle, AlertTriangle, XCircle, Sparkles, TrendingUp, TrendingDown, Minus, Wand2, RefreshCw } from 'lucide-react'
+import { CheckCircle, AlertTriangle, XCircle, Sparkles, TrendingUp, TrendingDown, Minus, Wand2, RefreshCw, Info } from 'lucide-react'
 import MetricCard from './MetricCard'
 import SuggestionList from './SuggestionList'
 import ExportButton from './ExportButton'
@@ -151,7 +151,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
                             Structural Score 
                             <div className="tooltip-trigger" style={{ cursor: 'help' }}>
-                                <Circle size={10} />
+                                <Info size={10} />
                                 <span className="tooltip-text">
                                     This score measures structural changes only (entity density, readability, answer clarity). 
                                     Actual citation performance depends on publishing and indexing by AI engines.
@@ -259,12 +259,17 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             <AlertTriangle size={18} /> Claims Needing Real Sources
                         </h4>
                         <div style={{ display: 'grid', gap: '0.75rem' }}>
-                            {(results.analysis?.citation_warnings || results.citation_warnings || results.missing_citations || []).map((flag, i) => (
-                                <div key={i} style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', gap: '0.6rem' }}>
-                                    <span style={{ color: 'var(--error)' }}>⚠️</span>
-                                    <span>{flag}</span>
-                                </div>
-                            ))}
+                            {(() => {
+                                const warnings = results.analysis?.citation_warnings || results.citation_warnings || results.missing_citations;
+                                const warningList = Array.isArray(warnings) ? warnings : (typeof warnings === 'string' ? [warnings] : []);
+                                
+                                return warningList.map((flag, i) => (
+                                    <div key={i} style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', gap: '0.6rem' }}>
+                                        <span style={{ color: 'var(--error)' }}>⚠️</span>
+                                        <span>{flag}</span>
+                                    </div>
+                                ));
+                            })()}
                         </div>
                         <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
                             Note: The Anti-Hallucination filter blocked the AI from inventing data for these claims. Please provide real evidence to improve trust scores.
