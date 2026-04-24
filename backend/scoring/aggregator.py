@@ -93,27 +93,22 @@ class ScoreAggregator:
         # --- Formatting for API Response ---
         ai_details = {
             'ai_friendly_formatting': llm_metrics['ai_formatting'],
-            'structural_integrity': llm_metrics['structural_integrity'],
-            'rule_structure_score': rb_structure,
-            'rule_schema_score': rb_schema
+            'structural_integrity': llm_metrics['structural_integrity']
         }
         
         citation_details = {
             'content_authority': llm_metrics['content_authority'],
-            'rule_authority_score': rb_authority,
             'citations_found': auth_details.get('citations', 0),
             'facts_density': auth_details.get('fact_density', 0)
         }
         
         semantic_details = {
             'semantic_richness': llm_metrics['semantic_richness'],
-            'user_intent_alignment': llm_metrics['user_intent'],
-            'rule_keyword_score': rb_keywords
+            'user_intent_alignment': llm_metrics['user_intent']
         }
         
         readability_details = {
-            'readability_ux': llm_metrics['readability_ux'],
-            'rule_readability_score': rb_readability
+            'readability_ux': llm_metrics['readability_ux']
         }
         
         formatted_llm_scores_response = {
