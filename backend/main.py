@@ -1325,7 +1325,8 @@ def get_comparison_detail(
 # ========================
 
 class AutoFixRequest(BaseModel):
-    content_item_id: int
+    content_item_id: Optional[int] = None
+    content: Optional[str] = None
     suggestion: str
     strategy: Optional[str] = 'general'
     tone: Optional[str] = 'professional'
@@ -1338,27 +1339,34 @@ async def auto_fix_content(
 ):
     """Applies a 'One-Click Fix' to content using LLM."""
     try:
-        # Get content item
-        content_item = db.query(ContentItem).filter(ContentItem.id == payload.content_item_id).first()
-        if not content_item:
-            raise HTTPException(status_code=404, detail="Content not found")
+        # Get content (either from DB or from direct payload)
+        if payload.content_item_id:
+            content_item = db.query(ContentItem).filter(ContentItem.id == payload.content_item_id).first()
+            if not content_item:
+                raise HTTPException(status_code=404, detail="Content not found")
+            content_to_fix = content_item.content
+        elif payload.content:
+            content_to_fix = payload.content
+        else:
+            raise HTTPException(status_code=400, detail="Either content_item_id or content must be provided")
             
         from geo_optimizer import geo_optimizer
         result = await geo_optimizer.auto_fix(
-            content_item.content, 
+            content_to_fix, 
             payload.suggestion,
             strategy=getattr(payload, 'strategy', 'general'),
             tone=getattr(payload, 'tone', 'professional')
         )
         
-        # Save version
-        new_version = ContentVersion(
-            content_item_id=payload.content_item_id,
-            content=result["optimized_content"],
-            version_label=f"Auto-Fix: {payload.suggestion[:30]}..."
-        )
-        db.add(new_version)
-        db.commit()
+        # Save version only if we have a content_item_id
+        if payload.content_item_id:
+            new_version = ContentVersion(
+                content_item_id=payload.content_item_id,
+                content=result["optimized_content"],
+                version_label=f"Auto-Fix: {payload.suggestion[:30]}..."
+            )
+            db.add(new_version)
+            db.commit()
         
         return result
     except Exception as e:

@@ -255,6 +255,7 @@ class HistoryResponse(BaseModel):
 class OptimizeContentRequest(BaseModel):
     content: str
     content_item_id: Optional[int] = None
+    mode: str = 'general' # 'rewrite', 'grounding', 'generate'
     strategy: str = 'general' # 'authority_boost', 'ai_answer', 'semantic_expansion', 'concise', 'technical'
     tone: str = 'professional' # 'professional', 'conversational', 'technical', 'persuasive'
     audience: str = 'intermediate' # 'beginner', 'intermediate', 'expert'
