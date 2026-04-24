@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, Link as LinkIcon, Info, Folder, Plus, X, Sparkles, BookOpen, ShoppingCart, Tag, History, Target, ChevronDown, Globe } from 'lucide-react'
+import { Search, Link as LinkIcon, Info, Folder, Plus, X, Sparkles, BookOpen, ShoppingCart, Tag, History, Target, ChevronDown, Globe, RefreshCw } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import axios from 'axios'
 import ResultsPanel from '../components/ResultsPanel'
