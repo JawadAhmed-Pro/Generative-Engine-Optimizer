@@ -481,7 +481,7 @@ class GEOOptimizer:
         }
         
         try:
-            timeout = aiohttp.ClientTimeout(total=60)
+            timeout = aiohttp.ClientTimeout(total=120)
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(url, headers=headers, json=payload) as resp:
                     if resp.status == 200:

@@ -199,7 +199,7 @@ INSTRUCTIONS:
             ]
         }
         
-        timeout = aiohttp.ClientTimeout(total=60) # Increased for complex content generation
+        timeout = aiohttp.ClientTimeout(total=120) # Max depth for complex generation
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, json=payload, headers=headers) as response:
                 if response.status != 200:
@@ -349,7 +349,7 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
             "temperature": 0.1
         }
         
-        timeout = aiohttp.ClientTimeout(total=60) # Increased for deep GEO analysis
+        timeout = aiohttp.ClientTimeout(total=120) # Max depth for deep GEO analysis
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, json=payload, headers=headers) as response:
                 if response.status != 200:
@@ -543,7 +543,7 @@ Does it directly answer the user's intent? (Boolean).
         }
         
         try:
-            timeout = aiohttp.ClientTimeout(total=60)
+            timeout = aiohttp.ClientTimeout(total=120)
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(url, headers=headers, json=payload) as response:
                     if response.status == 200:
@@ -597,7 +597,7 @@ Return ONLY valid JSON, no other text.
                 "max_tokens": 800
             }
             
-            timeout = aiohttp.ClientTimeout(total=60)
+            timeout = aiohttp.ClientTimeout(total=120)
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(url, headers=headers, json=payload) as response:
                     if response.status == 200:
