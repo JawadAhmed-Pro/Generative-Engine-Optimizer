@@ -175,9 +175,22 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                                     borderTop: '1px solid rgba(255,255,255,0.05)',
                                                     fontSize: '0.8rem',
                                                     color: 'var(--accent-primary)',
-                                                    fontWeight: '600'
+                                                    fontWeight: '600',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem'
                                                 }}>
-                                                    {fixes[suggestion.text].geo_lift_estimate}
+                                                    <span>Structural Improvement Score:</span>
+                                                    <span style={{ color: 'var(--text-primary)' }}>
+                                                        {fixes[suggestion.text].geo_lift_estimate.replace('Estimated ', '').replace(' visibility', '')}
+                                                    </span>
+                                                    <div className="tooltip-trigger" style={{ cursor: 'help', opacity: 0.7 }}>
+                                                        <Circle size={12} />
+                                                        <span className="tooltip-text">
+                                                            This score measures structural changes only (entity density, readability, answer clarity). 
+                                                            Actual citation performance depends on publishing and indexing by AI engines.
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

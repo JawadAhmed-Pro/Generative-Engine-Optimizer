@@ -141,38 +141,68 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
         <div>
             {/* Probability Score Header */}
             <div className="depth-card" style={{ marginBottom: '2rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-                <h2 style={{ marginBottom: '1rem', fontFamily: 'inherit' }}>
-                    Predicted Visibility Score
+                <h2 style={{ marginBottom: '1.5rem', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <Sparkles size={24} color="var(--accent-primary)" /> GEO Optimization Results
                 </h2>
 
-                {probabilityMetrics ? (
-                    <>
-                        <div className={`score-badge ${getScoreClass(probabilityMetrics.probability || 0)}`} style={{ fontSize: '3.5rem', padding: '2rem', display: 'inline-block' }}>
-                            {probabilityMetrics.probability || 0}%
-                        </div>
-                        <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>
-                            Based on our predictive models, your content has a <strong>{probabilityMetrics.probability || 0}%</strong> Predicted Visibility Score for being cited by AI engines.
-                        </p>
-                        
-                        {probabilityMetrics.validation_layer && (
-                            <div style={{ marginTop: '1.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', textAlign: 'center' }}>
-                                <div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Validation Queries</div>
-                                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{probabilityMetrics.validation_layer.total_checks}</div>
-                                </div>
-                                <div style={{ borderLeft: '1px solid var(--card-border)', borderRight: '1px solid var(--card-border)' }}>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Actual Citation Rate</div>
-                                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{probabilityMetrics.validation_layer.actual_citation_rate}%</div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Error Gap</div>
-                                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: probabilityMetrics.validation_layer.error_gap > 15 ? 'var(--error)' : 'var(--success)' }}>
-                                        {probabilityMetrics.validation_layer.error_gap > 0 ? '+' : ''}{probabilityMetrics.validation_layer.error_gap}%
-                                    </div>
-                                    <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: '0.2rem' }}>Status: {probabilityMetrics.validation_layer.status}</div>
-                                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '1rem' }}>
+                    {/* Structural Score Row */}
+                    <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                            Structural Score 
+                            <div className="tooltip-trigger" style={{ cursor: 'help' }}>
+                                <Circle size={10} />
+                                <span className="tooltip-text">
+                                    This score measures structural changes only (entity density, readability, answer clarity). 
+                                    Actual citation performance depends on publishing and indexing by AI engines.
+                                </span>
                             </div>
-                        )}
+                            <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', border: '1px solid var(--card-border)', borderRadius: '4px' }}>Deterministic</span>
+                        </div>
+                        <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                            {results.structural_score?.score || results.overall_score || 0}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                            H-Hierarchy • Readability • FAQ
+                        </div>
+                    </div>
+
+                    {/* Semantic Score Row */}
+                    <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                            Semantic Score <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', border: '1px solid var(--card-border)', borderRadius: '4px' }}>Probabilistic</span>
+                        </div>
+                        <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--accent-primary)' }}>
+                            {results.semantic_score?.score || (probabilityMetrics?.probability) || 0}
+                            <span style={{ fontSize: '1rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem', fontWeight: '400' }}>
+                                ± {results.semantic_score?.variance || 8}
+                            </span>
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                            Richness • Alignment • Intent
+                        </div>
+                    </div>
+                </div>
+
+                {probabilityMetrics?.validation_layer && (
+                    <div style={{ marginTop: '1.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', textAlign: 'center' }}>
+                        <div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Validation Queries</div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{probabilityMetrics.validation_layer.total_checks}</div>
+                        </div>
+                        <div style={{ borderLeft: '1px solid var(--card-border)', borderRight: '1px solid var(--card-border)' }}>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Actual Citation Rate</div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{probabilityMetrics.validation_layer.actual_citation_rate}%</div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Error Gap</div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: Math.abs(probabilityMetrics.validation_layer.error_gap) > 15 ? 'var(--error)' : 'var(--success)' }}>
+                                {probabilityMetrics.validation_layer.error_gap > 0 ? '+' : ''}{probabilityMetrics.validation_layer.error_gap}%
+                            </div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: '0.2rem' }}>Status: {probabilityMetrics.validation_layer.status}</div>
+                        </div>
+                    </div>
+                )}
 
                         <div style={{ fontSize: '0.85rem', color: 'var(--accent)', marginTop: '1.5rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
                             <span>Industry Average: {probabilityMetrics?.competitor_average || 'N/A'}%</span>
@@ -180,7 +210,6 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                                 Confidence Range: ±10% ({probabilityMetrics?.confidence_interval?.low || 'N/A'}% - {probabilityMetrics?.confidence_interval?.high || 'N/A'}%)
                             </span>
                         </div>
-                    </>
                 ) : (
                     <>
                         <div className={`score-badge ${getScoreClass(overallScore)}`} style={{ fontSize: '3rem', padding: '1.5rem', display: 'inline-block' }}>
@@ -312,6 +341,35 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     contentItemId={results.content_item_id}
                     initialInsights={results.insights}
                 />
+            )}
+
+            {/* Missing Citations Warning (FIX 1) */}
+            {results.missing_citations && results.missing_citations.length > 0 && (
+                <div style={{ marginBottom: '2rem' }}>
+                    <h3 style={{ marginBottom: '1rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--warning)' }}>
+                        <AlertTriangle size={18} /> Claims Requiring Real Data
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+                        {results.missing_citations.map((citation, i) => (
+                            <div key={i} className="depth-card" style={{ 
+                                padding: '1.25rem', 
+                                borderLeft: '4px solid var(--warning)',
+                                background: 'rgba(245, 158, 11, 0.05)'
+                            }}>
+                                <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>Citation Needed</div>
+                                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                                    "{citation}"
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--warning)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <Sparkles size={14} /> Suggested Search: 
+                                    <span style={{ color: 'var(--text-primary)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(citation + ' statistics 2024')}`, '_blank')}>
+                                        Find real source for "{citation}"
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
 
             {/* Suggestions */}
