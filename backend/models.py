@@ -285,6 +285,13 @@ class SimulateAIRequest(BaseModel):
     domain: str = 'education' # 'education' or 'ecommerce'
 
 
+class AutoFixRequest(BaseModel):
+    content: str
+    suggestion: str
+    strategy: str = 'general'
+    tone: str = 'professional'
+
+
 class PromptDiscoveryRequest(BaseModel):
     keyword: str
     target_keyword: Optional[str] = None # Alias for keyword if sent that way

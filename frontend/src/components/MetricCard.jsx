@@ -1,6 +1,6 @@
 import { ArrowUpRight, ArrowRight, ArrowDownRight } from 'lucide-react'
 
-function MetricCard({ title, score, description }) {
+function MetricCard({ title, score, description, unit = "/ 100" }) {
     const safeScore = typeof score === 'number' && !isNaN(score) ? score : 0;
 
     const getScoreClass = (score) => {
@@ -51,7 +51,11 @@ function MetricCard({ title, score, description }) {
                     <span style={{ fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
                         {Math.round(safeScore)}
                     </span>
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '500' }}>/ 100</span>
+                    {unit && (
+                        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
+                            {unit}
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -61,7 +65,7 @@ function MetricCard({ title, score, description }) {
                         className="progress-fill"
                         style={{
                             height: '100%',
-                            width: `${safeScore}%`,
+                            width: `${Math.min(safeScore, 100)}%`,
                             background: getProgressColor(safeScore),
                             boxShadow: `0 0 10px ${getProgressColor(safeScore)}22`,
                             transition: 'width 1s ease-out'

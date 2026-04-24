@@ -870,6 +870,22 @@ async def simulate_ai(payload: SimulateAIRequest = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/auto-fix")
+async def auto_fix_content(payload: AutoFixRequest = Body(...)):
+    """Surgically fix content based on a specific audit suggestion."""
+    try:
+        from geo_optimizer import geo_optimizer
+        result = await geo_optimizer.auto_fix(
+            content=payload.content,
+            suggestion=payload.suggestion,
+            strategy=payload.strategy,
+            tone=payload.tone
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/semantic-search")
 def semantic_search(query: str, limit: int = 5, content_item_id: int = None):
     """
@@ -1072,8 +1088,42 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     )
     
     # Format probability_metrics to match the ScoreMetric pydantic schema before saving
+    
+    # ---------------------------------------------------------
+    # NEW: Live Validation Layer & Error Gap
+    # ---------------------------------------------------------
+    from live_verifier import live_verifier
+    
+    # Generate Multi-Query Variations (Using simple heuristics for now, in prod use LLM)
+    base_kw = extracted.get('target_keyword', 'the topic')
+    if not base_kw:
+         base_kw = "the topic"
+    validation_queries = [
+        f"What is {base_kw}?",
+        f"Best {base_kw} for beginners",
+        f"Explain {base_kw} in detail",
+        f"{base_kw} pros and cons",
+        f"How does {base_kw} work?"
+    ]
+    
+    # Run Live Verification (Simulation wrapper)
+    # Using a sync wrapper for the async call since perform_analysis is async
+    live_results = await live_verifier.verify_citations(url=extracted.get('url', ''), queries=validation_queries)
+    actual_rate = live_results["actual_citation_rate"]
+    
+    predicted_score = prob_calc.get('probability', 0.0)
+    error_gap = predicted_score - actual_rate
+    
+    prob_calc['validation_layer'] = {
+        "queries_tested": validation_queries,
+        "total_checks": live_results["validation_queries_run"],
+        "actual_citation_rate": round(actual_rate, 1),
+        "error_gap": round(error_gap, 1),
+        "status": "Validated" if abs(error_gap) <= 15 else "High Variance"
+    }
+    
     final_scores['llm_scores']['probability_metrics'] = {
-        'score': prob_calc.get('probability', 0.0),
+        'score': predicted_score,
         'details': prob_calc,
         'suggestions': []
     }

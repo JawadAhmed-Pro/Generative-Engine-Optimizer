@@ -215,7 +215,7 @@ class CitationProbabilityModel:
             "category": detected_category,
             "competitor_average": round(competitor_avg, 1),
             "confidence_interval": {
-                "low": max(1, round(final_prob * 0.9, 1)),
-                "high": min(99, round(final_prob * 1.1, 1))
+                "low": max(1, round(final_prob - 10.0, 1)),
+                "high": min(99, round(final_prob + 10.0, 1))
             }
         }

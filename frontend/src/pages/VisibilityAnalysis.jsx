@@ -20,6 +20,27 @@ function VisibilityAnalysis() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [history, setHistory] = useState([])
+    const [loadingStep, setLoadingStep] = useState(0)
+    const loadingSteps = [
+        "Initializing GEO Agent...",
+        "Scraping Content Structure...",
+        "Simulating AI Perception...",
+        "Auditing E-E-A-T Signals...",
+        "Calculating Citation Probability...",
+        "Synthesizing Strategic Gaps..."
+    ]
+
+    useEffect(() => {
+        let interval;
+        if (loading) {
+            interval = setInterval(() => {
+                setLoadingStep(prev => (prev + 1) % loadingSteps.length)
+            }, 2500)
+        } else {
+            setLoadingStep(0)
+        }
+        return () => clearInterval(interval)
+    }, [loading])
     const [selectedProject, setSelectedProject] = useState(projectFromUrl || contextProject || '')
     const [targetEngine, setTargetEngine] = useState('perplexity')
 
@@ -365,7 +386,14 @@ function VisibilityAnalysis() {
                             boxShadow: '0 4px 20px rgba(59, 130, 246, 0.2)'
                         }}
                     >
-                        {loading ? 'Initializing Analysis...' : <><Search size={22} /> Run Visibility Audit</>}
+                        {loading ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <RefreshCw size={22} className="spin" />
+                                <span>{loadingSteps[loadingStep]}</span>
+                            </div>
+                        ) : (
+                            <><Search size={22} /> Run Visibility Audit</>
+                        )}
                     </button>
 
                     {error && (

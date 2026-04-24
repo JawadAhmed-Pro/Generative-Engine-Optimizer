@@ -1,10 +1,15 @@
-import { CheckCircle, AlertTriangle, XCircle, Sparkles, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { useState } from 'react'
+import { CheckCircle, AlertTriangle, XCircle, Sparkles, TrendingUp, TrendingDown, Minus, Wand2, RefreshCw } from 'lucide-react'
 import MetricCard from './MetricCard'
 import SuggestionList from './SuggestionList'
 import ExportButton from './ExportButton'
 import RAGInsights from './RAGInsights'
+import axios from 'axios'
 
 function ResultsPanel({ results, onReset, context = 'url' }) {
+    const [fixingIndex, setFixingIndex] = useState(null);
+    const [fixedContent, setFixedContent] = useState(null);
+
     // Label mappings based on context
     const LABELS = {
         url: {
@@ -114,10 +119,11 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     // e.g. 'product_data_completeness' -> 'Product Data Completeness'
                     const title = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
-                    detailed.push({
+                detailed.push({
                         key: key,
                         title: title,
-                        score: value
+                        score: value,
+                        unit: (key.includes('count') || key.includes('found') || key.includes('density')) ? "" : "/ 100"
                     });
                 });
             }
@@ -134,7 +140,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
             {/* Probability Score Header */}
             <div className="depth-card" style={{ marginBottom: '2rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
                 <h2 style={{ marginBottom: '1rem', fontFamily: 'inherit' }}>
-                    Citation Probability
+                    Predicted Visibility Score
                 </h2>
 
                 {probabilityMetrics ? (
@@ -143,10 +149,34 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             {probabilityMetrics.probability || 0}%
                         </div>
                         <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>
-                            Based on our research models, your content has a <strong>{probabilityMetrics.probability || 0}%</strong> chance of being cited by AI engines as a source.
+                            Based on our predictive models, your content has a <strong>{probabilityMetrics.probability || 0}%</strong> Predicted Visibility Score for being cited by AI engines.
                         </p>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--accent)', marginTop: '0.5rem' }}>
-                            Industry Average: {probabilityMetrics?.competitor_average || 'N/A'}% | Confidence Interval: {probabilityMetrics?.confidence_interval?.low || 'N/A'}% - {probabilityMetrics?.confidence_interval?.high || 'N/A'}%
+                        
+                        {probabilityMetrics.validation_layer && (
+                            <div style={{ marginTop: '1.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', textAlign: 'center' }}>
+                                <div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Validation Queries</div>
+                                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{probabilityMetrics.validation_layer.total_checks}</div>
+                                </div>
+                                <div style={{ borderLeft: '1px solid var(--card-border)', borderRight: '1px solid var(--card-border)' }}>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Actual Citation Rate</div>
+                                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{probabilityMetrics.validation_layer.actual_citation_rate}%</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Error Gap</div>
+                                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: probabilityMetrics.validation_layer.error_gap > 15 ? 'var(--error)' : 'var(--success)' }}>
+                                        {probabilityMetrics.validation_layer.error_gap > 0 ? '+' : ''}{probabilityMetrics.validation_layer.error_gap}%
+                                    </div>
+                                    <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: '0.2rem' }}>Status: {probabilityMetrics.validation_layer.status}</div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div style={{ fontSize: '0.85rem', color: 'var(--accent)', marginTop: '1.5rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+                            <span>Industry Average: {probabilityMetrics?.competitor_average || 'N/A'}%</span>
+                            <span style={{ padding: '0.2rem 0.6rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '4px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                Confidence Range: ±10% ({probabilityMetrics?.confidence_interval?.low || 'N/A'}% - {probabilityMetrics?.confidence_interval?.high || 'N/A'}%)
+                            </span>
                         </div>
                     </>
                 ) : (
@@ -243,6 +273,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             key={metric.key}
                             title={metric.title}
                             score={metric.score}
+                            unit={metric.unit}
                             description=""
                         />
                     ))
@@ -287,6 +318,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     suggestions={results.suggestions}
                     contentItemId={results.content_item_id}
                     context={context}
+                    rawContent={results.raw_content || ""}
                 />
             )}
         </div>

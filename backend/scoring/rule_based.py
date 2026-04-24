@@ -272,21 +272,42 @@ class RuleBasedScorer:
         else:
             suggestions.append("Add expert quotations (e.g., 'says Dr. Smith, Lead Scientist') (High Impact: +35% Lift)")
 
-        # 2. Fact / Data Density (NEW: 2025 Lift)
-        number_pattern = r'\b\d+(?:\.\d+)?%|\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:percent|million|billion|thousand)\b|\b(19|20)\d{2}\b'
-        stat_count = len(re.findall(number_pattern, content))
-        details['statistics'] = stat_count
-        
+        # 2. Fact / Data Density (NEW: 2025 Lift with NLP)
+        try:
+            import spacy
+            # Load English tokenizer, tagger, parser, NER and word vectors
+            try:
+                nlp = spacy.load("en_core_web_sm")
+            except OSError:
+                import spacy.cli
+                spacy.cli.download("en_core_web_sm")
+                nlp = spacy.load("en_core_web_sm")
+                
+            doc = nlp(content)
+            
+            # Target specific entity types that represent "facts" or "density"
+            target_ents = ['PERSON', 'ORG', 'GPE', 'MONEY', 'PERCENT', 'DATE', 'QUANTITY', 'FAC']
+            fact_entities = [ent for ent in doc.ents if ent.label_ in target_ents]
+            
+            stat_count = len(fact_entities)
+            details['nlp_entities_found'] = stat_count
+            
+        except ImportError:
+            # Fallback to Regex if spaCy is not installed
+            number_pattern = r'\b\d+(?:\.\d+)?%|\b\d+(?:,\d{3})*(?:\.\d+)?\s+(?:percent|million|billion|thousand)\b|\b(19|20)\d{2}\b'
+            stat_count = len(re.findall(number_pattern, content))
+            details['regex_statistics'] = stat_count
+
         # Fact density per 200 words
         fact_density = stat_count / max(word_count / 200, 1)
         details['fact_density'] = round(fact_density, 2)
         
-        if fact_density >= 1.5:
+        if fact_density >= 2.0:
             score += 30
-        elif fact_density >= 0.5:
+        elif fact_density >= 1.0:
             score += 15
         else:
-            suggestions.append("Increase fact density to 1+ per 200 words (High Impact: +30% Lift)")
+            suggestions.append("Increase Information Density using NLP entities (Names, Organizations, Metrics) (High Impact: +30% Lift)")
 
         # 3. Inline Source Citations
         citation_patterns = [r'according to', r'source:', r'\[\d+\]', r'\(202\d\)']
