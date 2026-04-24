@@ -232,7 +232,7 @@ class GEOOptimizer:
         Return exactly:
         {{
             "entities_found": ["entity1", "entity2"],
-            "json_ld_schema": "<script type=\\"application/ld+json\\">...</script>",
+            "json_ld_schema": "<script type=\"application/ld+json\">...</script>",
             "explanation": "Brief reason why these entities anchor the text"
         }}
         """
@@ -259,9 +259,9 @@ class GEOOptimizer:
         2. Suggest 3 'Hard Grounding' injections (e.g., 'Add a stat about X', 'Cite a study from Y').
         
         Return JSON:
-        {
+        {{
             "suggestions": ["Add a statistic about X from a reputable source", "Cite an expert in niche Y", "Include a case study summary"]
-        }
+        }}
         """
         return await self._call_llm(prompt)
 
