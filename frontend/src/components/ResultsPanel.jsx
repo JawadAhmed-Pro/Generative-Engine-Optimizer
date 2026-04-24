@@ -10,6 +10,8 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
     const [fixingIndex, setFixingIndex] = useState(null);
     const [fixedContent, setFixedContent] = useState(null);
 
+    if (!results) return null;
+
     // Label mappings based on context
     const LABELS = {
         url: {

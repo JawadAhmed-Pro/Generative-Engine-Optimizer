@@ -63,18 +63,20 @@ function VisibilityAnalysis() {
     const fetchHistory = async () => {
         try {
             const response = await axios.get('/api/history?type=url&limit=5')
-            setHistory(response.data.items)
+            setHistory(response.data.items || [])
         } catch (error) {
             console.error('Failed to fetch history:', error)
+            setHistory([])
         }
     }
 
     const fetchProjects = async () => {
         try {
             const response = await axios.get('/api/projects')
-            setProjects(response.data)
+            setProjects(response.data || [])
         } catch (error) {
             console.error('Failed to fetch projects:', error)
+            setProjects([])
         }
     }
 
