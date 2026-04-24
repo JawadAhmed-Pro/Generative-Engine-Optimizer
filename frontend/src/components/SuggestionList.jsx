@@ -20,11 +20,24 @@ function SuggestionList({ suggestions, contentItemId, context = 'url' }) {
         }
     }
 
+    // Normalize suggestions to handle both objects and simple strings
+    const normalizedSuggestions = suggestions.map(s => {
+        if (typeof s === 'string') {
+            return {
+                text: s,
+                priority: 'MEDIUM',
+                category: 'General',
+                source: 'AI Engine'
+            }
+        }
+        return s
+    })
+
     // Group by priority
     const groupedSuggestions = {
-        HIGH: suggestions.filter(s => s.priority === 'HIGH'),
-        MEDIUM: suggestions.filter(s => s.priority === 'MEDIUM'),
-        LOW: suggestions.filter(s => s.priority === 'LOW')
+        HIGH: normalizedSuggestions.filter(s => s?.priority === 'HIGH'),
+        MEDIUM: normalizedSuggestions.filter(s => s?.priority === 'MEDIUM'),
+        LOW: normalizedSuggestions.filter(s => s?.priority === 'LOW')
     }
 
     return (

@@ -101,7 +101,8 @@ function SchemaInput({ label, value, onChange, placeholder, type = 'text' }) {
 function ContentOptimization() {
     const [searchParams] = useSearchParams()
     const projectFromUrl = searchParams.get('project')
-    const contentRef = useRef(null)
+    const editorRef = useRef(null)
+    const resultRef = useRef(null)
 
     // Use context for persistent state
     const { optimizationState, updateOptimization } = useAnalysisState()
@@ -121,6 +122,8 @@ function ContentOptimization() {
     const [optimizationStrength, setOptimizationStrength] = useState(50)
     const [showSplitView, setShowSplitView] = useState(false)
     const [selection, setSelection] = useState({ text: '', top: 0, left: 0, visible: false })
+    const [history, setHistory] = useState([])
+    const [versionHistory, setVersionHistory] = useState([])
 
     // Create project inline
     const [showCreateProject, setShowCreateProject] = useState(false)
@@ -134,7 +137,7 @@ function ContentOptimization() {
         // If we arrived with a pre-populated prompt (from Strategy), 
         // focus the editor or show a hint
         if (content && activeTab === 'generate' && !analysisResults) {
-            contentRef.current?.scrollIntoView({ behavior: 'smooth' })
+            editorRef.current?.scrollIntoView({ behavior: 'smooth' })
         }
     }, [])
 
@@ -161,7 +164,7 @@ function ContentOptimization() {
                 optimizedContent: null // Reset optimization on history load
             })
             
-            // Set view mode to analysis
+            // Set view mode to analysis to show the results
             setViewMode('analysis')
             
             // Scroll to top
@@ -204,7 +207,7 @@ function ContentOptimization() {
     }
 
     // viewMode is local state
-    const [viewMode, setViewMode] = useState('analysis') // 'analysis' or 'result'
+    const [viewMode, setViewMode] = useState('analysis') // 'analysis', 'result', or 'compare'
 
     // Schema Generator State
     const [schemaResult, setSchemaResult] = useState(null)
@@ -725,7 +728,7 @@ function ContentOptimization() {
 
                         <div style={{ position: 'relative', marginBottom: '1.5rem', display: activeTab === 'schema' ? 'none' : 'block' }}>
                             <textarea
-                                ref={contentRef}
+                                ref={editorRef}
                                 value={content}
                                 onChange={(e) => updateOptimization({ content: e.target.value })}
                                 onMouseUp={handleTextSelection}
@@ -1507,8 +1510,8 @@ function ContentOptimization() {
                                                 className="btn btn-primary"
                                                 onClick={async () => {
                                                     try {
-                                                        if (contentRef.current) {
-                                                            const htmlBlob = new Blob([contentRef.current.innerHTML], { type: 'text/html' })
+                                                        if (resultRef.current) {
+                                                            const htmlBlob = new Blob([resultRef.current.innerHTML], { type: 'text/html' })
                                                             const textBlob = new Blob([optimizedContent], { type: 'text/plain' })
                                                             const item = new ClipboardItem({
                                                                 'text/html': htmlBlob,
@@ -1543,7 +1546,7 @@ function ContentOptimization() {
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="markdown-content" ref={contentRef} style={{
+                                    <div className="markdown-content" ref={resultRef} style={{
                                         lineHeight: '1.8',
                                         color: '#cbd5e1',
                                         fontFamily: 'Inter, sans-serif',
@@ -1731,12 +1734,14 @@ function ContentOptimization() {
                             <div style={{ maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' }}>
                                 {history
                                     .filter(item => {
-                                        const isSchema = item.title.toLowerCase().includes('schema') || item.title.toLowerCase().includes('json');
+                                        const title = item.title || '';
+                                        const isSchema = title.toLowerCase().includes('schema') || title.toLowerCase().includes('json');
                                         if (activeTab === 'schema') return isSchema;
                                         return !isSchema;
                                     })
                                     .map(item => {
-                                        const isSchema = item.title.toLowerCase().includes('schema') || item.title.toLowerCase().includes('json');
+                                        const title = item.title || '';
+                                        const isSchema = title.toLowerCase().includes('schema') || title.toLowerCase().includes('json');
                                         return (
                                             <div key={item.id} 
                                                 onClick={() => handleHistoryItemClick(item.id)}
@@ -1782,7 +1787,8 @@ function ContentOptimization() {
                                     })
                                 }
                                 {history.filter(item => {
-                                    const isSchema = item.title.toLowerCase().includes('schema') || item.title.toLowerCase().includes('json');
+                                    const title = item.title || '';
+                                    const isSchema = title.toLowerCase().includes('schema') || title.toLowerCase().includes('json');
                                     if (activeTab === 'schema') return isSchema;
                                     return !isSchema;
                                 }).length === 0 && (

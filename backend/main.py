@@ -619,7 +619,7 @@ def get_analysis_by_item(
         "id": item.id,
         "title": item.title,
         "url": item.url,
-        "content": item.content[:500] + "..." if item.content and len(item.content) > 500 else item.content,
+        "content": item.content,
         "created_at": item.created_at.isoformat(),
         "project_id": item.project_id,
         "analysis": {
