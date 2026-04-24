@@ -211,10 +211,15 @@ class ScoreMetric(BaseModel):
 
 class AnalysisResponse(BaseModel):
     content_item_id: Optional[int]
+    overall_score: Optional[float] = None
     ai_visibility_score: float
     citation_worthiness_score: float
     semantic_coverage_score: float
     technical_readability_score: float
+    structural_score: Optional[Dict[str, Any]] = None
+    semantic_score: Optional[Dict[str, Any]] = None
+    probability_metrics: Optional[Dict[str, Any]] = None
+    missing_citations: Optional[List[str]] = None
     rule_based_scores: Dict[str, ScoreMetric]
     llm_scores: Dict[str, ScoreMetric]
     suggestions: List[Dict[str, Any]]

@@ -1112,6 +1112,12 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     live_results = await live_verifier.verify_citations(url=extracted.get('url', ''), queries=validation_queries)
     actual_rate = live_results["actual_citation_rate"]
     
+    # NEW: Grounding Audit (Identify missing stats/facts)
+    from geo_optimizer import GEOOptimizer
+    optimizer = GEOOptimizer()
+    grounding_audit = await optimizer.suggest_hard_grounding(content, extracted.get('content_type', 'general'))
+    missing_citations = grounding_audit.get('suggestions', [])
+    
     predicted_score = prob_calc.get('probability', 0.0)
     error_gap = predicted_score - actual_rate
     
@@ -1156,10 +1162,15 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     # Create response
     response = AnalysisResponse(
         content_item_id=content_item_id,
+        overall_score=round(newest_score if len(history) > 0 else current_overall, 1),
         ai_visibility_score=final_scores['ai_visibility_score'],
         citation_worthiness_score=final_scores['citation_worthiness_score'],
         semantic_coverage_score=final_scores['semantic_coverage_score'],
         technical_readability_score=final_scores['technical_readability_score'],
+        structural_score=final_scores['rule_based_scores'].get('structure'), # Fallback to rule structure
+        semantic_score=final_scores['llm_scores'].get('semantic_richness'),
+        probability_metrics=prob_calc,
+        missing_citations=missing_citations,
         rule_based_scores=final_scores['rule_based_scores'],
         llm_scores=final_scores['llm_scores'],
         suggestions=final_scores['suggestions'],

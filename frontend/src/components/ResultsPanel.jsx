@@ -246,7 +246,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
             </div>
 
                 {/* NEW: Citation Warnings / Grounding Gaps */}
-                {(results.analysis?.citation_warnings || results.citation_warnings) && (results.analysis?.citation_warnings?.length > 0 || results.citation_warnings?.length > 0) && (
+                {(results.analysis?.citation_warnings || results.citation_warnings || results.missing_citations) && (results.analysis?.citation_warnings?.length > 0 || results.citation_warnings?.length > 0 || results.missing_citations?.length > 0) && (
                     <div style={{ 
                         marginTop: '2rem', 
                         padding: '1.5rem', 
@@ -259,7 +259,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             <AlertTriangle size={18} /> Claims Needing Real Sources
                         </h4>
                         <div style={{ display: 'grid', gap: '0.75rem' }}>
-                            {(results.analysis?.citation_warnings || results.citation_warnings).map((flag, i) => (
+                            {(results.analysis?.citation_warnings || results.citation_warnings || results.missing_citations || []).map((flag, i) => (
                                 <div key={i} style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', gap: '0.6rem' }}>
                                     <span style={{ color: 'var(--error)' }}>⚠️</span>
                                     <span>{flag}</span>
