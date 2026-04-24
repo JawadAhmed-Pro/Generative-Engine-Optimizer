@@ -259,10 +259,36 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     </div>
                 )}
 
-                <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                     <button className="btn btn-secondary" onClick={onReset}>Analyze Another</button>
                     <ExportButton results={results} />
                 </div>
+
+                {/* NEW: Citation Warnings / Grounding Gaps */}
+                {(results.analysis?.citation_warnings || results.citation_warnings) && (results.analysis?.citation_warnings?.length > 0 || results.citation_warnings?.length > 0) && (
+                    <div style={{ 
+                        marginTop: '2rem', 
+                        padding: '1.5rem', 
+                        background: 'rgba(239, 68, 68, 0.05)', 
+                        borderRadius: '12px', 
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        textAlign: 'left'
+                    }}>
+                        <h4 style={{ color: 'var(--error)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <AlertTriangle size={18} /> Claims Needing Real Sources
+                        </h4>
+                        <div style={{ display: 'grid', gap: '0.75rem' }}>
+                            {(results.analysis?.citation_warnings || results.citation_warnings).map((flag, i) => (
+                                <div key={i} style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', gap: '0.6rem' }}>
+                                    <span style={{ color: 'var(--error)' }}>⚠️</span>
+                                    <span>{flag}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                            Note: The Anti-Hallucination filter blocked the AI from inventing data for these claims. Please provide real evidence to improve trust scores.
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* Probability Breakdown Factors */}

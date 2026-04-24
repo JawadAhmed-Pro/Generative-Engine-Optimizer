@@ -85,9 +85,12 @@ class GEOOptimizer:
             RULES:
             1. Optimize for AI search visibility and citation probability.
             2. ENTITY GUARDRAIL: Only use entities from this list: {page_context['allowed_entity_pool']}. Do not introduce new ones.
-            3. FIX 1: NO HALLUCINATED STATISTICS. If a claim lacks data, do NOT simulate a number. 
-               Use [CITATION NEEDED: <description>] instead.
-            4. Stay scoped to this section. Do not reference other sections.
+            8. ANTI-HALLUCINATION RULE: 
+               If a claim already contains a statistic from the original content, preserve it exactly.
+               If a claim has no statistic, do NOT invent one.
+               Instead, append a tag: [CITATION NEEDED: <what type of source would support this claim>]
+               Never generate percentages, figures, or numerical data that were not in the original input.
+            9. Stay scoped to this section. Do not reference other sections.
             
             Section Content:
             ---
@@ -132,10 +135,14 @@ class GEOOptimizer:
         if hallucinated:
             all_changes.append(f"WARNING: Hallucinated entities detected: {hallucinated}")
 
+        # 7. Extract Citation Flags
+        final_clean_content, citation_warnings = self.extract_citation_flags(smoothed_content)
+
         return {
-            "optimized_content": smoothed_content,
+            "optimized_content": final_clean_content,
             "changes_made": list(set(all_changes)),
-            "missing_citations": list(set(all_missing_citations)),
+            "missing_citations": list(set(all_missing_citations + citation_warnings)),
+            "citation_warnings": citation_warnings,
             "structural_score": structural,
             "semantic_score": semantic,
             "geo_lift_estimate": f"Estimated +{structural['score']}% structural lift"
@@ -178,8 +185,24 @@ class GEOOptimizer:
         }}
         """
         
-        return await self._call_llm(prompt)
+        result = await self._call_llm(prompt)
+        
+        # Extract flags from the optimized content
+        if "optimized_content" in result:
+            clean_text, flags = self.extract_citation_flags(result["optimized_content"])
+            result["optimized_content"] = clean_text
+            result["citation_warnings"] = flags
+            
+        return result
 
+    def extract_citation_flags(self, rewritten_text: str):
+        """
+        Extracts [CITATION NEEDED] tags from text and returns clean text + list of flags.
+        """
+        pattern = r'\[CITATION NEEDED: (.*?)\]'
+        flags = re.findall(pattern, rewritten_text)
+        clean_text = re.sub(pattern, '', rewritten_text)
+        return clean_text.strip(), flags
 
     async def generate_entity_schema(self, content: str) -> Dict[str, Any]:
         """
@@ -254,11 +277,13 @@ class GEOOptimizer:
         GOAL: Apply the following specific suggestion to the provided content.
         STRATEGY: {strategy}
         TONE: {tone}
-        
-        Surgical Rule:
+               Surgical Rule:
         1. Maintain the original tone and context unless specified.
         2. ONLY change the content to directly address the suggestion.
-        3. If requesting an expert quote or statistic, simulate a high-fidelity placeholder (e.g. "[Insert Specific Performance Data from [Source]]").
+        3. ANTI-HALLUCINATION: If a claim already contains a statistic from the original content, preserve it exactly.
+           If a claim has no statistic, do NOT invent one.
+           Instead, append a tag: [CITATION NEEDED: <what type of source would support this claim>]
+           Never generate percentages, figures, or numerical data that were not in the original input.
         
         SUGGESTION TO APPLY:
         "{suggestion}"
