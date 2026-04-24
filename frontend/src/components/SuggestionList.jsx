@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Lightbulb, Circle, Wand2, RefreshCw, Check, Copy } from 'lucide-react'
+import { Lightbulb, Circle, Wand2, RefreshCw, Check, Copy, AlertTriangle } from 'lucide-react'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -166,11 +166,34 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                     {fixes[suggestion.text].optimized_content}
                                                 </ReactMarkdown>
+
+                                                {/* NEW: Citation Warnings for this specific fix */}
+                                                {fixes[suggestion.text].citation_warnings && fixes[suggestion.text].citation_warnings.length > 0 && (
+                                                    <div style={{ 
+                                                        marginTop: '1.5rem', 
+                                                        padding: '1rem', 
+                                                        background: 'rgba(239, 68, 68, 0.03)', 
+                                                        borderRadius: '8px', 
+                                                        border: '1px solid rgba(239, 68, 68, 0.15)' 
+                                                    }}>
+                                                        <div style={{ color: 'var(--error)', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                            <AlertTriangle size={14} /> CLAIMS NEEDING REAL SOURCES
+                                                        </div>
+                                                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                                            {fixes[suggestion.text].citation_warnings.map((flag, i) => (
+                                                                <div key={i} style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', gap: '0.5rem' }}>
+                                                                    <span>⚠️</span>
+                                                                    <span>{flag}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                             
                                             {fixes[suggestion.text].geo_lift_estimate && (
                                                 <div style={{ 
-                                                    marginTop: '1rem', 
+                                                    marginTop: '1.25rem', 
                                                     paddingTop: '1rem', 
                                                     borderTop: '1px solid rgba(255,255,255,0.05)',
                                                     fontSize: '0.8rem',

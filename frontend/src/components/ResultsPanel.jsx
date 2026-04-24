@@ -203,26 +203,6 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                         </div>
                     </div>
                 )}
-
-                        <div style={{ fontSize: '0.85rem', color: 'var(--accent)', marginTop: '1.5rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-                            <span>Industry Average: {probabilityMetrics?.competitor_average || 'N/A'}%</span>
-                            <span style={{ padding: '0.2rem 0.6rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '4px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                                Confidence Range: ±10% ({probabilityMetrics?.confidence_interval?.low || 'N/A'}% - {probabilityMetrics?.confidence_interval?.high || 'N/A'}%)
-                            </span>
-                        </div>
-                ) : (
-                    <>
-                        <div className={`score-badge ${getScoreClass(overallScore)}`} style={{ fontSize: '3rem', padding: '1.5rem', display: 'inline-block' }}>
-                            {overallScore}/100
-                        </div>
-                        <p style={{ marginTop: '1rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                            {overallScore >= 75 ? <><CheckCircle size={18} color="var(--success)" /> Excellent optimization for AI search!</>
-                                : overallScore >= 50 ? <><AlertTriangle size={18} color="var(--warning)" /> Good start, but room for improvement</>
-                                    : <><XCircle size={18} color="var(--error)" /> Needs significant optimization</>}
-                        </p>
-                    </>
-                )}
-
                 {/* Progress Tracking Widget */}
                 {prevCount > 1 && typeof scoreDelta === 'number' && (
                     <div style={{
@@ -259,9 +239,11 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     </div>
                 )}
 
+                <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                     <button className="btn btn-secondary" onClick={onReset}>Analyze Another</button>
                     <ExportButton results={results} />
                 </div>
+            </div>
 
                 {/* NEW: Citation Warnings / Grounding Gaps */}
                 {(results.analysis?.citation_warnings || results.citation_warnings) && (results.analysis?.citation_warnings?.length > 0 || results.citation_warnings?.length > 0) && (
@@ -289,7 +271,6 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                         </p>
                     </div>
                 )}
-            </div>
 
             {/* Probability Breakdown Factors */}
             {probabilityMetrics && probabilityMetrics.factors && probabilityMetrics.factors.length > 0 && (
@@ -367,35 +348,6 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     contentItemId={results.content_item_id}
                     initialInsights={results.insights}
                 />
-            )}
-
-            {/* Missing Citations Warning (FIX 1) */}
-            {results.missing_citations && results.missing_citations.length > 0 && (
-                <div style={{ marginBottom: '2rem' }}>
-                    <h3 style={{ marginBottom: '1rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--warning)' }}>
-                        <AlertTriangle size={18} /> Claims Requiring Real Data
-                    </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-                        {results.missing_citations.map((citation, i) => (
-                            <div key={i} className="depth-card" style={{ 
-                                padding: '1.25rem', 
-                                borderLeft: '4px solid var(--warning)',
-                                background: 'rgba(245, 158, 11, 0.05)'
-                            }}>
-                                <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>Citation Needed</div>
-                                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
-                                    "{citation}"
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--warning)', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <Sparkles size={14} /> Suggested Search: 
-                                    <span style={{ color: 'var(--text-primary)', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(citation + ' statistics 2024')}`, '_blank')}>
-                                        Find real source for "{citation}"
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             )}
 
             {/* Suggestions */}
