@@ -24,7 +24,8 @@ from models import (
     AnalyzeTextRequest, AnalyzeURLRequest, ExtractContentRequest, ExtractKeywordsRequest,
     GenerateSchemaRequest, InjectRequest, ValidateCitationRequest,
     CompetitorCompareRequest, CompetitorComparison, PromptDiscoveryRequest,
-    OptimizeRAGPayloadRequest, OptimizeEntitySchemaRequest, DiagnosticMetrics
+    OptimizeRAGPayloadRequest, OptimizeEntitySchemaRequest, DiagnosticMetrics,
+    AutoFixRequest
 )
 import models
 from content_fetcher import ContentFetcher
