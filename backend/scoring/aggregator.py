@@ -15,7 +15,7 @@ class ScoreAggregator:
         llm_scores: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Combine scores using the Gated Scoring Architecture (60% Rule / 40% LLM).
+        Combine scores using the Gated Scoring Architecture ({int(self.rule_weight*100)}% Rule / {int(self.llm_weight*100)}% LLM).
         """
         # --- Normalize LLM Metrics (Default to 50 if missing) ---
         llm_metrics = {
@@ -45,7 +45,7 @@ class ScoreAggregator:
         # Gated by: rb_structure and rb_schema
         visibility_baseline = (rb_structure * 0.7) + (rb_schema * 0.3)
         visibility_refinement = (llm_metrics['ai_formatting'] * 0.5) + (llm_metrics['structural_integrity'] * 0.5)
-        ai_visibility_score = min(max((visibility_baseline * 0.6) + (visibility_refinement * 0.4), 0), 100)
+        ai_visibility_score = min(max((visibility_baseline * self.rule_weight) + (visibility_refinement * self.llm_weight), 0), 100)
         
         # --- Pillar 2: Citation Worthiness (Trust, Authority, EEAT) ---
         # Gated by: rb_authority (citations, stats, expert mentions)
@@ -65,19 +65,19 @@ class ScoreAggregator:
         # Citation Gate
         citation_baseline = rb_authority
         citation_refinement = (llm_metrics['content_authority'] * 0.5) + (overall_eeat * 0.5)
-        citation_worthiness_score = min(max((citation_baseline * 0.6) + (citation_refinement * 0.4), 0), 100)
+        citation_worthiness_score = min(max((citation_baseline * self.rule_weight) + (citation_refinement * self.llm_weight), 0), 100)
 
         # --- Pillar 3: Semantic Coverage (Keyword Relevance & Information Gain) ---
         # Gated by: rb_keywords
         semantic_baseline = rb_keywords
         semantic_refinement = (llm_metrics['semantic_richness'] * 0.6) + (llm_metrics['user_intent'] * 0.4)
-        semantic_coverage_score = min(max((semantic_baseline * 0.6) + (semantic_refinement * 0.4), 0), 100)
+        semantic_coverage_score = min(max((semantic_baseline * self.rule_weight) + (semantic_refinement * self.llm_weight), 0), 100)
 
         # --- Pillar 4: Technical Readability (UX & Flow) ---
         # Gated by: rb_readability
         readability_baseline = rb_readability
         readability_refinement = llm_metrics['readability_ux']
-        technical_readability_score = min(max((readability_baseline * 0.7) + (readability_refinement * 0.3), 0), 100)
+        technical_readability_score = min(max((readability_baseline * self.rule_weight) + (readability_refinement * self.llm_weight), 0), 100)
 
         # --- E-commerce Specialization (Overrides) ---
         if 'product_data_completeness' in llm_scores:
