@@ -439,7 +439,7 @@ function AISimulator() {
                                     border: '1px solid var(--card-border)',
                                     boxShadow: 'var(--elevation-med)'
                                 }}>
-                                    <RefreshCw size={32} color="var(--accent-primary)" style={{ filter: 'drop-shadow(0 0 8px var(--accent-primary)44)' }} />
+                                    <RefreshCw size={32} color="var(--accent-primary)" className="spin" style={{ filter: 'drop-shadow(0 0 8px var(--accent-primary)44)' }} />
                                 </div>
                                 <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem' }}>Simulation Pending</h3>
                                 <p style={{ color: 'var(--text-secondary)', maxWidth: '300px', lineHeight: '1.6' }}>

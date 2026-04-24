@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Sparkles, FileText, List, Lightbulb } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 
 function RAGInsights({ contentItemId, initialInsights = [] }) {
     // If we have initial insights, default to explanation, otherwise show landing (null)
@@ -107,7 +108,7 @@ function RAGInsights({ contentItemId, initialInsights = [] }) {
                 display: 'flex',
                 gap: '1rem',
                 marginBottom: '1.5rem',
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
+                borderBottom: '1px solid var(--card-border)',
                 overflowX: 'auto'
             }}>
                 <button
@@ -153,18 +154,9 @@ function RAGInsights({ contentItemId, initialInsights = [] }) {
                         {error}
                     </div>
                 ) : (
-                    <div className="markdown-content" style={{
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                        overflowWrap: 'anywhere',
-                        lineHeight: '1.6',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.95rem',
-                        maxWidth: '100%',
-                        overflow: 'hidden'
-                    }}>
-                        {insights[activeTab]}
-                    </div>
+                        <ReactMarkdown>
+                            {insights[activeTab] || ""}
+                        </ReactMarkdown>
                 )}
             </div>
         </div>

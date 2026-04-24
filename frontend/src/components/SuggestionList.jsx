@@ -137,14 +137,14 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                         <div style={{ 
                                             marginTop: '1.25rem', 
                                             padding: '1.25rem', 
-                                            background: '#0a0a10', 
+                                            background: 'var(--bg-tertiary)', 
                                             borderRadius: '10px',
-                                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                                            border: '1px solid var(--card-border)',
                                             position: 'relative'
                                         }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--success)', fontSize: '0.85rem', fontWeight: '700' }}>
-                                                    <Check size={16} /> OPTIMIZED CONTENT READY
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-primary)', fontSize: '0.85rem', fontWeight: '700' }}>
+                                                    <Check size={16} /> SURGICAL IMPROVEMENT GENERATED
                                                 </div>
                                                 <button 
                                                     onClick={() => copyToClipboard(fixes[suggestion.text].optimized_content)}
@@ -196,7 +196,7 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                                 <div style={{ 
                                                     marginTop: '1.25rem', 
                                                     paddingTop: '1rem', 
-                                                    borderTop: '1px solid rgba(255,255,255,0.05)',
+                                                    borderTop: '1px solid var(--card-border)',
                                                     fontSize: '0.8rem',
                                                     color: 'var(--accent-primary)',
                                                     fontWeight: '600',

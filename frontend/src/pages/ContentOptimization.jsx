@@ -500,6 +500,7 @@ function ContentOptimization() {
 
         try {
             // Parallel execution: Get Scores AND Get Optimized Version
+            // Using /api/optimize for full rewrite/generation
             const [analysisRes, optimizationRes] = await Promise.all([
                 axios.post('/api/analyze-text', {
                     content: content,
@@ -507,12 +508,13 @@ function ContentOptimization() {
                     content_type: contentType,
                     target_keyword: selectedKeyword || customKeyword || undefined
                 }),
-                axios.post('/api/auto-fix', {
+                axios.post('/api/optimize', {
                     content: content,
-                    suggestion: "Perform " + optimizationStrategy + " optimization for " + optimizationAudience + " audience in a " + optimizationTone + " tone.",
                     strategy: optimizationStrategy,
                     tone: optimizationTone,
-                    content_item_id: null // Will be assigned if saved later
+                    audience: optimizationAudience,
+                    strength: optimizationStrength,
+                    target_keyword: selectedKeyword || customKeyword || undefined
                 })
             ])
 
@@ -521,11 +523,9 @@ function ContentOptimization() {
                 optimizedContent: optimizationRes.data.optimized_content
             })
 
-            // Auto switch to result view if generating or rewriting
-            if (activeTab === 'generate' || activeTab === 'rewrite') {
-                setViewMode('result')
-                setShowSplitView(true)
-            }
+            // Auto switch to result view (Optimized tab) immediately
+            setViewMode('result')
+            setShowSplitView(true)
 
             fetchHistory()
         } catch (err) {
@@ -603,7 +603,7 @@ function ContentOptimization() {
                 </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '1.5rem' }}>
                 {/* Left Column - Input */}
                 <div>
                     {/* Diagnostic Bar */}
@@ -1189,7 +1189,7 @@ function ContentOptimization() {
                                             </label>
                                             <div style={{ display: 'grid', gap: '1.25rem' }}>
                                                 {schemaMetadata.faqItems.map((item, idx) => (
-                                                    <div key={idx} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                    <div key={idx} style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
                                                         <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', marginBottom: '1rem', fontWeight: '800' }}>QUESTION #{idx + 1}</div>
                                                         <input
                                                             value={item.question}
@@ -1235,7 +1235,7 @@ function ContentOptimization() {
                                             </label>
                                             <div style={{ display: 'grid', gap: '1rem' }}>
                                                 {schemaMetadata.howtoSteps.map((step, idx) => (
-                                                    <div key={idx} style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                    <div key={idx} style={{ padding: '1.25rem', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
                                                         <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', marginBottom: '0.75rem', fontWeight: '800' }}>STEP {idx + 1}</div>
                                                         <input
                                                             value={step.name}
@@ -1298,7 +1298,7 @@ function ContentOptimization() {
                         
                         {/* Adversarial Injections */}
                         {activeTab !== 'schema' && (
-                            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--card-border)' }}>
                                 <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-tertiary)', marginBottom: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                                     Adversarial Injection Tools
                                 </div>
@@ -1353,15 +1353,15 @@ function ContentOptimization() {
                                 </button>
                             </div>
                             <pre style={{
-                                background: 'rgba(0,0,0,0.3)',
+                                background: 'var(--bg-tertiary)',
                                 borderRadius: '12px',
                                 padding: '1.5rem',
                                 overflow: 'auto',
                                 maxHeight: '400px',
                                 fontSize: '0.85rem',
-                                color: '#a5f3fc',
+                                color: 'var(--accent-primary)',
                                 fontFamily: 'JetBrains Mono, SF Mono, Menlo, monospace',
-                                border: '1px solid rgba(255,255,255,0.05)',
+                                border: '1px solid var(--card-border)',
                                 lineHeight: '1.5'
                             }}>
                                 {JSON.stringify(schemaResult.json_ld, null, 2)}
@@ -1501,10 +1501,9 @@ function ContentOptimization() {
                             {viewMode === 'analysis' && analysisResults && (
                                 <ResultsPanel results={analysisResults} onReset={() => updateOptimization({ analysisResults: null, optimizedContent: '' })} context="text" />
                             )}
-
                             {viewMode === 'result' && optimizedContent && (
-                                <div className="depth-card animate-fade-in" style={{ padding: '2.5rem', background: 'rgba(15, 23, 42, 0.2)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1.5rem' }}>
+                                <div className="depth-card animate-fade-in" style={{ padding: '2.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--card-border)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1.5rem' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                             <div style={{ width: '8px', height: '24px', background: 'var(--accent-primary)', borderRadius: '4px' }}></div>
                                             <h3 style={{ fontSize: '1.4rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
@@ -1554,7 +1553,7 @@ function ContentOptimization() {
                                     </div>
                                     <div className="markdown-content" ref={resultRef} style={{
                                         lineHeight: '1.8',
-                                        color: '#cbd5e1',
+                                        color: 'var(--text-primary)',
                                         fontFamily: 'Inter, sans-serif',
                                         fontSize: '1.05rem'
                                     }}>
@@ -1598,7 +1597,7 @@ function ContentOptimization() {
 
                                     {/* Side by Side */}
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                        <div className="depth-card" style={{ padding: '2rem', background: 'rgba(239, 68, 68, 0.02)', border: '1px solid rgba(239, 68, 68, 0.08)' }}>
+                                        <div className="depth-card" style={{ padding: '2rem', background: 'var(--bg-tertiary)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
                                                 <div style={{ width: '6px', height: '18px', background: '#ef4444', borderRadius: '4px' }}></div>
                                                 <h4 style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>DRAFT VERSION</h4>
@@ -1614,7 +1613,7 @@ function ContentOptimization() {
                                                 {content}
                                             </div>
                                         </div>
-                                        <div className="depth-card" style={{ padding: '2rem', background: 'rgba(16, 185, 129, 0.02)', border: '1px solid rgba(16, 185, 129, 0.08)' }}>
+                                        <div className="depth-card" style={{ padding: '2rem', background: 'var(--bg-tertiary)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
                                                 <div style={{ width: '6px', height: '18px', background: '#10b981', borderRadius: '4px' }}></div>
                                                 <h4 style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>OPTIMIZED MASTER</h4>
@@ -1759,7 +1758,13 @@ function ContentOptimization() {
                                                     borderLeft: `2px solid ${isSchema ? 'var(--accent-secondary)' : 'var(--accent-primary)'}`
                                                 }} className="history-item">
                                                 <div style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.4rem', color: 'var(--text-primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    <span style={{ 
+                                                        display: 'block',
+                                                        overflow: 'hidden', 
+                                                        textOverflow: 'ellipsis', 
+                                                        whiteSpace: 'nowrap',
+                                                        width: '100%'
+                                                    }}>
                                                         {item.title || 'Untitled Optimization'}
                                                     </span>
                                                     <span style={{
@@ -1809,9 +1814,10 @@ function ContentOptimization() {
                     {/* Optimization Insights Panel */}
                     <div className="depth-card" style={{
                         padding: '1.5rem',
-                        background: 'rgba(255,255,255,0.02)',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                        borderRadius: '16px'
+                        position: 'sticky',
+                        top: '1.5rem',
+                        borderRadius: '16px',
+                        overflow: 'hidden'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
                             {activeTab === 'schema' ? <Code2 size={18} color="var(--accent-primary)" /> : <TrendingUp size={18} color="var(--accent-primary)" />}

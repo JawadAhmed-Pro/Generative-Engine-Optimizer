@@ -874,20 +874,24 @@ async def simulate_ai(payload: SimulateAIRequest = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/auto-fix")
-async def auto_fix_content(payload: AutoFixRequest = Body(...)):
-    """Surgically fix content based on a specific audit suggestion."""
+@app.post("/api/optimize")
+async def optimize_full_content(payload: OptimizeContentRequest = Body(...)):
+    """Deep optimization using section-by-section rewrite engine."""
     try:
         from geo_optimizer import geo_optimizer
-        result = await geo_optimizer.auto_fix(
+        result = await geo_optimizer.rewrite(
             content=payload.content,
-            suggestion=payload.suggestion,
             strategy=payload.strategy,
-            tone=payload.tone
+            tone=payload.tone,
+            audience=payload.audience,
+            strength=payload.strength,
+            target_query=payload.target_keyword
         )
         return result
     except Exception as e:
+        app_logger.error(f"Optimization failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @app.get("/api/semantic-search")
@@ -1111,8 +1115,8 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     ]
     
     # Run Live Verification (Simulation wrapper)
-    # Using a sync wrapper for the async call since perform_analysis is async
-    live_results = await live_verifier.verify_citations(url=extracted.get('url', ''), queries=validation_queries)
+    predicted_anchor = prob_calc.get('probability', 60.0)
+    live_results = await live_verifier.verify_citations(url=extracted.get('url', ''), queries=validation_queries, predicted_score=predicted_anchor)
     actual_rate = live_results["actual_citation_rate"]
     
     # NEW: Grounding Audit (Identify missing stats/facts)

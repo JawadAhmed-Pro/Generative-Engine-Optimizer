@@ -123,7 +123,12 @@ class GEOOptimizer:
         """
         # Smoothing can be a simpler text response or JSON
         final_result = await self._call_llm(smoothing_prompt)
-        smoothed_content = final_result.get("optimized_content", full_content) if isinstance(final_result, dict) else full_content
+        
+        smoothed_content = full_content
+        if isinstance(final_result, dict):
+            smoothed_content = final_result.get("optimized_content") or final_result.get("smoothed_content") or full_content
+        elif isinstance(final_result, str):
+            smoothed_content = final_result
 
         # 5. Final Scoring (FIX 3)
         structural = self.get_structural_score(smoothed_content)
@@ -268,35 +273,40 @@ class GEOOptimizer:
     async def auto_fix(self, content: str, suggestion: str, strategy: str = 'general', tone: str = 'professional') -> Dict[str, Any]:
         """
         Automatically fixes content based on a suggestion, respecting strategy and tone.
+        Strictly surgical: Returns ONLY the improved snippet or new section.
         """
-        app_logger.info(f"Agent: Auto-fixing content based on suggestion: {suggestion}")
+        app_logger.info(f"Agent: Surgical auto-fix for suggestion: {suggestion}")
         
         prompt = f"""
         Act as a GEO (Generative Engine Optimization) Content Optimizer.
         
-        GOAL: Apply the following specific suggestion to the provided content.
+        GOAL: Generate a SURGICAL FIX for the following suggestion.
         STRATEGY: {strategy}
         TONE: {tone}
-               Surgical Rule:
-        1. Maintain the original tone and context unless specified.
-        2. ONLY change the content to directly address the suggestion.
-        3. ANTI-HALLUCINATION: If a claim already contains a statistic from the original content, preserve it exactly.
-           If a claim has no statistic, do NOT invent one.
-           Instead, append a tag: [CITATION NEEDED: <what type of source would support this claim>]
-           Never generate percentages, figures, or numerical data that were not in the original input.
+        
+        CRITICAL SURGICAL RULES:
+        1. Do NOT rewrite the entire article.
+        2. Generate ONLY the specific sentence, paragraph, or section (like a table or FAQ) that addresses the suggestion.
+        3. If the suggestion is to 'Add' something, generate only the new content to be added.
+        4. If the suggestion is to 'Modify' something, provide the improved version of that specific part.
+        5. The output should be a concise snippet, not a bulk of text.
+        
+        ANTI-HALLUCINATION:
+        - If the suggestion requires data (stats, numbers), only use data from the content below.
+        - If no data is available in the content, use the [CITATION NEEDED] tag.
         
         SUGGESTION TO APPLY:
         "{suggestion}"
         
-        CONTENT TO FIX:
+        CONTENT CONTEXT:
         ---
         {content[:3000]}
         ---
         
         Return the response in valid JSON format exactly as follows:
         {{
-            "optimized_content": "...",
-            "changes_made": ["change 1", "change 2"],
+            "optimized_content": "The surgical snippet here...",
+            "changes_made": ["Briefly describe the specific change"],
             "geo_lift_estimate": "Estimated +X% visibility"
         }}
         """
@@ -499,6 +509,9 @@ class GEOOptimizer:
                         return result
                     else:
                         app_logger.error(f"LLM Error: {resp.status}")
+                        # Fallback for network/API error if we have partial results
+                        if "optimized_content" in prompt:
+                            return {"optimized_content": "Error: AI engine unreachable. Please try again."}
                         return {"error": f"LLM Error: {resp.status}"}
         except Exception as e:
             app_logger.error(f"GEO Optimizer LLM Call Failed: {e}")

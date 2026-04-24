@@ -16,17 +16,17 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
     const LABELS = {
         url: {
             overall: "Overall GEO Score",
-            ai_visibility: "AI Search Visibility",
+            ai_visibility: "Structural Visibility",
             citation_worthiness: "Citation Worthiness",
-            semantic_richness: "Semantic Coverage",
-            technical_readability: "Technical Readability"
+            semantic_richness: "Semantic Depth",
+            technical_readability: "Readability & UX"
         },
         text: {
             overall: "Content Optimization Score",
-            ai_visibility: "Structure & AI Readiness",
+            ai_visibility: "AI Structure",
             citation_worthiness: "Authority & Trust",
-            semantic_richness: "Topic Depth & Intent",
-            technical_readability: "Readability & Clarity"
+            semantic_richness: "Topic Depth",
+            technical_readability: "Readability UX"
         }
     }
     const currentLabels = LABELS[context] || LABELS.url;
@@ -195,9 +195,17 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{probabilityMetrics.validation_layer.actual_citation_rate}%</div>
                         </div>
                         <div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Error Gap</div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: Math.abs(probabilityMetrics.validation_layer.error_gap) > 15 ? 'var(--error)' : 'var(--success)' }}>
-                                {probabilityMetrics.validation_layer.error_gap > 0 ? '+' : ''}{probabilityMetrics.validation_layer.error_gap}%
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
+                                Score Confidence
+                                <div className="tooltip-trigger" style={{ cursor: 'help' }}>
+                                    <Info size={10} />
+                                    <span className="tooltip-text">
+                                        The variance between predicted probability and actual engine citations. Low variance indicates high model reliability.
+                                    </span>
+                                </div>
+                            </div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: Math.abs(probabilityMetrics.validation_layer.error_gap) > 15 ? 'var(--warning)' : 'var(--success)' }}>
+                                {100 - Math.abs(probabilityMetrics.validation_layer.error_gap)}%
                             </div>
                             <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: '0.2rem' }}>Status: {probabilityMetrics.validation_layer.status}</div>
                         </div>
@@ -326,22 +334,26 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                         <MetricCard
                             title={currentLabels.ai_visibility}
                             score={results.ai_visibility_score || 0}
-                            description={context === 'text' ? "How well structured for AI understanding" : "How easily AI models can find and cite this content"}
+                            description="Measures H-tags, schema, and AI-parsable hierarchy."
+                            tooltip="AI search engines prioritize content with clear semantic markers and proper schema.org tagging."
                         />
                         <MetricCard
                             title={currentLabels.citation_worthiness}
                             score={results.citation_worthiness_score || 0}
-                            description={context === 'text' ? "Trust signals and expertise indicators" : "Likelihood of being referenced by AI as authoritative"}
+                            description="Analysis of trust signals and factual density."
+                            tooltip="High citation worthiness means your content provides verifiable facts and expert consensus."
                         />
                         <MetricCard
                             title={currentLabels.semantic_richness}
                             score={results.semantic_coverage_score || 0}
-                            description={context === 'text' ? "Vocabulary depth and user intent match" : "Depth and richness of topic coverage"}
+                            description="Depth of topic coverage and entity anchoring."
+                            tooltip="A measure of how comprehensively you cover the 'entities' related to your target keyword."
                         />
                         <MetricCard
                             title={currentLabels.technical_readability}
                             score={results.technical_readability_score || 0}
-                            description={context === 'text' ? "Clarity, flow, and formatting" : "Structure, readability, and freshness signals"}
+                            description="Clarity, UX flow, and answer directness."
+                            tooltip="Measures if an AI can easily extract a direct answer for its response snippet."
                         />
                     </>
                 )}

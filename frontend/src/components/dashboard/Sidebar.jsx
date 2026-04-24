@@ -86,8 +86,8 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                                 }}
                             />
                             <div>
-                                <h1 style={{ fontSize: '1rem', fontWeight: '700', lineHeight: '1.2', whiteSpace: 'nowrap' }}>Generative Engine</h1>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Optimizer</div>
+                                <h1 style={{ fontSize: '1rem', fontWeight: '700', lineHeight: '1.2', whiteSpace: 'nowrap', color: '#F8FAFC' }}>Generative Engine</h1>
+                                <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Optimizer</div>
                             </div>
                         </>
                     )}
@@ -134,7 +134,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                                     gap: '0.75rem',
                                     padding: collapsed ? '0.75rem' : '0.75rem',
                                     borderRadius: 'var(--radius-md)',
-                                    color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                                    color: isActive ? '#3B82F6' : '#94A3B8',
                                     textDecoration: 'none',
                                     fontSize: '0.9rem',
                                     fontWeight: isActive ? '600' : '500',
@@ -188,10 +188,10 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
                     {!collapsed && (
                         <>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '0.9rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ fontSize: '0.9rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#F8FAFC' }}>
                                     {user?.name || 'User'}
                                 </div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ fontSize: '0.75rem', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {user?.email || ''}
                                 </div>
                             </div>

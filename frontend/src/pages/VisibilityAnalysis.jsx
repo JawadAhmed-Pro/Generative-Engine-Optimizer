@@ -452,7 +452,9 @@ function VisibilityAnalysis() {
                                                     fontWeight: '600', 
                                                     marginBottom: '0.4rem', 
                                                     color: 'var(--text-primary)',
-                                                    wordBreak: 'break-all',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
                                                     lineHeight: '1.4'
                                                 }}>
                                                     {item.url?.replace('https://', '').replace('http://', '') || item.title}
@@ -466,11 +468,11 @@ function VisibilityAnalysis() {
                                                         fontWeight: '700',
                                                         padding: '0.15rem 0.5rem',
                                                         borderRadius: '4px',
-                                                        background: item.score >= 80 ? '#0a1d15' : '#1d150a',
-                                                        color: item.score >= 80 ? 'var(--success)' : 'var(--warning)',
-                                                        border: `1px solid ${item.score >= 80 ? 'var(--success)' : 'var(--warning)'}33`
+                                                        background: (item.score >= 80 || !item.score) ? '#0a1d15' : '#1d150a',
+                                                        color: (item.score >= 80 || !item.score) ? 'var(--success)' : 'var(--warning)',
+                                                        border: `1px solid ${(item.score >= 80 || !item.score) ? 'var(--success)' : 'var(--warning)'}33`
                                                     }}>
-                                                        {typeof item.score === 'number' ? Math.round(item.score) + '%' : 'N/A'}
+                                                        {typeof item.score === 'number' ? Math.round(item.score) + '%' : 'Pending'}
                                                     </div>
                                                 </div>
                                             </div>

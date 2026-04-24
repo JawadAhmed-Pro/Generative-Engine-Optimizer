@@ -95,7 +95,8 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
+            background: 'var(--bg-primary)',
+            opacity: 0.95,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -141,7 +142,7 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                                     title="Copy to clipboard"
                                     aria-label="Copy results to clipboard"
                                     style={{
-                                        background: 'rgba(255,255,255,0.1)',
+                                        background: 'var(--bg-tertiary)',
                                         border: 'none',
                                         color: 'var(--text-secondary)',
                                         cursor: 'pointer',
@@ -159,7 +160,7 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                                     title="Download JSON"
                                     aria-label="Download analysis as JSON"
                                     style={{
-                                        background: 'rgba(255,255,255,0.1)',
+                                        background: 'var(--bg-tertiary)',
                                         border: 'none',
                                         color: 'var(--text-secondary)',
                                         cursor: 'pointer',
@@ -201,25 +202,25 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                     <>
                         {/* Score Cards */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-                            <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
+                            <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--card-border)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
                                 <div style={{ fontSize: '2rem', fontWeight: '700', color: getScoreColor(data.analysis.overall_score) }}>
                                     {data.analysis.overall_score}
                                 </div>
                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>OVERALL</div>
                             </div>
-                            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
+                            <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
                                 <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis.ai_visibility_score}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>AI Visibility</div>
                             </div>
-                            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
+                            <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
                                 <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis.citation_worthiness_score}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Citation</div>
                             </div>
-                            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
+                            <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
                                 <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis.semantic_coverage_score}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Semantic</div>
                             </div>
-                            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
+                            <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
                                 <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis.technical_readability_score}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Readability</div>
                             </div>
@@ -241,7 +242,8 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem' }}>AI Feedback</h3>
                                 <div style={{
-                                    background: 'rgba(0,0,0,0.2)',
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid var(--card-border)',
                                     padding: '1rem',
                                     borderRadius: '8px',
                                     fontSize: '0.875rem',

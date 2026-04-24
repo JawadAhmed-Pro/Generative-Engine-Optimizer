@@ -1,6 +1,6 @@
-import { ArrowUpRight, ArrowRight, ArrowDownRight } from 'lucide-react'
+import { ArrowUpRight, ArrowRight, ArrowDownRight, Info } from 'lucide-react'
 
-function MetricCard({ title, score, description, unit = "/ 100" }) {
+function MetricCard({ title, score, description, unit = "/ 100", tooltip = "" }) {
     const safeScore = typeof score === 'number' && !isNaN(score) ? score : 0;
 
     const getScoreClass = (score) => {
@@ -31,7 +31,17 @@ function MetricCard({ title, score, description, unit = "/ 100" }) {
         }}>
             <div>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.25rem', gap: '0.75rem', justifyContent: 'space-between' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-primary)' }}>{title}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-primary)' }}>{title}</h3>
+                        {tooltip && (
+                            <div className="tooltip-trigger" style={{ cursor: 'help', color: 'var(--text-tertiary)' }}>
+                                <Info size={14} />
+                                <span className="tooltip-text" style={{ width: '200px', fontSize: '0.75rem', fontWeight: 'normal' }}>
+                                    {tooltip}
+                                </span>
+                            </div>
+                        )}
+                    </div>
                     <div style={{
                         width: '32px',
                         height: '32px',

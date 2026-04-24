@@ -180,11 +180,19 @@ export default function ContentStrategy() {
                                     className="btn btn-primary"
                                     style={{ width: '100%', padding: '1.1rem', background: 'var(--accent-gradient)', border: 'none', fontSize: '1.1rem', fontWeight: '700', gap: '0.75rem', boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.4)' }}
                                 >
-                                    {isLoading ? (
-                                        <RefreshCwIcon size={22} className="spin" />
-                                    ) : (
-                                        <><Search size={22} /> Generate Strategy</>
-                                    )}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+                                        {isLoading ? (
+                                            <>
+                                                <RefreshCwIcon size={22} className="spin" />
+                                                <span>Strategizing...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Search size={22} />
+                                                <span>Generate Strategy</span>
+                                            </>
+                                        )}
+                                    </div>
                                 </button>
                             </div>
                         </form>

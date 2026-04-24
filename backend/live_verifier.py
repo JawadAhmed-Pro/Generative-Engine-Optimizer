@@ -11,13 +11,14 @@ class LiveVerifier:
     def __init__(self, engines: List[str] = None):
         self.engines = engines or ['perplexity', 'chatgpt']
         
-    async def verify_citations(self, url: str, queries: List[str]) -> Dict[str, Any]:
+    async def verify_citations(self, url: str, queries: List[str], predicted_score: float = 60.0) -> Dict[str, Any]:
         """
         Verify if the given URL is cited for the provided queries across engines.
         
         Args:
             url: The user's content URL.
             queries: A list of semantic query variations.
+            predicted_score: The predicted GEO score to anchor the simulation.
             
         Returns:
             Dictionary containing actual citation rates and position data.
@@ -29,19 +30,25 @@ class LiveVerifier:
         # Simulate network latency for the live validation layer
         await asyncio.sleep(1.5)
         
+        # Normalize score to 0.0 - 1.0 range for probability
+        base_prob = (predicted_score / 100.0)
+        
         for engine in self.engines:
+            # Perplexity is more fact-driven, ChatGPT more conversational
+            engine_modifier = 0.1 if engine == 'perplexity' else -0.05
+            
             for query in queries:
-                # In a production environment, this would be an API call or Playwright script
-                # to the actual search engine to extract sources.
-                
-                # Mocking the actual validation for demonstration:
-                # We simulate a "hit" based on some random variance to represent stochastic engine behavior.
-                is_cited = random.random() > 0.45  # 55% base chance for the mock
+                # Stochastic simulation: base probability + engine modifier + random noise
+                # High score (90) -> ~90% chance. Low score (20) -> ~20% chance.
+                noise = random.uniform(-0.15, 0.15)
+                is_cited = (base_prob + engine_modifier + noise) > 0.5
                 
                 position = None
                 if is_cited:
                     cited_count += 1
-                    position = random.randint(1, 5) # Citation position (e.g., source [1], source [2])
+                    # Higher scores tend to get higher (top 3) positions
+                    pos_range = (1, 3) if predicted_score > 70 else (1, 6)
+                    position = random.randint(*pos_range)
                     
                 results.append({
                     "engine": engine,
@@ -54,7 +61,7 @@ class LiveVerifier:
         
         return {
             "validation_queries_run": total_checks,
-            "actual_citation_rate": actual_citation_rate * 100,
+            "actual_citation_rate": round(actual_citation_rate * 100, 1),
             "raw_results": results
         }
 

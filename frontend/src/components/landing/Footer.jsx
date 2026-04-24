@@ -115,16 +115,16 @@ function Footer() {
                             The authoritative engine for Generative Engine Optimization. Engineering visibility in the age of intelligence.
                         </p>
                         <div style={{ display: 'flex', gap: '1.25rem' }}>
-                            <a href="#" style={{ color: 'var(--text-tertiary)', transition: 'color 0.2s' }}>
+                            <a href="https://twitter.com/geotool" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-tertiary)', transition: 'color 0.2s' }}>
                                 <Twitter size={22} />
                             </a>
-                            <a href="#" style={{ color: 'var(--text-tertiary)', transition: 'color 0.2s' }}>
+                            <a href="https://linkedin.com/company/geotool" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-tertiary)', transition: 'color 0.2s' }}>
                                 <Linkedin size={22} />
                             </a>
-                            <a href="#" style={{ color: 'var(--text-tertiary)', transition: 'color 0.2s' }}>
+                            <a href="https://github.com/geotool" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-tertiary)', transition: 'color 0.2s' }}>
                                 <Github size={22} />
                             </a>
-                            <a href="#" style={{ color: 'var(--text-tertiary)', transition: 'color 0.2s' }}>
+                            <a href="mailto:contact@geo-tool.site" style={{ color: 'var(--text-tertiary)', transition: 'color 0.2s' }}>
                                 <Mail size={22} />
                             </a>
                         </div>
@@ -144,10 +144,10 @@ function Footer() {
                     <div>
                         <h4 style={{ fontWeight: '700', marginBottom: '1.25rem', fontSize: '0.9rem', color: 'var(--text-primary)', letterSpacing: '0.05em' }}>RESOURCES</h4>
                         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                            <li><a href="#" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.95rem' }}>Documentation</a></li>
-                            <li><a href="#" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.95rem' }}>Case Studies</a></li>
-                            <li><a href="#" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.95rem' }}>API Control</a></li>
-                            <li><a href="#" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.95rem' }}>System Status</a></li>
+                            <li><Link to="/docs" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.95rem' }}>Documentation</Link></li>
+                            <li><Link to="/cases" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.95rem' }}>Case Studies</Link></li>
+                            <li><Link to="/api" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.95rem' }}>API Control</Link></li>
+                            <li><a href="https://status.geo-tool.site" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.95rem' }}>System Status</a></li>
                         </ul>
                     </div>
                 </div>
