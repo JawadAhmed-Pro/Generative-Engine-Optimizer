@@ -450,8 +450,6 @@ You are an OBJECTIVE AUDITOR. Grade fairly based on industry standards.
     - **Trustworthiness**: Absence of generic fluff; presence of safety warnings, citations, and data.
 7. **Readability UX**: Clarity and lack of narrative 'fluff'.
 
-Provide response in this EXACT JSON format:
-{
     "semantic_richness": <int>,
     "user_intent_alignment": <int>,
     "structural_integrity": <int>,
@@ -459,7 +457,10 @@ Provide response in this EXACT JSON format:
     "content_authority": <int>,
     "internal_linkability": <int>,
     "readability_ux": <int>,
-    "primary_intent": "Informational" | "Navigational" | "Transactional" | "Commercial Investigation",
+    "query_intent": "Factual" | "Advisory" | "Comparative" | "Commercial",
+    "atomic_claim_quality": <int>,
+    "narrative_noise_score": <int>,
+    "structural_scrapability": <int>,
     "experience_score": <int>,
     "expertise_score": <int>,
     "authoritativeness_score": <int>,
@@ -467,6 +468,12 @@ Provide response in this EXACT JSON format:
     "explanation": "<summary string>",
     "suggestions": ["<impact_prefix>: <suggestion_string>", "..."]
 }
+
+### CHATGPT SPECIALIZED SIGNALS (NEW):
+- **query_intent**: Classify the query. (Factual = seeking direct data; Advisory = seeking how-to; Comparative = seeking vs; Commercial = seeking product).
+- **atomic_claim_quality**: High score if claims are specific (dates, %s, exact names). Low score if claims are vague ("high speed", "many people").
+- **narrative_noise_score**: 0-100. High score = too much filler ("In conclusion", "Furthermore", "It is important to note").
+- **structural_scrapability**: 0-100. Ease of lifting data from tables and lists.
 """
 
         # Add Intent Alignment specific instruction
@@ -506,7 +513,10 @@ Does it directly answer the user's intent? (Boolean).
             "content_authority": 50,
             "internal_linkability": 50,
             "readability_ux": 50,
-            "primary_intent": "Informational",
+            "query_intent": "Factual",
+            "atomic_claim_quality": 50,
+            "narrative_noise_score": 0,
+            "structural_scrapability": 50,
             "experience_score": 50,
             "expertise_score": 50,
             "authoritativeness_score": 50,

@@ -29,7 +29,12 @@ class ScoreAggregator:
             'experience': llm_scores.get('experience_score', 50),
             'expertise': llm_scores.get('expertise_score', 50),
             'authoritativeness': llm_scores.get('authoritativeness_score', 50),
-            'trustworthiness': llm_scores.get('trustworthiness_score', 50)
+            'trustworthiness': llm_scores.get('trustworthiness_score', 50),
+            # ChatGPT Specialized Signals
+            'atomic_claim_quality': llm_scores.get('atomic_claim_quality', 50),
+            'narrative_noise': llm_scores.get('narrative_noise_score', 0),
+            'structural_scrapability': llm_scores.get('structural_scrapability', 50),
+            'query_intent': llm_scores.get('query_intent', 'Factual')
         }
         
         # --- Extract Rule-Based Metrics (The Gated Baseline) ---
@@ -41,13 +46,17 @@ class ScoreAggregator:
         
         auth_details = rule_based_scores.get('authority', {}).get('details', {})
         
-        # --- Pillar 1: Structural Clarity (Structure + Readability + AI Formatting) ---
+        # --- Pillar 1: Structural Clarity (Structure + Readability + AI Formatting + Scrapability - Noise) ---
         structural_baseline = (rb_structure * 0.6) + (rb_readability * 0.4)
-        structural_refinement = (llm_metrics['structural_integrity'] * 0.5) + (llm_metrics['ai_formatting'] * 0.5)
+        
+        # ChatGPT Optimization: Scrapability increases score, Noise decreases it
+        structural_refinement_base = (llm_metrics['structural_integrity'] * 0.4) + (llm_metrics['ai_formatting'] * 0.3) + (llm_metrics['structural_scrapability'] * 0.3)
+        noise_penalty = (llm_metrics['narrative_noise'] / 2) # Max -50 penalty for pure fluff
+        structural_refinement = max(0, structural_refinement_base - noise_penalty)
+        
         structural_clarity_score = min(max((structural_baseline * self.rule_weight) + (structural_refinement * self.llm_weight), 0), 100)
         
-        # --- Pillar 2: Citation Worthiness (Entity + Grounding + EEAT) ---
-        # Booster logic remains the same
+        # --- Pillar 2: Citation Worthiness (Entity + Grounding + EEAT + Atomic Claim Quality) ---
         trust_booster = min((auth_details.get('citations', 0) * 5) + (auth_details.get('fact_density', 0) * 10), 20)
         hybrid_trust = min(llm_metrics['trustworthiness'] * 0.8 + trust_booster, 100)
         
@@ -62,7 +71,8 @@ class ScoreAggregator:
         )
         
         citation_baseline = rb_authority
-        citation_refinement = (llm_metrics['content_authority'] * 0.5) + (overall_eeat * 0.5)
+        # ChatGPT Optimization: Incorporate Atomic Claim Quality
+        citation_refinement = (llm_metrics['content_authority'] * 0.4) + (overall_eeat * 0.4) + (llm_metrics['atomic_claim_quality'] * 0.2)
         citation_worthiness_score = min(max((citation_baseline * self.rule_weight) + (citation_refinement * self.llm_weight), 0), 100)
         
         # --- Pillar 3: Semantic Coverage (Intent Alignment + Information Gain) ---
@@ -74,7 +84,6 @@ class ScoreAggregator:
         rb_freshness = rule_based_scores.get('freshness', {}).get('score', 50)
         freshness_baseline = (rb_freshness * 0.6) + (rb_schema * 0.4)
         
-        # Incorporate Authority Signals from Fix 4
         auth_signals_score = auth_details.get('link_authority_score', 0)
         if auth_details.get('has_same_as_entities'):
             auth_signals_score = min(100, auth_signals_score + 40)
@@ -82,28 +91,41 @@ class ScoreAggregator:
         freshness_refinement = (llm_metrics['authoritativeness'] * 0.4) + (auth_signals_score * 0.6)
         freshness_authority_score = min(max((freshness_baseline * self.rule_weight) + (freshness_refinement * self.llm_weight), 0), 100)
             
+        # --- [NEW] Intent-Based Weighting (The ChatGPT Filter) ---
+        intent = llm_metrics['query_intent']
+        if intent == 'Factual':
+            weights = {'p1': 0.15, 'p2': 0.50, 'p3': 0.20, 'p4': 0.15}
+        elif intent == 'Advisory':
+            weights = {'p1': 0.50, 'p2': 0.15, 'p3': 0.20, 'p4': 0.15}
+        elif intent == 'Comparative':
+            weights = {'p1': 0.15, 'p2': 0.20, 'p3': 0.50, 'p4': 0.15}
+        elif intent == 'Commercial':
+            weights = {'p1': 0.20, 'p2': 0.30, 'p3': 0.30, 'p4': 0.20}
+        else: # Default
+            weights = {'p1': 0.25, 'p2': 0.25, 'p3': 0.25, 'p4': 0.25}
+
         # --- E-commerce Specialization (Overrides) ---
         if 'product_data_completeness' in llm_scores:
-            # Re-weight Semantic Coverage for Ecom
             ecom_data = llm_scores.get('product_data_completeness', 50)
             semantic_coverage_score = min(max((semantic_coverage_score * 0.7) + (ecom_data * 0.3), 0), 100)
         
         if 'review_presence' in llm_scores:
-            # Re-weight Citation for Ecom
             ecom_reviews = llm_scores.get('review_presence', 50)
             citation_worthiness_score = min(max((citation_worthiness_score * 0.7) + (ecom_reviews * 0.3), 0), 100)
             
         # --- Formatting for API Response ---
         ai_details = {
             'ai_friendly_formatting': llm_metrics['ai_formatting'],
-            'structural_integrity': llm_metrics['structural_integrity']
+            'structural_integrity': llm_metrics['structural_integrity'],
+            'structural_scrapability': llm_metrics['structural_scrapability'],
+            'narrative_noise': llm_metrics['narrative_noise']
         }
         
         citation_details = {
             'content_authority': llm_metrics['content_authority'],
+            'atomic_claim_quality': llm_metrics['atomic_claim_quality'],
             'citations_found': auth_details.get('citations', 0),
-            'facts_density': auth_details.get('fact_density', 0),
-            'authority_links_found': auth_details.get('authority_links_found', 0)
+            'facts_density': auth_details.get('fact_density', 0)
         }
         
         semantic_details = {
@@ -187,7 +209,16 @@ class ScoreAggregator:
         authoritativeness_score = llm_metrics['authoritativeness']
         trustworthiness_score = llm_metrics['trustworthiness']
 
+        # Calculate overall score using dynamic weights
+        overall_visibility_score = (
+            structural_clarity_score * weights['p1'] +
+            citation_worthiness_score * weights['p2'] +
+            semantic_coverage_score * weights['p3'] +
+            freshness_authority_score * weights['p4']
+        )
+
         return {
+            'overall_visibility_score': round(overall_visibility_score, 1),
             'structural_clarity_score': round(structural_clarity_score, 1),
             'citation_worthiness_score': round(citation_worthiness_score, 1),
             'semantic_coverage_score': round(semantic_coverage_score, 1),
@@ -196,8 +227,9 @@ class ScoreAggregator:
             'llm_scores': formatted_llm_scores_response,
             'suggestions': final_suggestions,
             'intent_analysis': {
-                'primary_intent': primary_intent,
-                'alignment_score': user_intent_val
+                'query_intent': intent,
+                'alignment_score': user_intent_val,
+                'weights_used': weights
             },
             'eeat_analysis': {
                 'experience': experience_score,

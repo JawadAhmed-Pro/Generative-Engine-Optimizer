@@ -160,13 +160,21 @@ class RuleBasedScorer:
         else:
             suggestions.append("Add a comprehensive introduction paragraph (30+ words)")
         
-        # Paragraph Variety (Medium)
-        para_lengths = [len(p.split()) for p in paragraphs]
-        if len(para_lengths) > 3:
-            std_dev = (sum((x - avg_para_words)**2 for x in para_lengths) / len(para_lengths))**0.5
-            if std_dev < 10:
-                suggestions.append("Vary paragraph lengths to improve visual rhythm and engagement")
+        # Structural Scrapability (ChatGPT Specialized)
+        has_tables = '|' in content and '---' in content
+        list_items = len(re.findall(r'^[-*]\s+', content, re.MULTILINE))
         
+        scrapability_score = 0
+        if has_tables: scrapability_score += 60
+        if list_items >= 5: scrapability_score += 40
+        
+        details['structural_scrapability'] = min(100, scrapability_score)
+        if scrapability_score >= 60:
+            score += 20
+            suggestions.insert(0, "✅ Excellent: Structural scrapability is high (Tables/Lists detected).")
+        else:
+            suggestions.append("Add Markdown Tables or long bulleted lists to improve AI data lifting (High Impact)")
+            
         return {
             'score': min(score, 100),
             'details': details,
@@ -534,6 +542,7 @@ class RuleBasedScorer:
             pass # Don't penalize if calculation fails
         
         # Direct Answer Density (Pillar 3)
+        sentences = re.split(r'(?<=[.?!])\s+', content.strip())
         direct_answer_count = 0
         for sentence in sentences:
             words = sentence.strip().split()
@@ -557,6 +566,16 @@ class RuleBasedScorer:
         if ratio < 0.4:
             suggestions.append("Increase Direct Answer Density: Start more sentences with declarative Subject+Verb patterns")
         
+        # Narrative Noise Detector (ChatGPT Specialized)
+        fluff_phrases = ["in conclusion", "furthermore", "moreover", "it is important to note", "it is worth noting", "additionally", "as such", "consequently", "it should be noted"]
+        noise_count = sum(content.lower().count(p) for p in fluff_phrases)
+        noise_score = min(100, (noise_count * 15)) # Every fluff phrase adds 15% noise
+        details['narrative_noise'] = noise_score
+        
+        if noise_score > 30:
+            score -= 15
+            suggestions.append(f"High Narrative Noise ({noise_score}%): Remove generic transition fluff like 'Moreover' or 'It is important to note'")
+        
         # Active voice - Relaxed
         words = content.lower().split()
         passive_indicators = words.count('was') + words.count('were') + words.count('been')
@@ -567,12 +586,6 @@ class RuleBasedScorer:
             details['active_voice_dominant'] = True
         else:
             suggestions.append("Consider using more active voice for punchier content")
-        
-        # Transition words (Medium)
-        transitions = ['however', 'furthermore', 'moreover', 'consequently', 'therefore', 'additionally', 'similarly', 'conversely', 'notably', 'specifically']
-        transition_count = sum(1 for t in transitions if t in content.lower())
-        if transition_count < 5:
-            suggestions.append("Use more transition words (e.g., 'Moreover', 'Specifically') to improve logical flow")
             
         return {
             'score': min(score, 100),

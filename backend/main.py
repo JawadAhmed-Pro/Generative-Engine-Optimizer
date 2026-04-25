@@ -1165,13 +1165,8 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     detection_context['raw_content'] = content
     detection_context['target_keyword'] = extracted.get('target_keyword', '')
 
-    # Calculate initial probability baseline (Pillar weights: 25% each)
-    current_overall = (
-        final_scores['citation_worthiness_score'] * 0.25 +
-        final_scores['structural_clarity_score'] * 0.25 + 
-        final_scores['semantic_coverage_score'] * 0.25 + 
-        final_scores['freshness_authority_score'] * 0.25
-    )
+    # Calculate initial probability baseline (using dynamically weighted overall score)
+    current_overall = final_scores.get('overall_visibility_score', 0)
     
     prob_calc = services.probability_model.calculate_probability(
         overall_score=current_overall,

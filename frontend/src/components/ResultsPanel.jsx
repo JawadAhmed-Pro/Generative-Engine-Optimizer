@@ -88,12 +88,16 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
         return 'score-low'
     }
 
-    const overallScore = Math.round(
+    const overallScore = results.overall_visibility_score ?? Math.round(
         ((results.structural_clarity_score || 0) +
             (results.citation_worthiness_score || 0) +
             (results.semantic_coverage_score || 0) +
             (results.freshness_authority_score || 0)) / 4
     )
+
+    const queryIntent = results.intent_analysis?.query_intent || 'General';
+    const chatgptMetrics = results.llm_scores?.structural_clarity?.details || {};
+    const citationMetrics = results.llm_scores?.citation_worthiness?.details || {};
 
     // Extract new probability metrics if available, accounting for Pydantic wrapper mapping
     const rawProb = results.probability_metrics || (results.llm_scores && results.llm_scores.probability_metrics) || null;
@@ -138,8 +142,13 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
             {/* Probability Score Header */}
             <div className="depth-card" style={{ marginBottom: '2rem', textAlign: 'center', position: 'relative', overflow: 'visible' }}>
                 <h2 style={{ marginBottom: '1.5rem', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                    <Sparkles size={24} color="var(--accent-primary)" /> GEO Optimization Results
+                    <Sparkles size={24} color="var(--accent-primary)" /> ChatGPT Visibility Analysis
                 </h2>
+
+                <div style={{ marginBottom: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.6rem', padding: '0.4rem 1rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '100px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Detected Intent:</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>{queryIntent}</span>
+                </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '1rem' }}>
                     {/* Structural Score Row */}
@@ -149,33 +158,31 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             <div className="tooltip-trigger" style={{ cursor: 'help' }}>
                                 <Info size={10} />
                                 <span className="tooltip-text">
-                                    This score measures structural changes only (entity density, readability, answer clarity). 
-                                    Actual citation performance depends on publishing and indexing by AI engines.
+                                    Measures atomic structure: Scrapability ({chatgptMetrics.structural_scrapability || 0}%), Formatting, and Noise ({chatgptMetrics.narrative_noise || 0}%).
                                 </span>
                             </div>
-                            <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', border: '1px solid var(--card-border)', borderRadius: '4px' }}>Deterministic</span>
                         </div>
                         <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-primary)' }}>
                             {results.structural_clarity_score ?? results.overall_score ?? 0}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                            H-Hierarchy • Readability • FAQ
+                            Scrapability • Noise Penalty • FAQ
                         </div>
                     </div>
 
                     {/* Semantic Score Row */}
                     <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                            Semantic Score <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', border: '1px solid var(--card-border)', borderRadius: '4px' }}>Probabilistic</span>
+                            Citation Potential <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', border: '1px solid var(--card-border)', borderRadius: '4px' }}>AI Confidence</span>
                         </div>
                         <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--accent-primary)' }}>
-                            {results.semantic_coverage_score ?? (probabilityMetrics?.probability) ?? (probabilityMetrics?.score) ?? 0}
+                            {results.overall_visibility_score ?? results.semantic_coverage_score ?? 0}
                             <span style={{ fontSize: '1rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem', fontWeight: '400' }}>
-                                ± {results.semantic_score?.variance || 8}
+                                %
                             </span>
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                            Richness • Alignment • Intent
+                            Claim Quality: {citationMetrics.atomic_claim_quality || 0}/100
                         </div>
                     </div>
                 </div>
