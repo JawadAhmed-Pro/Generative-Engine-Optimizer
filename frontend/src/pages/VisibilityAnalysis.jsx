@@ -241,6 +241,7 @@ function VisibilityAnalysis() {
                                         ? "Enter the URL of the academic article or educational resource to audit its authority in LLM training sets."
                                         : "Enter the product listing URL to analyze its referral probability in AI shopping assistants."}
                                 </div>
+                            </div>
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
                                     <Tag size={18} color="var(--accent-secondary)" />
