@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { PenTool, Lightbulb, Zap, Sparkles, Download, Copy, Check, Folder, Plus, X, Code2, Info as InfoIcon, History, Link as LinkIcon, TrendingUp, Target, RefreshCw } from 'lucide-react'
 import axios from 'axios'
 import ResultsPanel from '../components/ResultsPanel'
+import ContentExportButton from '../components/ContentExportButton'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import html2canvas from 'html2canvas'
@@ -1534,21 +1535,10 @@ function ContentOptimization() {
                                             >
                                                 <Copy size={16} /> Copy Content
                                             </button>
-                                            <button
-                                                className="btn btn-outline"
-                                                onClick={() => {
-                                                    const blob = new Blob([optimizedContent], { type: 'text/markdown' })
-                                                    const url = URL.createObjectURL(blob)
-                                                    const a = document.createElement('a')
-                                                    a.href = url
-                                                    a.download = `optimized-content-${Date.now()}.md`
-                                                    a.click()
-                                                    URL.revokeObjectURL(url)
-                                                }}
-                                                style={{ fontSize: '0.85rem', padding: '0.6rem 1.25rem', gap: '0.5rem', borderRadius: '100px' }}
-                                            >
-                                                <Download size={16} /> Markdown
-                                            </button>
+                                            <ContentExportButton 
+                                                content={optimizedContent} 
+                                                title={`geo-optimized-${activeTab}`}
+                                            />
                                         </div>
                                     </div>
                                     <div className="markdown-content" ref={resultRef} style={{
