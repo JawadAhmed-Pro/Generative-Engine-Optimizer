@@ -13,7 +13,7 @@ function VisibilityAnalysis() {
 
     // Use context for persistent state
     const { visibilityState, updateVisibility } = useAnalysisState()
-    const { url, contentType, analysisResults, selectedProject: contextProject } = visibilityState
+    const { url, targetKeyword, contentType, analysisResults, selectedProject: contextProject } = visibilityState
 
     // Local-only state (doesn't need persistence)
     const [projects, setProjects] = useState([])
@@ -110,6 +110,7 @@ function VisibilityAnalysis() {
         try {
             const response = await axios.post('/api/analyze-url', {
                 url: url,
+                target_keyword: targetKeyword,
                 content_type: contentType,
                 project_id: selectedProject ? parseInt(selectedProject) : null,
                 engine: targetEngine
@@ -239,6 +240,37 @@ function VisibilityAnalysis() {
                                         : contentType === 'educational'
                                         ? "Enter the URL of the academic article or educational resource to audit its authority in LLM training sets."
                                         : "Enter the product listing URL to analyze its referral probability in AI shopping assistants."}
+                                </div>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                                    <Tag size={18} color="var(--accent-secondary)" />
+                                    <span style={{ fontWeight: '700', fontSize: '0.95rem', letterSpacing: '0.02em' }}>
+                                        Target Keyword (Optional)
+                                    </span>
+                                </div>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        value={targetKeyword}
+                                        onChange={(e) => updateVisibility({ targetKeyword: e.target.value })}
+                                        placeholder="e.g. 'best ai tool', 'iphone 15 pro review'"
+                                        style={{
+                                            width: '100%',
+                                            background: 'var(--bg-tertiary)',
+                                            border: '1px solid var(--card-border)',
+                                            borderRadius: '10px',
+                                            padding: '1rem 1.25rem',
+                                            color: 'var(--text-primary)',
+                                            fontFamily: 'Inter, sans-serif',
+                                            fontSize: '1rem',
+                                            outline: 'none',
+                                            transition: 'border-color 0.2s'
+                                        }}
+                                        className="focus-ring"
+                                    />
+                                </div>
+                                <div style={{ marginTop: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                                    Specifying a keyword helps the AI engine analyze your ranking probability for that specific search intent.
                                 </div>
                             </div>
 
@@ -399,9 +431,33 @@ function VisibilityAnalysis() {
                     </button>
 
                     {error && (
-                        <div style={{ marginBottom: '2rem', color: 'var(--error)', fontSize: '0.9rem' }}>
-                            Error: {error}
-                        </div>
+                        <motion.div 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            style={{ 
+                                marginTop: '1.5rem', 
+                                padding: '1rem', 
+                                background: 'rgba(239, 68, 68, 0.1)', 
+                                border: '1px solid var(--error)',
+                                borderRadius: '10px',
+                                color: 'var(--error)', 
+                                fontSize: '0.9rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.75rem'
+                            }}
+                        >
+                            <X size={18} style={{ flexShrink: 0 }} />
+                            <div style={{ flex: 1 }}>
+                                <strong>Analysis Failed:</strong> {error}
+                            </div>
+                            <button 
+                                onClick={() => setError(null)}
+                                style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', opacity: 0.7 }}
+                            >
+                                <X size={16} />
+                            </button>
+                        </motion.div>
                     )}
 
                 </div>

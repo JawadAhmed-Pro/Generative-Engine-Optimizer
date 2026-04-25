@@ -113,7 +113,7 @@ class ContentFetcher:
                 'sec-ch-ua-mobile': '?0',
                 'sec-ch-ua-platform': '"Windows"'
             }
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
                 page_content = response.text

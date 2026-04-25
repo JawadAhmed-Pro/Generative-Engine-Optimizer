@@ -17,6 +17,7 @@ export function AnalysisProvider({ children }) {
     // Visibility Analysis state
     const [visibilityState, setVisibilityState] = useState({
         url: '',
+        targetKeyword: '',
         contentType: sanitizeContentType(localStorage.getItem('geo_default_domain') || 'general'),
         analysisResults: null,
         selectedProject: ''
