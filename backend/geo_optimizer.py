@@ -1,3 +1,4 @@
+import os
 import aiohttp
 import json
 import re
@@ -14,11 +15,18 @@ class GEOOptimizer:
         self.groq_api_key = settings.GROQ_API_KEY
         self.gemini_api_key = settings.GEMINI_API_KEY
         self.nlp = None
-        try:
-            import spacy
-            self.nlp = spacy.load("en_core_web_sm")
-        except Exception as e:
-            app_logger.warning(f"spaCy load failed (expected in local dev): {e}")
+        
+        # Memory Optimization: Skip spacy if disabled via env var
+        disable_spacy = os.getenv("DISABLE_SPACY", "false").lower() == "true"
+        
+        if not disable_spacy:
+            try:
+                import spacy
+                self.nlp = spacy.load("en_core_web_sm")
+            except Exception as e:
+                app_logger.warning(f"spaCy load failed: {e}. Falling back to regex.")
+        else:
+            app_logger.info("Lite Mode Active: spaCy entity extraction disabled to save RAM.")
 
     def _extract_entities(self, content: str) -> List[str]:
         """FIX 4: Extract named entities from content."""

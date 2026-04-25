@@ -81,16 +81,86 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize services
-content_fetcher = ContentFetcher()
-chunker = ContentChunker()
-vector_store = VectorStore()
-rule_scorer = RuleBasedScorer()
-llm_scorer = LLMScorer()
-aggregator = ScoreAggregator()
-rag_pipeline = RAGPipeline()
-probability_model = CitationProbabilityModel()
-discovery_engine = PromptDiscoveryEngine()
+# --- Lazy Loading Service Container ---
+class ServiceContainer:
+    """Memory-efficient container that initializes services only when needed."""
+    def __init__(self):
+        self._content_fetcher = None
+        self._chunker = None
+        self._vector_store = None
+        self._rule_scorer = None
+        self._llm_scorer = None
+        self._aggregator = None
+        self._rag_pipeline = None
+        self._probability_model = None
+        self._discovery_engine = None
+        self._competitor_analyzer = None
+
+    @property
+    def content_fetcher(self):
+        if not self._content_fetcher: self._content_fetcher = ContentFetcher()
+        return self._content_fetcher
+
+    @property
+    def chunker(self):
+        if not self._chunker: self._chunker = ContentChunker()
+        return self._chunker
+
+    @property
+    def vector_store(self):
+        if not self._vector_store: self._vector_store = VectorStore()
+        return self._vector_store
+
+    @property
+    def rule_scorer(self):
+        if not self._rule_scorer: self._rule_scorer = RuleBasedScorer()
+        return self._rule_scorer
+
+    @property
+    def llm_scorer(self):
+        if not self._llm_scorer: self._llm_scorer = LLMScorer()
+        return self._llm_scorer
+
+    @property
+    def aggregator(self):
+        if not self._aggregator: self._aggregator = ScoreAggregator()
+        return self._aggregator
+
+    @property
+    def rag_pipeline(self):
+        if not self._rag_pipeline: self._rag_pipeline = RAGPipeline()
+        return self._rag_pipeline
+
+    @property
+    def probability_model(self):
+        if not self._probability_model: self._probability_model = CitationProbabilityModel()
+        return self._probability_model
+
+    @property
+    def discovery_engine(self):
+        if not self._discovery_engine: self._discovery_engine = PromptDiscoveryEngine()
+        return self._discovery_engine
+
+    @property
+    def competitor_analyzer(self):
+        if not self._competitor_analyzer:
+            self._competitor_analyzer = CompetitorAnalyzer(
+                content_fetcher=self.content_fetcher,
+                rule_scorer=self.rule_scorer,
+                llm_scorer=self.llm_scorer,
+                aggregator=self.aggregator,
+                discovery_engine=self.discovery_engine
+            )
+        return self._competitor_analyzer
+
+# Global container instance
+services = ServiceContainer()
+
+# Use properties for backwards compatibility with existing route logic
+# (Note: we use a helper to prevent accidental early instantiation)
+def get_services():
+    return services
+
 # Configure internal logging for debugging
 app_logger = logging.getLogger("geo_app")
 
@@ -132,21 +202,12 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     )
 
-competitor_analyzer = CompetitorAnalyzer(
-    content_fetcher=content_fetcher,
-    rule_scorer=rule_scorer,
-    llm_scorer=llm_scorer,
-    aggregator=aggregator,
-    discovery_engine=discovery_engine
-)
-
-
 @app.post("/api/extract-content")
 async def extract_content_from_url(payload: ExtractContentRequest = Body(...)):
     """Extract raw content from a URL for the frontend editor."""
     try:
         # Use existing fetcher
-        content_data = await content_fetcher.async_fetch_url(payload.url)
+        content_data = await services.content_fetcher.async_fetch_url(payload.url)
         return {
             "content": content_data['content'],
             "title": content_data.get('title', ''),
@@ -177,7 +238,7 @@ def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "vector_store": vector_store.get_collection_stats()
+        "vector_store": services.vector_store.get_collection_stats()
     }
 
 
@@ -933,7 +994,7 @@ def semantic_search(query: str, limit: int = 5, content_item_id: int = None):
         List of similar content chunks with metadata and similarity scores
     """
     try:
-        results = vector_store.similarity_search(
+        results = services.vector_store.similarity_search(
             query=query,
             content_item_id=content_item_id,
             n_results=limit
@@ -961,7 +1022,7 @@ def semantic_search(query: str, limit: int = 5, content_item_id: int = None):
 def get_vector_stats():
     """Get ChromaDB vector store statistics."""
     try:
-        stats = vector_store.get_collection_stats()
+        stats = services.vector_store.get_collection_stats()
         return {
             "status": "connected",
             **stats
@@ -1091,13 +1152,13 @@ Return ONLY the JSON object, no other text."""
 async def perform_analysis(content: str, extracted: dict, db: Session, content_item_id: int, engine: str = "perplexity") -> AnalysisResponse:
     """Perform complete GEO analysis."""
     # Rule-based scoring
-    rule_scores = rule_scorer.analyze(content, extracted, extracted.get('content_type', 'general'))
+    rule_scores = services.rule_scorer.analyze(content, extracted, extracted.get('content_type', 'general'))
     
     # LLM scoring (Async)
-    llm_scores = await llm_scorer.analyze(content, extracted)
+    llm_scores = await services.llm_scorer.analyze(content, extracted)
     
     # Aggregate scores
-    final_scores = aggregator.aggregate(rule_scores, llm_scores)
+    final_scores = services.aggregator.aggregate(rule_scores, llm_scores)
     
     # Add context for probability auto-detection
     detection_context = final_scores['llm_scores'].copy()
@@ -1112,7 +1173,7 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
         final_scores['freshness_authority_score'] * 0.25
     )
     
-    prob_calc = probability_model.calculate_probability(
+    prob_calc = services.probability_model.calculate_probability(
         overall_score=current_overall,
         rule_scores=final_scores['rule_based_scores'],
         llm_scores=detection_context,
@@ -1250,7 +1311,7 @@ async def generate_insights(payload: InsightRequest = Body(...), db: Session = D
     }
     
     # Generate insights
-    insights = await rag_pipeline.generate_insights(
+    insights = await services.rag_pipeline.generate_insights(
         payload.content_item_id,
         payload.insight_type,
         analysis_dict
@@ -1288,7 +1349,7 @@ def factory_reset(db: Session = Depends(get_db)):
         
         # Also clear vector store
         try:
-            vector_store.client.reset() 
+            services.vector_store.client.reset() 
         except:
             pass # Chroma reset might not be available or needed depending on version
             
@@ -1305,7 +1366,7 @@ def factory_reset(db: Session = Depends(get_db)):
 
 async def _run_competitor_comparison(user_url, competitor_urls, keyword, niche, content_type, user_id):
     from database import AsyncSessionLocal
-    results = await competitor_analyzer.compare(
+    results = await services.competitor_analyzer.compare(
         user_url=user_url,
         competitor_urls=competitor_urls,
         keyword=keyword,
@@ -1551,9 +1612,9 @@ class PromptDiscoveryRequest(BaseModel):
 
 async def _run_discover_prompts(keyword, niche):
     if len(keyword.split()) <= 2:
-         results = await discovery_engine.generate_niche_library(keyword)
+         results = await services.discovery_engine.generate_niche_library(keyword)
     else:
-         results = await discovery_engine.discover_prompts(
+         results = await services.discovery_engine.discover_prompts(
             keyword=keyword,
             niche=niche
          )
