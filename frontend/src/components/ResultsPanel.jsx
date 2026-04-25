@@ -102,26 +102,23 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
     const prevCount = results.previous_analyses_count || 0;
 
     // Helper to check if we have detailed new metrics
-    const hasDetailedMetrics = results.llm_scores &&
-        results.llm_scores.semantic_richness &&
-        results.llm_scores.semantic_richness.details &&
+    const hasDetailedMetrics = results.llm_scores?.semantic_richness?.details &&
         Object.keys(results.llm_scores.semantic_richness.details).length > 0;
 
     // Helper to extract all detailed metrics
     const getDetailedMetrics = () => {
-        if (!hasDetailedMetrics) return [];
+        if (!hasDetailedMetrics || !results.llm_scores) return [];
 
         const detailed = [];
         const categories = ['ai_visibility', 'citation_worthiness', 'semantic_richness', 'technical_readability'];
 
         categories.forEach(cat => {
-            if (results.llm_scores[cat] && results.llm_scores[cat].details) {
-                Object.entries(results.llm_scores[cat].details).forEach(([key, value]) => {
-                    // Try to generate a nice title from key
-                    // e.g. 'product_data_completeness' -> 'Product Data Completeness'
+            const catData = results.llm_scores[cat];
+            if (catData?.details) {
+                Object.entries(catData.details).forEach(([key, value]) => {
                     const title = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
-                detailed.push({
+                    detailed.push({
                         key: key,
                         title: title,
                         score: value,
@@ -131,7 +128,6 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
             }
         });
 
-        // Remove duplicates if any logic causes overlap
         return detailed.filter((v, i, a) => a.findIndex(t => (t.key === v.key)) === i);
     }
 
@@ -160,7 +156,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', border: '1px solid var(--card-border)', borderRadius: '4px' }}>Deterministic</span>
                         </div>
                         <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                            {results.structural_score?.score || results.overall_score || 0}
+                            {results.structural_score?.score ?? results.overall_score ?? 0}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
                             H-Hierarchy • Readability • FAQ
@@ -173,7 +169,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             Semantic Score <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', border: '1px solid var(--card-border)', borderRadius: '4px' }}>Probabilistic</span>
                         </div>
                         <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--accent-primary)' }}>
-                            {results.semantic_score?.score || (probabilityMetrics?.probability) || 0}
+                            {results.semantic_score?.score ?? (probabilityMetrics?.probability) ?? (probabilityMetrics?.score) ?? 0}
                             <span style={{ fontSize: '1rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem', fontWeight: '400' }}>
                                 ± {results.semantic_score?.variance || 8}
                             </span>

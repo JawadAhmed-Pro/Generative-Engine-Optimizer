@@ -55,7 +55,11 @@ function AnalysisModal({ itemId, onClose }) {
     }
 
     const handleCopyResults = () => {
-        if (!data) return
+        const recs = data.analysis?.recommendations;
+        const recommendationsText = Array.isArray(recs) 
+            ? recs.map((r, i) => `${i + 1}. ${r}`).join('\n') 
+            : (typeof recs === 'string' ? recs : 'No recommendations');
+
         const text = `
 GEO Analysis Report
 ==================
@@ -65,19 +69,19 @@ Date: ${new Date(data.created_at).toLocaleDateString()}
 
 SCORES
 ------
-Overall: ${data.analysis.overall_score}/100
-AI Visibility: ${data.analysis.ai_visibility_score}/100
-Citation Worthiness: ${data.analysis.citation_worthiness_score}/100
-Semantic Coverage: ${data.analysis.semantic_coverage_score}/100
-Technical Readability: ${data.analysis.technical_readability_score}/100
+Overall: ${data.analysis?.overall_score ?? 0}/100
+AI Visibility: ${data.analysis?.ai_visibility_score ?? 0}/100
+Citation Worthiness: ${data.analysis?.citation_worthiness_score ?? 0}/100
+Semantic Coverage: ${data.analysis?.semantic_coverage_score ?? 0}/100
+Technical Readability: ${data.analysis?.technical_readability_score ?? 0}/100
 
 AI FEEDBACK
 -----------
-${data.analysis.llm_feedback || 'No feedback available'}
+${data.analysis?.llm_feedback || 'No feedback available'}
 
 RECOMMENDATIONS
 ---------------
-${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || 'No recommendations'}
+${recommendationsText}
         `.trim()
 
         navigator.clipboard.writeText(text)
@@ -203,25 +207,25 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                         {/* Score Cards */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
                             <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--card-border)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
-                                <div style={{ fontSize: '2rem', fontWeight: '700', color: getScoreColor(data.analysis.overall_score) }}>
-                                    {data.analysis.overall_score}
+                                <div style={{ fontSize: '2rem', fontWeight: '700', color: getScoreColor(data.analysis?.overall_score) }}>
+                                    {data.analysis?.overall_score ?? 0}
                                 </div>
                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>OVERALL</div>
                             </div>
                             <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis.ai_visibility_score}</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis?.ai_visibility_score ?? 0}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>AI Visibility</div>
                             </div>
                             <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis.citation_worthiness_score}</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis?.citation_worthiness_score ?? 0}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Citation</div>
                             </div>
                             <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis.semantic_coverage_score}</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis?.semantic_coverage_score ?? 0}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Semantic</div>
                             </div>
                             <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis.technical_readability_score}</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis?.technical_readability_score ?? 0}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Readability</div>
                             </div>
                         </div>
@@ -238,7 +242,7 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                         </div>
 
                         {/* LLM Feedback */}
-                        {data.analysis.llm_feedback && (
+                        {data.analysis?.llm_feedback && (
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem' }}>AI Feedback</h3>
                                 <div style={{
@@ -256,7 +260,7 @@ ${data.analysis.recommendations?.map((r, i) => `${i + 1}. ${r}`).join('\n') || '
                         )}
 
                         {/* Recommendations */}
-                        {data.analysis.suggestions_detailed && data.analysis.suggestions_detailed.length > 0 && (
+                        {data.analysis?.suggestions_detailed && data.analysis?.suggestions_detailed.length > 0 && (
                             <SuggestionList 
                                 suggestions={data.analysis.suggestions_detailed}
                                 contentItemId={data.id}

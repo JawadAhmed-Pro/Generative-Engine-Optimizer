@@ -48,15 +48,17 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
         }
     }
 
+    const safeSuggestions = Array.isArray(suggestions) ? suggestions : []
+
     // Normalize suggestions to handle both objects and simple strings
-    const normalizedSuggestions = suggestions.map((s, idx) => {
+    const normalizedSuggestions = safeSuggestions.map((s, idx) => {
         const item = typeof s === 'string' ? {
             text: s,
             priority: 'MEDIUM',
             category: 'General',
             source: 'AI Engine'
-        } : s
-        return { ...item, id: `sug-${idx}` }
+        } : (s || {})
+        return { ...item, id: item.id || `sug-${idx}` }
     })
 
     // Group by priority

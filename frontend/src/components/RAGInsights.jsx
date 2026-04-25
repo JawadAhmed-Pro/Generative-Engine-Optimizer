@@ -4,9 +4,12 @@ import { Sparkles, FileText, List, Lightbulb } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
 function RAGInsights({ contentItemId, initialInsights = [] }) {
+    // Ensure initialInsights is an array even if null was passed
+    const safeInsights = Array.isArray(initialInsights) ? initialInsights : [];
+
     // If we have initial insights, default to explanation, otherwise show landing (null)
     const [activeTab, setActiveTab] = useState(() => {
-        if (initialInsights && initialInsights.some(i => i.type === 'explanation')) {
+        if (safeInsights.length > 0 && safeInsights.some(i => i.type === 'explanation')) {
             return 'explanation'
         }
         return null
@@ -19,8 +22,8 @@ function RAGInsights({ contentItemId, initialInsights = [] }) {
             recommendations: null,
             rewrite: null
         }
-        if (initialInsights && Array.isArray(initialInsights)) {
-            initialInsights.forEach(item => {
+        if (safeInsights.length > 0) {
+            safeInsights.forEach(item => {
                 if (item.type && ['explanation', 'recommendations', 'rewrite'].includes(item.type)) {
                     initialState[item.type] = item.content
                 }
