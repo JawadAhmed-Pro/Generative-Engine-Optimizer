@@ -10,13 +10,19 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
 
     const calculateOverallScore = () => {
         if (!results) return 0
+        
+        // Try new structural/semantic average first
+        if (results.structural_score && results.semantic_score) {
+            return Math.round((results.structural_score.score + results.semantic_score.score) / 2);
+        }
+
         const score = (
             ((results.ai_visibility_score || 0) +
                 (results.citation_worthiness_score || 0) +
                 (results.semantic_coverage_score || 0) +
                 (results.technical_readability_score || 0)) / 4
         )
-        return isNaN(score) ? 0 : parseFloat(score.toFixed(1))
+        return isNaN(score) ? 0 : Math.round(score)
     }
 
     const exportToPDF = async () => {
@@ -67,10 +73,10 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
             doc.text('Core Metrics', 20, 95)
 
             const metricsData = [
-                ['AI Search Visibility', results.ai_visibility_score?.toFixed(1) || 'N/A'],
-                ['Citation Worthiness', results.citation_worthiness_score?.toFixed(1) || 'N/A'],
-                ['Semantic Coverage', results.semantic_coverage_score?.toFixed(1) || 'N/A'],
-                ['Technical Readability', results.technical_readability_score?.toFixed(1) || 'N/A']
+                ['Structural Score', (results.structural_score?.score || results.ai_visibility_score || 0).toFixed(1)],
+                ['Semantic Probability', (results.semantic_score?.score || results.semantic_coverage_score || 0).toFixed(1)],
+                ['Citation Worthiness', (results.citation_worthiness_score || 0).toFixed(1)],
+                ['Technical Readability', (results.technical_readability_score || 0).toFixed(1)]
             ]
 
             doc.autoTable({
@@ -217,10 +223,10 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
                 [''],
                 ['Metric', 'Score'],
                 ['Overall Score', calculateOverallScore()],
-                ['AI Search Visibility', results.ai_visibility_score],
-                ['Citation Worthiness', results.citation_worthiness_score],
-                ['Semantic Coverage', results.semantic_coverage_score],
-                ['Technical Readability', results.technical_readability_score],
+                ['Structural Score', results.structural_score?.score || results.ai_visibility_score || 0],
+                ['Semantic Probability', results.semantic_score?.score || results.semantic_coverage_score || 0],
+                ['Citation Worthiness', results.citation_worthiness_score || 0],
+                ['Technical Readability', results.technical_readability_score || 0],
                 [''],
                 ['Recommendations']
             ]
@@ -265,12 +271,29 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
         }
     }
 
+    const [showOptions, setShowOptions] = useState(false)
+    const [exportSuccess, setExportSuccess] = useState(null)
+
+    // Close dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (showOptions && !e.target.closest('.export-container')) {
+                setShowOptions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showOptions]);
+
     if (!results) return null
 
     return (
-        <div style={{ position: 'relative' }}>
+        <div className="export-container" style={{ position: 'relative' }}>
             <button
-                onClick={() => setShowOptions(!showOptions)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setShowOptions(!showOptions);
+                }}
                 className="btn btn-outline"
                 style={{ gap: '0.5rem', fontSize: '0.875rem' }}
                 disabled={exporting}

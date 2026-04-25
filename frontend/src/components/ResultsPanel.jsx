@@ -140,7 +140,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
     return (
         <div>
             {/* Probability Score Header */}
-            <div className="depth-card" style={{ marginBottom: '2rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div className="depth-card" style={{ marginBottom: '2rem', textAlign: 'center', position: 'relative', overflow: 'visible' }}>
                 <h2 style={{ marginBottom: '1.5rem', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                     <Sparkles size={24} color="var(--accent-primary)" /> GEO Optimization Results
                 </h2>
