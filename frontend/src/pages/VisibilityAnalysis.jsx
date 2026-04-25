@@ -184,7 +184,7 @@ function VisibilityAnalysis() {
             </div>
 
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '1.5rem' }}>
                 {/* Left Column - Input */}
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <div className="depth-card" style={{ padding: '2rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
@@ -411,7 +411,7 @@ function VisibilityAnalysis() {
                     {/* History Panel - Matches Content Optimization Style */}
                     <div className="depth-card" style={{ padding: '0', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
                         <div style={{
-                            padding: '1.25rem 1.5rem',
+                            padding: '1rem 1.25rem',
                             borderBottom: '1px solid var(--card-border)',
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -438,7 +438,7 @@ function VisibilityAnalysis() {
                                         onClick={() => setSelectedHistoryItem(item.id)}
                                         className="table-row-hover"
                                         style={{
-                                            padding: '1.25rem 1.5rem',
+                                            padding: '1rem 1.25rem',
                                             borderBottom: '1px solid var(--card-border)',
                                             cursor: 'pointer',
                                             transition: 'all 0.2s ease',

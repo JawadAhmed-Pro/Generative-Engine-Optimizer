@@ -603,7 +603,7 @@ function ContentOptimization() {
                 </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '1.5rem' }}>
                 {/* Left Column - Input */}
                 <div>
                     {/* Diagnostic Bar */}
@@ -1716,7 +1716,7 @@ function ContentOptimization() {
                     {/* History Panel */}
                     <div className="depth-card" style={{ padding: '0', overflow: 'hidden' }}>
                         <div style={{
-                            padding: '1.25rem 1.5rem',
+                            padding: '1rem 1.25rem',
                             borderBottom: '1px solid rgba(255,255,255,0.08)',
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -1751,7 +1751,7 @@ function ContentOptimization() {
                                             <div key={item.id} 
                                                 onClick={() => handleHistoryItemClick(item.id)}
                                                 style={{
-                                                    padding: '1.25rem 1.5rem',
+                                                    padding: '1rem 1.25rem',
                                                     borderBottom: '1px solid rgba(255,255,255,0.05)',
                                                     cursor: 'pointer',
                                                     transition: 'all 0.2s ease',
