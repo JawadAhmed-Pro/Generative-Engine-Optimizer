@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Download, FileText, FileSpreadsheet, Check, Loader2 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
@@ -7,6 +7,17 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
     const [exporting, setExporting] = useState(false)
     const [showOptions, setShowOptions] = useState(false)
     const [exportSuccess, setExportSuccess] = useState(null)
+
+    // Close dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (showOptions && !e.target.closest('.export-container')) {
+                setShowOptions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showOptions]);
 
     const calculateOverallScore = () => {
         if (!results) return 0
@@ -270,20 +281,6 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
             setShowOptions(false)
         }
     }
-
-    const [showOptions, setShowOptions] = useState(false)
-    const [exportSuccess, setExportSuccess] = useState(null)
-
-    // Close dropdown on click outside
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (showOptions && !e.target.closest('.export-container')) {
-                setShowOptions(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showOptions]);
 
     if (!results) return null
 
