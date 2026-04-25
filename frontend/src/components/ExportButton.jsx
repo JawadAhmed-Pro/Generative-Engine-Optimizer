@@ -99,42 +99,48 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
                 margin: { left: 20, right: 20 }
             })
 
+            let currentY = (doc.lastAutoTable?.finalY || 140) + 15
+
             // Detailed LLM Metrics - Match what ResultsPanel displays
             const detailedMetrics = []
 
             // Helper to format metric name
             const formatMetricName = (key) => {
+                if (!key) return 'Unknown'
                 return key.split('_').map(word =>
                     word.charAt(0).toUpperCase() + word.slice(1)
                 ).join(' ')
             }
 
-            // Extract from llm_scores - nested under category.details
-            // Structure: llm_scores.ai_visibility.details, llm_scores.semantic_richness.details, etc.
-            if (results.llm_scores) {
-                const categories = ['ai_visibility', 'citation_worthiness', 'semantic_richness', 'technical_readability']
+            try {
+                if (results && results.llm_scores) {
+                    const categories = ['ai_visibility', 'citation_worthiness', 'semantic_richness', 'technical_readability']
 
-                categories.forEach(category => {
-                    const categoryData = results.llm_scores[category]
-                    if (categoryData && categoryData.details) {
-                        Object.entries(categoryData.details).forEach(([key, value]) => {
-                            if (typeof value === 'number') {
-                                detailedMetrics.push([formatMetricName(key), value.toFixed(1)])
-                            }
-                        })
-                    }
-                })
+                    categories.forEach(category => {
+                        const categoryData = results.llm_scores[category]
+                        if (categoryData && categoryData.details) {
+                            Object.entries(categoryData.details).forEach(([key, value]) => {
+                                if (typeof value === 'number') {
+                                    detailedMetrics.push([formatMetricName(key), value.toFixed(1)])
+                                } else if (typeof value === 'string') {
+                                    detailedMetrics.push([formatMetricName(key), value])
+                                }
+                            })
+                        }
+                    })
+                }
+            } catch (e) {
+                console.error('Error extracting detailed metrics:', e)
             }
 
             // Add detailed metrics table if we have any
             if (detailedMetrics.length > 0) {
-                const detailedY = (doc).lastAutoTable.finalY + 15
                 doc.setFontSize(16)
                 doc.setFont('helvetica', 'bold')
-                doc.text('Detailed Analysis', 20, detailedY)
+                doc.text('Detailed Analysis', 20, currentY)
 
                 autoTable(doc, {
-                    startY: detailedY + 5,
+                    startY: currentY + 5,
                     head: [['Metric', 'Score']],
                     body: detailedMetrics,
                     theme: 'striped',
@@ -142,46 +148,41 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
                     margin: { left: 20, right: 20 },
                     styles: { fontSize: 9 }
                 })
+                currentY = (doc.lastAutoTable?.finalY || currentY + 40) + 15
             }
 
             // Suggestions
-            const suggestionsY = (doc).lastAutoTable.finalY + 15
-            doc.setFontSize(16)
-            doc.setFont('helvetica', 'bold')
-            doc.text('Recommendations', 20, suggestionsY)
+            if (results && results.suggestions && Array.isArray(results.suggestions) && results.suggestions.length > 0) {
+                doc.setFontSize(16)
+                doc.setFont('helvetica', 'bold')
+                doc.text('Recommendations', 20, currentY)
 
-            if (results.suggestions && results.suggestions.length > 0) {
                 // Helper function to extract readable text from suggestion
                 const getSuggestionText = (suggestion) => {
+                    if (!suggestion) return 'No details available'
                     if (typeof suggestion === 'string') return suggestion
-                    if (suggestion.message) return suggestion.message
-                    if (suggestion.suggestion) return suggestion.suggestion
-                    if (suggestion.text) return suggestion.text
-                    // If it's an object with nested suggestions array
+                    if (suggestion.message) return String(suggestion.message)
+                    if (suggestion.suggestion) return String(suggestion.suggestion)
+                    if (suggestion.text) return String(suggestion.text)
                     if (suggestion.suggestions && Array.isArray(suggestion.suggestions)) {
                         return suggestion.suggestions.join('; ')
                     }
-                    // Try to stringify if nothing else works
-                    try {
-                        const str = JSON.stringify(suggestion)
-                        if (str !== '{}') return str.substring(0, 100)
-                    } catch (e) { }
                     return 'See detailed analysis'
                 }
 
                 const getCategory = (suggestion) => {
-                    if (typeof suggestion === 'string') return 'General'
+                    if (!suggestion || typeof suggestion === 'string') return 'General'
                     return suggestion.category || suggestion.type || suggestion.metric || 'General'
                 }
 
-                const suggestionsData = results.suggestions.slice(0, 10).map((s, i) => [
+                const suggestionsData = results.suggestions.slice(0, 15).map((s, i) => [
                     `${i + 1}`,
                     getCategory(s),
                     getSuggestionText(s)
                 ])
 
                 autoTable(doc, {
-                    startY: suggestionsY + 5,
+                    startY: currentY + 5,
                     head: [['#', 'Category', 'Recommendation']],
                     body: suggestionsData,
                     theme: 'striped',
@@ -207,7 +208,7 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
                 doc.setTextColor(128, 128, 128)
                 doc.text(
                     `Generated by GEO Agent | Page ${i} of ${pageCount}`,
-                    pageWidth / 2,
+                    doc.internal.pageSize.getWidth() / 2,
                     doc.internal.pageSize.getHeight() - 10,
                     { align: 'center' }
                 )
@@ -218,7 +219,7 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
             setTimeout(() => setExportSuccess(null), 2000)
         } catch (error) {
             console.error('PDF export failed:', error)
-            alert('Failed to export PDF. Please try again.')
+            alert(`Failed to export PDF: ${error.message || 'Unknown error'}. Please try CSV or contact support.`)
         } finally {
             setExporting(false)
             setShowOptions(false)
