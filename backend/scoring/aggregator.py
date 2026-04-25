@@ -41,14 +41,13 @@ class ScoreAggregator:
         
         auth_details = rule_based_scores.get('authority', {}).get('details', {})
         
-        # --- Pillar 1: AI Visibility (Structural & Schema Integrity) ---
-        # Gated by: rb_structure and rb_schema
-        visibility_baseline = (rb_structure * 0.7) + (rb_schema * 0.3)
-        visibility_refinement = (llm_metrics['ai_formatting'] * 0.5) + (llm_metrics['structural_integrity'] * 0.5)
-        ai_visibility_score = min(max((visibility_baseline * self.rule_weight) + (visibility_refinement * self.llm_weight), 0), 100)
+        # --- Pillar 1: Structural Clarity (Structure + Readability + AI Formatting) ---
+        structural_baseline = (rb_structure * 0.6) + (rb_readability * 0.4)
+        structural_refinement = (llm_metrics['structural_integrity'] * 0.5) + (llm_metrics['ai_formatting'] * 0.5)
+        structural_clarity_score = min(max((structural_baseline * self.rule_weight) + (structural_refinement * self.llm_weight), 0), 100)
         
-        # --- Pillar 2: Citation Worthiness (Trust, Authority, EEAT) ---
-        # Gated by: rb_authority (citations, stats, expert mentions)
+        # --- Pillar 2: Citation Worthiness (Entity + Grounding + EEAT) ---
+        # Booster logic remains the same
         trust_booster = min((auth_details.get('citations', 0) * 5) + (auth_details.get('fact_density', 0) * 10), 20)
         hybrid_trust = min(llm_metrics['trustworthiness'] * 0.8 + trust_booster, 100)
         
@@ -62,23 +61,27 @@ class ScoreAggregator:
             llm_metrics['experience'] * 0.15
         )
         
-        # Citation Gate
         citation_baseline = rb_authority
         citation_refinement = (llm_metrics['content_authority'] * 0.5) + (overall_eeat * 0.5)
         citation_worthiness_score = min(max((citation_baseline * self.rule_weight) + (citation_refinement * self.llm_weight), 0), 100)
-
-        # --- Pillar 3: Semantic Coverage (Keyword Relevance & Information Gain) ---
-        # Gated by: rb_keywords
+        
+        # --- Pillar 3: Semantic Coverage (Intent Alignment + Information Gain) ---
         semantic_baseline = rb_keywords
         semantic_refinement = (llm_metrics['semantic_richness'] * 0.6) + (llm_metrics['user_intent'] * 0.4)
         semantic_coverage_score = min(max((semantic_baseline * self.rule_weight) + (semantic_refinement * self.llm_weight), 0), 100)
 
-        # --- Pillar 4: Technical Readability (UX & Flow) ---
-        # Gated by: rb_readability
-        readability_baseline = rb_readability
-        readability_refinement = llm_metrics['readability_ux']
-        technical_readability_score = min(max((readability_baseline * self.rule_weight) + (readability_refinement * self.llm_weight), 0), 100)
-
+        # --- Pillar 4: Freshness & Authority (Recency + Outbound Links + sameAs) ---
+        rb_freshness = rule_based_scores.get('freshness', {}).get('score', 50)
+        freshness_baseline = (rb_freshness * 0.6) + (rb_schema * 0.4)
+        
+        # Incorporate Authority Signals from Fix 4
+        auth_signals_score = auth_details.get('link_authority_score', 0)
+        if auth_details.get('has_same_as_entities'):
+            auth_signals_score = min(100, auth_signals_score + 40)
+            
+        freshness_refinement = (llm_metrics['authoritativeness'] * 0.4) + (auth_signals_score * 0.6)
+        freshness_authority_score = min(max((freshness_baseline * self.rule_weight) + (freshness_refinement * self.llm_weight), 0), 100)
+            
         # --- E-commerce Specialization (Overrides) ---
         if 'product_data_completeness' in llm_scores:
             # Re-weight Semantic Coverage for Ecom
@@ -99,7 +102,8 @@ class ScoreAggregator:
         citation_details = {
             'content_authority': llm_metrics['content_authority'],
             'citations_found': auth_details.get('citations', 0),
-            'facts_density': auth_details.get('fact_density', 0)
+            'facts_density': auth_details.get('fact_density', 0),
+            'authority_links_found': auth_details.get('authority_links_found', 0)
         }
         
         semantic_details = {
@@ -112,8 +116,8 @@ class ScoreAggregator:
         }
         
         formatted_llm_scores_response = {
-            'ai_visibility': {
-                'score': llm_metrics['ai_formatting'],
+            'structural_clarity': {
+                'score': llm_metrics['structural_integrity'],
                 'details': ai_details,
                 'suggestions': []
             },
@@ -122,14 +126,14 @@ class ScoreAggregator:
                 'details': citation_details,
                 'suggestions': []
             },
-            'semantic_richness': {
+            'semantic_coverage': {
                 'score': llm_metrics['semantic_richness'],
                 'details': semantic_details,
                 'suggestions': []
             },
-            'technical_readability': {
-                'score': llm_metrics['readability_ux'],
-                'details': readability_details,
+            'freshness_authority': {
+                'score': llm_metrics['authoritativeness'],
+                'details': readability_details, # Reuse for UI consistency or fix if needed
                 'suggestions': []
             }
         }
@@ -184,10 +188,10 @@ class ScoreAggregator:
         trustworthiness_score = llm_metrics['trustworthiness']
 
         return {
-            'ai_visibility_score': round(ai_visibility_score, 1),
+            'structural_clarity_score': round(structural_clarity_score, 1),
             'citation_worthiness_score': round(citation_worthiness_score, 1),
             'semantic_coverage_score': round(semantic_coverage_score, 1),
-            'technical_readability_score': round(technical_readability_score, 1),
+            'freshness_authority_score': round(freshness_authority_score, 1),
             'rule_based_scores': rule_based_scores,
             'llm_scores': formatted_llm_scores_response,
             'suggestions': final_suggestions,

@@ -24,7 +24,7 @@ class RuleBasedScorer:
             'keywords': self._analyze_keywords(content, metadata),
             'authority': self._analyze_authority(content, metadata, content_type),
             'schema': self._analyze_schema(metadata, content_type),
-            'freshness': self._analyze_freshness(content),
+            'freshness': self._analyze_freshness(content, content_type),
             'readability': self._analyze_readability(content)
         }
         
@@ -38,30 +38,29 @@ class RuleBasedScorer:
         
         headings = metadata.get('headings', {})
         
-        # Check for H1
+        # 1. H-Tag Hierarchy (Pillar 1 - Depth Aware)
         h1_count = len(headings.get('h1', []))
-        if h1_count == 1:
-            score += 20
-        elif h1_count == 0:
-            suggestions.append("Add a single H1 heading to define the main topic")
-        else:
-            suggestions.append(f"Use only one H1 heading (found {h1_count})")
-        
-        # Check heading hierarchy
         h2_count = len(headings.get('h2', []))
         h3_count = len(headings.get('h3', []))
         
-        if h2_count >= 2:
-            score += 20
-            details['h2_count'] = h2_count
-        else:
-            suggestions.append("Add more H2 headings (Medium Impact: +10% Visibility)")
+        score_htag = 0
+        if h1_count == 1:       score_htag += 40   # exactly one H1 is correct
+        elif h1_count > 1:      score_htag += 10   # multiple H1 is an SEO problem
+        if h2_count >= 2:       score_htag += 40   # at least 2 H2 sections
+        if h3_count >= 1:       score_htag += 20   # H3 shows depth
         
-        if h3_count >= 1:
-            score += 10
-            details['h3_count'] = h3_count
-        else:
-             suggestions.append("Add H3 subheadings for deeper semantic structure")
+        score += score_htag
+        details['htag_score'] = score_htag
+        
+        if h1_count == 0:
+            suggestions.append("Critical: Add a single H1 heading to define the main topic")
+        elif h1_count > 1:
+            suggestions.append(f"SEO Warning: Multiple H1 headings found ({h1_count}). Use only one.")
+            
+        if h2_count < 2:
+            suggestions.append("Add more H2 headings (at least 2) for better structure")
+        if h3_count == 0:
+            suggestions.append("Add H3 subheadings to show topical depth")
         
         # Heading scanability (Medium)
         long_headings = [h for level in headings.values() for h in level if len(h.split()) > 12]
@@ -184,15 +183,28 @@ class RuleBasedScorer:
         words = content.lower().split()
         word_count = len(words)
         
-        # Question keywords (5W1H)
-        question_words = ['what', 'why', 'how', 'when', 'where', 'who', 'which']
-        question_count = sum(1 for line in content.lower().split('\n') if any(q in line for q in question_words))
+        # Q&A Pair Detection (Pillar 4)
+        sentences = re.split(r'(?<=[.?!])\s+', content.strip())
+        qa_pairs = 0
+        for i in range(len(sentences) - 1):
+            current = sentences[i].strip()
+            next_sent = sentences[i + 1].strip()
+            next_word_count = len(next_sent.split())
+            if current.endswith('?') and 10 <= next_word_count <= 40:
+                qa_pairs += 1
         
-        if question_count >= 3:
-            score += 25
-            details['question_based_headings'] = question_count
-        else:
-            suggestions.append("Add more question-based headings (What, Why, How) to match user intent")
+        qa_score = 0
+        if qa_pairs >= 5:    qa_score = 100
+        elif qa_pairs >= 3:  qa_score = 75
+        elif qa_pairs >= 1:  qa_score = 40
+        
+        score += (qa_score * 0.25) # Weight within keywords
+        details['qa_pairs'] = qa_pairs
+        
+        if qa_pairs == 0:
+            suggestions.append("Add Q&A pairs (Question followed by 10-40 word answer) for higher AI visibility")
+        elif qa_pairs < 3:
+            suggestions.append(f"Detected {qa_pairs} Q&A pairs. Aim for 3-5 to maximize citation probability.")
         
         # Long-tail keywords (phrases of 3-5 words)
         long_tail_pattern = r'\b[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,3}\b'
@@ -323,13 +335,23 @@ class RuleBasedScorer:
         else:
             suggestions.append("Include inline source citations (e.g., [1] or according to Study X) (Medium Impact: +31% Lift)")
         
-        # Outbound Authority Links (Medium)
+        # Outbound Authority Links (Fix 4 logic)
         outbound_links = metadata.get('links', [])
-        authority_links = [l for l in outbound_links if any(ext in l.lower() for ext in ['.gov', '.edu', '.org', 'wikipedia.org', 'reuters.com', 'bloomberg.com'])]
-        if len(authority_links) == 0 and len(outbound_links) > 0:
-            suggestions.append("Link to high-authority external sources (.edu, .gov) to bolster credibility")
-        elif len(outbound_links) == 0:
-            suggestions.append("Add outbound links to authoritative external references (Medium Impact)")
+        edu_gov_links = [l for l in outbound_links if ".edu" in l or ".gov" in l]
+        details['authority_links_found'] = len(edu_gov_links)
+        
+        link_score = 0
+        if len(edu_gov_links) >= 3:
+            link_score = 60
+            score += 30 # rule weights are balanced elsewhere
+        elif len(edu_gov_links) >= 1:
+            link_score = 30
+            score += 15
+            suggestions.append("Add 2+ more high-authority outbound links (.edu, .gov) (High Impact)")
+        else:
+            suggestions.append("Add outbound links to authoritative .edu or .gov references (High Impact)")
+
+        details['link_authority_score'] = link_score
         
         # 4. Content Type Specifics (Ecom Trust)
         if content_type == 'ecommerce':
@@ -429,7 +451,7 @@ class RuleBasedScorer:
             'suggestions': suggestions
         }
     
-    def _analyze_freshness(self, content: str) -> Dict[str, Any]:
+    def _analyze_freshness(self, content: str, content_type: str = 'general') -> Dict[str, Any]:
         """Analyze content freshness signals (2025/26 Recency)."""
         score = 0
         suggestions = []
@@ -439,6 +461,13 @@ class RuleBasedScorer:
         recent_year_pattern = r'\b(2025|2026)\b'
         recent_years = len(re.findall(recent_year_pattern, content))
         
+        # Extract specific year for Fix 1
+        year_matches = re.findall(r'\b(20\d{2})\b', content)
+        extracted_year = 2026
+        if year_matches:
+            extracted_year = max(int(y) for y in year_matches if int(y) <= 2026)
+        details['extracted_year'] = extracted_year
+
         if recent_years > 0:
             score += 50
             details['v2025_recency'] = True
@@ -453,9 +482,19 @@ class RuleBasedScorer:
         else:
             # 2025 Factor: Perplexity drops older content by 63%
             suggestions.append("Include 'Last Updated 2025' text (Critical Impact: Prevents -63% Decay Penalty)")
-            
+            score -= 10
+        
+        # Blog/General specific freshness decay
+        if content_type == 'general' and not has_update_info and recent_years == 0:
+            # Check for older years that might indicate stale content
+            stale_years = re.findall(r'\b(201\d|202[0-3])\b', content)
+            if stale_years:
+                score -= 30
+                suggestions.append("CRITICAL: Content appears stale (references older years). Update to 2025/2026 standards.")
+                details['is_stale'] = True
+
         return {
-            'score': min(score, 100),
+            'score': max(0, min(score, 100)),
             'details': details,
             'suggestions': suggestions
         }
@@ -494,18 +533,29 @@ class RuleBasedScorer:
         except:
             pass # Don't penalize if calculation fails
         
-        # Sentence length - Relaxed
-        sentences = re.split(r'[.!?]+', content)
-        sentences = [s.strip() for s in sentences if s.strip()]
-        
-        if sentences:
-            avg_sentence_length = sum(len(s.split()) for s in sentences) / len(sentences)
-            details['avg_sentence_length'] = round(avg_sentence_length, 1)
+        # Direct Answer Density (Pillar 3)
+        direct_answer_count = 0
+        for sentence in sentences:
+            words = sentence.strip().split()
+            if len(words) < 4: continue
             
-            if 10 <= avg_sentence_length <= 30: # Much wider range
-                score += 35
-            else:
-                suggestions.append("Vary sentence length. Aim for 10-30 words per sentence on average")
+            question_starters = {"what", "why", "how", "when", "where", "who", "is", "are", "do", "does"}
+            filler_starters = {"however", "moreover", "furthermore", "in", "the", "this", "that"}
+            first_word = words[0].lower()
+            if first_word not in question_starters and first_word not in filler_starters:
+                direct_answer_count += 1
+        
+        ratio = direct_answer_count / len(sentences) if sentences else 0
+        da_score = 10
+        if ratio >= 0.6:    da_score = 100
+        elif ratio >= 0.4:  da_score = 70
+        elif ratio >= 0.2:  da_score = 40
+        
+        score += (da_score * 0.35) # Replacing previous sentence length weight
+        details['direct_answer_ratio'] = round(ratio, 2)
+        
+        if ratio < 0.4:
+            suggestions.append("Increase Direct Answer Density: Start more sentences with declarative Subject+Verb patterns")
         
         # Active voice - Relaxed
         words = content.lower().split()

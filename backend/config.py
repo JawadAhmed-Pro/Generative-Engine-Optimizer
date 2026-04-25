@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-2.5-flash"
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
     
+    # Versioning & Benchmarks
+    GEO_BENCHMARK_VERSION: str = "2025.1"
+    
     # Chunking Configuration
     CHUNK_SIZE: int = 512
     CHUNK_OVERLAP: int = 50
@@ -47,8 +50,11 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list = [
         "https://geo-tool.site", 
         "https://www.geo-tool.site",
+        "https://api.geo-tool.site",
         "http://localhost:3000",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173"
     ]
     
     class Config:

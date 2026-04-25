@@ -63,10 +63,10 @@ class AnalysisResult(Base):
     content_item_id = Column(Integer, ForeignKey("content_items.id"))
     
     # Overall scores
-    ai_visibility_score = Column(Float)
+    structural_clarity_score = Column(Float)
     citation_worthiness_score = Column(Float)
     semantic_coverage_score = Column(Float)
-    technical_readability_score = Column(Float)
+    freshness_authority_score = Column(Float)
     
     # Detailed metrics (stored as JSON)
     rule_based_scores = Column(JSON)
@@ -212,10 +212,10 @@ class ScoreMetric(BaseModel):
 class AnalysisResponse(BaseModel):
     content_item_id: Optional[int]
     overall_score: Optional[float] = None
-    ai_visibility_score: float
+    structural_clarity_score: float
     citation_worthiness_score: float
     semantic_coverage_score: float
-    technical_readability_score: float
+    freshness_authority_score: float
     structural_score: Optional[Dict[str, Any]] = None
     semantic_score: Optional[Dict[str, Any]] = None
     probability_metrics: Optional[Dict[str, Any]] = None
@@ -231,6 +231,8 @@ class AnalysisResponse(BaseModel):
     # Historical metadata
     score_delta: Optional[float] = 0.0
     previous_analyses_count: Optional[int] = 0
+    benchmark_version: Optional[str] = "2025.1"
+    analysis_disclaimer: Optional[str] = "Citation status is a snapshot sampled at this moment. AI engine citations are non-deterministic and change with every query."
 
 
 class InsightRequest(BaseModel):

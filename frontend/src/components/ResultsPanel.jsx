@@ -16,17 +16,17 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
     const LABELS = {
         url: {
             overall: "Overall GEO Score",
-            ai_visibility: "Structural Visibility",
+            structural_clarity: "Structural Clarity",
             citation_worthiness: "Citation Worthiness",
-            semantic_richness: "Semantic Depth",
-            technical_readability: "Readability & UX"
+            semantic_coverage: "Semantic Coverage",
+            freshness_authority: "Freshness & Authority"
         },
         text: {
             overall: "Content Optimization Score",
-            ai_visibility: "AI Structure",
+            structural_clarity: "AI Structure",
             citation_worthiness: "Authority & Trust",
-            semantic_richness: "Topic Depth",
-            technical_readability: "Readability UX"
+            semantic_coverage: "Topic Depth",
+            freshness_authority: "Recency & Links"
         }
     }
     const currentLabels = LABELS[context] || LABELS.url;
@@ -89,10 +89,10 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
     }
 
     const overallScore = Math.round(
-        ((results.ai_visibility_score || 0) +
+        ((results.structural_clarity_score || 0) +
             (results.citation_worthiness_score || 0) +
             (results.semantic_coverage_score || 0) +
-            (results.technical_readability_score || 0)) / 4
+            (results.freshness_authority_score || 0)) / 4
     )
 
     // Extract new probability metrics if available, accounting for Pydantic wrapper mapping
@@ -102,15 +102,15 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
     const prevCount = results.previous_analyses_count || 0;
 
     // Helper to check if we have detailed new metrics
-    const hasDetailedMetrics = results.llm_scores?.semantic_richness?.details &&
-        Object.keys(results.llm_scores.semantic_richness.details).length > 0;
+    const hasDetailedMetrics = results.llm_scores?.semantic_coverage?.details &&
+        Object.keys(results.llm_scores.semantic_coverage.details).length > 0;
 
     // Helper to extract all detailed metrics
     const getDetailedMetrics = () => {
         if (!hasDetailedMetrics || !results.llm_scores) return [];
 
         const detailed = [];
-        const categories = ['ai_visibility', 'citation_worthiness', 'semantic_richness', 'technical_readability'];
+        const categories = ['structural_clarity', 'citation_worthiness', 'semantic_coverage', 'freshness_authority'];
 
         categories.forEach(cat => {
             const catData = results.llm_scores[cat];
@@ -156,7 +156,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', border: '1px solid var(--card-border)', borderRadius: '4px' }}>Deterministic</span>
                         </div>
                         <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                            {results.structural_score?.score ?? results.overall_score ?? 0}
+                            {results.structural_clarity_score ?? results.overall_score ?? 0}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
                             H-Hierarchy • Readability • FAQ
@@ -169,7 +169,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                             Semantic Score <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', border: '1px solid var(--card-border)', borderRadius: '4px' }}>Probabilistic</span>
                         </div>
                         <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--accent-primary)' }}>
-                            {results.semantic_score?.score ?? (probabilityMetrics?.probability) ?? (probabilityMetrics?.score) ?? 0}
+                            {results.semantic_coverage_score ?? (probabilityMetrics?.probability) ?? (probabilityMetrics?.score) ?? 0}
                             <span style={{ fontSize: '1rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem', fontWeight: '400' }}>
                                 ± {results.semantic_score?.variance || 8}
                             </span>
@@ -183,25 +183,25 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                 {probabilityMetrics?.validation_layer && (
                     <div style={{ marginTop: '1.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', textAlign: 'center' }}>
                         <div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Validation Queries</div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{probabilityMetrics.validation_layer.total_checks}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Target Keyword</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{probabilityMetrics.validation_layer.queries_tested?.[0] || 'N/A'}</div>
                         </div>
                         <div style={{ borderLeft: '1px solid var(--card-border)', borderRight: '1px solid var(--card-border)' }}>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Actual Citation Rate</div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{probabilityMetrics.validation_layer.actual_citation_rate}%</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Citation Status</div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: probabilityMetrics.validation_layer.citation_status === 'Cited' ? 'var(--success)' : 'var(--text-tertiary)' }}>{probabilityMetrics.validation_layer.citation_status}</div>
                         </div>
                         <div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
-                                Score Confidence
+                                Confidence
                                 <div className="tooltip-trigger" style={{ cursor: 'help' }}>
                                     <Info size={10} />
                                     <span className="tooltip-text">
-                                        The variance between predicted probability and actual engine citations. Low variance indicates high model reliability.
+                                        {probabilityMetrics.validation_layer.snapshot_label}
                                     </span>
                                 </div>
                             </div>
                             <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: Math.abs(probabilityMetrics.validation_layer.error_gap) > 15 ? 'var(--warning)' : 'var(--success)' }}>
-                                {100 - Math.abs(probabilityMetrics.validation_layer.error_gap)}%
+                                {100 - Math.min(100, Math.abs(probabilityMetrics.validation_layer.error_gap))}%
                             </div>
                             <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: '0.2rem' }}>Status: {probabilityMetrics.validation_layer.status}</div>
                         </div>
@@ -328,28 +328,28 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     // Fallback to old 4 metrics if no details found
                     <>
                         <MetricCard
-                            title={currentLabels.ai_visibility}
-                            score={results.ai_visibility_score || 0}
-                            description="Measures H-tags, schema, and AI-parsable hierarchy."
-                            tooltip="AI search engines prioritize content with clear semantic markers and proper schema.org tagging."
+                            title={currentLabels.structural_clarity}
+                            score={results.structural_clarity_score || 0}
+                            description="Measures H-tags, direct answers, and AI-parsable clarity."
+                            tooltip="AI search engines prioritize content with clear semantic markers and proper answer structures."
                         />
                         <MetricCard
                             title={currentLabels.citation_worthiness}
                             score={results.citation_worthiness_score || 0}
-                            description="Analysis of trust signals and factual density."
+                            description="Analysis of E-E-A-T signals and factual density."
                             tooltip="High citation worthiness means your content provides verifiable facts and expert consensus."
                         />
                         <MetricCard
-                            title={currentLabels.semantic_richness}
+                            title={currentLabels.semantic_coverage}
                             score={results.semantic_coverage_score || 0}
-                            description="Depth of topic coverage and entity anchoring."
+                            description="Depth of intent alignment and information gain."
                             tooltip="A measure of how comprehensively you cover the 'entities' related to your target keyword."
                         />
                         <MetricCard
-                            title={currentLabels.technical_readability}
-                            score={results.technical_readability_score || 0}
-                            description="Clarity, UX flow, and answer directness."
-                            tooltip="Measures if an AI can easily extract a direct answer for its response snippet."
+                            title={currentLabels.freshness_authority}
+                            score={results.freshness_authority_score || 0}
+                            description="Recency, sameAs entities, and outbound authority."
+                            tooltip="Measures if your content is up-to-date and linked to high-authority knowledge graphs."
                         />
                     </>
                 )}

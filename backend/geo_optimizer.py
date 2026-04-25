@@ -342,33 +342,60 @@ class GEOOptimizer:
 
     def get_structural_score(self, content: str) -> Dict[str, Any]:
         """
-        FIX 3: Deterministic scoring based on hard structural markers.
+        Deterministic scoring based on 2025 GEO pillars.
         """
         soup = BeautifulSoup(content, 'html.parser')
         
-        # 1. H-Tag Hierarchy Check
-        h_tags = [t.name for t in soup.find_all(['h1', 'h2', 'h3'])]
-        has_h1 = 'h1' in h_tags
-        has_h2 = 'h2' in h_tags
-        hierarchy_score = 100 if (has_h1 and has_h2) else 50 if (has_h1 or has_h2) else 0
+        # 1. H-Tag Hierarchy (Pillar 1 - Depth Aware)
+        h1 = soup.find_all('h1')
+        h2 = soup.find_all('h2')
+        h3 = soup.find_all('h3')
+        
+        hierarchy_score = 0
+        if len(h1) == 1:       hierarchy_score += 40
+        elif len(h1) > 1:      hierarchy_score += 10
+        if len(h2) >= 2:       hierarchy_score += 40
+        if len(h3) >= 1:       hierarchy_score += 20
+        hierarchy_score = min(hierarchy_score, 100)
         
         # 2. Readability (Flesch)
         readability = textstat.flesch_reading_ease(content)
         readability_score = max(0, min(100, readability))
         
-        # 3. Sentence Length Average
-        sentences = re.split(r'[.!?]+', content)
+        # 3. Direct Answer Density (Pillar 3)
+        sentences = re.split(r'(?<=[.?!])\s+', content.strip())
+        direct_answer_count = 0
+        for sentence in sentences:
+            words = sentence.strip().split()
+            if len(words) < 4: continue
+            question_starters = {"what", "why", "how", "when", "where", "who", "is", "are", "do", "does"}
+            filler_starters = {"however", "moreover", "furthermore", "in", "the", "this", "that"}
+            first_word = words[0].lower()
+            if first_word not in question_starters and first_word not in filler_starters:
+                direct_answer_count += 1
+        
+        ratio = direct_answer_count / len(sentences) if sentences else 0
+        if ratio >= 0.6:    sentence_score = 100
+        elif ratio >= 0.4:  sentence_score = 70
+        elif ratio >= 0.2:  sentence_score = 40
+        else:               sentence_score = 10
+        
+        # 4. Answer Readiness (Pillar 4 - Q&A Pairs)
+        qa_pairs = 0
+        for i in range(len(sentences) - 1):
+            current = sentences[i].strip()
+            next_sent = sentences[i + 1].strip()
+            next_word_count = len(next_sent.split())
+            if current.endswith('?') and 10 <= next_word_count <= 40:
+                qa_pairs += 1
+        
+        if qa_pairs >= 5:    faq_score = 100
+        elif qa_pairs >= 3:  faq_score = 75
+        elif qa_pairs >= 1:  faq_score = 40
+        else:               faq_score = 0
+        
+        # 5. Entity Density
         words = content.split()
-        avg_sentence_len = len(words) / len(sentences) if sentences else 0
-        # Optimal length is 15-20 words
-        sentence_score = 100 - abs(avg_sentence_len - 18) * 4
-        sentence_score = max(0, min(100, sentence_score))
-        
-        # 4. FAQ / Direct Answer Presence
-        has_faq = any(kw in content.lower() for kw in ['faq', 'questions', 'how to', 'what is'])
-        faq_score = 100 if has_faq else 20
-        
-        # 5. Entity Density (Simple count for now)
         entities = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', content)
         entity_score = min(100, (len(entities) / (len(words) / 100 + 1)) * 10)
 
@@ -379,7 +406,7 @@ class GEOOptimizer:
             "breakdown": {
                 "hierarchy": int(hierarchy_score),
                 "readability": int(readability_score),
-                "sentence_flow": int(sentence_score),
+                "direct_answer_density": int(sentence_score),
                 "answer_readiness": int(faq_score),
                 "entity_density": int(entity_score)
             }

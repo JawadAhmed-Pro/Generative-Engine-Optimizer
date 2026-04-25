@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Download, FileText, FileSpreadsheet, Check, Loader2 } from 'lucide-react'
+import { Download, FileText, FileSpreadsheet, Check, Loader2, Code, FileJson } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
@@ -22,7 +22,6 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
     const calculateOverallScore = () => {
         if (!results) return 0
         
-        // Try new structural/semantic average first
         if (results.structural_score && results.semantic_score) {
             return Math.round((results.structural_score.score + results.semantic_score.score) / 2);
         }
@@ -42,10 +41,8 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
             const doc = new jsPDF()
             const pageWidth = doc.internal.pageSize.getWidth()
 
-            // Header
             doc.setFillColor(59, 130, 246)
             doc.rect(0, 0, pageWidth, 40, 'F')
-
             doc.setTextColor(255, 255, 255)
             doc.setFontSize(24)
             doc.setFont('helvetica', 'bold')
@@ -53,41 +50,33 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
 
             doc.setFontSize(10)
             doc.setFont('helvetica', 'normal')
-            doc.text(new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            }), 20, 35)
+            doc.text(new Date().toLocaleDateString(), 20, 35)
 
-            // Reset text color
             doc.setTextColor(0, 0, 0)
-
-            // Overall Score
             doc.setFontSize(16)
             doc.setFont('helvetica', 'bold')
             doc.text('Overall GEO Score', 20, 55)
 
             const overallScore = calculateOverallScore()
             doc.setFontSize(36)
-            doc.setTextColor(overallScore >= 70 ? 34 : overallScore >= 50 ? 234 : 239,
-                overallScore >= 70 ? 197 : overallScore >= 50 ? 179 : 68,
-                overallScore >= 70 ? 94 : overallScore >= 50 ? 8 : 68)
+            const r = overallScore >= 75 ? 16 : overallScore >= 50 ? 245 : 239;
+            const g = overallScore >= 75 ? 185 : overallScore >= 50 ? 158 : 68;
+            const b = overallScore >= 75 ? 129 : overallScore >= 50 ? 11 : 68;
+            doc.setTextColor(r, g, b)
             doc.text(`${overallScore}`, 20, 75)
             doc.setFontSize(14)
             doc.text('/ 100', 55, 75)
 
             doc.setTextColor(0, 0, 0)
-
-            // Metrics Table - Main 4 scores
             doc.setFontSize(16)
             doc.setFont('helvetica', 'bold')
             doc.text('Core Metrics', 20, 95)
 
             const metricsData = [
-                ['Structural Score', Number(results.structural_score?.score || results.ai_visibility_score || 0).toFixed(1)],
-                ['Semantic Probability', Number(results.semantic_score?.score || results.semantic_coverage_score || 0).toFixed(1)],
-                ['Citation Worthiness', Number(results.citation_worthiness_score || 0).toFixed(1)],
-                ['Technical Readability', Number(results.technical_readability_score || 0).toFixed(1)]
+                ['Structural Score', (results.structural_score?.score || results.ai_visibility_score || 0).toFixed(1)],
+                ['Semantic Probability', (results.semantic_score?.score || results.semantic_coverage_score || 0).toFixed(1)],
+                ['Citation Worthiness', (results.citation_worthiness_score || 0).toFixed(1)],
+                ['Technical Readability', (results.technical_readability_score || 0).toFixed(1)]
             ]
 
             autoTable(doc, {
@@ -100,86 +89,17 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
             })
 
             let currentY = (doc.lastAutoTable?.finalY || 140) + 15
-
-            // Detailed LLM Metrics - Match what ResultsPanel displays
-            const detailedMetrics = []
-
-            // Helper to format metric name
-            const formatMetricName = (key) => {
-                if (!key) return 'Unknown'
-                return key.split('_').map(word =>
-                    word.charAt(0).toUpperCase() + word.slice(1)
-                ).join(' ')
-            }
-
-            try {
-                if (results && results.llm_scores) {
-                    const categories = ['ai_visibility', 'citation_worthiness', 'semantic_richness', 'technical_readability']
-
-                    categories.forEach(category => {
-                        const categoryData = results.llm_scores[category]
-                        if (categoryData && categoryData.details) {
-                            Object.entries(categoryData.details).forEach(([key, value]) => {
-                                if (typeof value === 'number') {
-                                    detailedMetrics.push([formatMetricName(key), value.toFixed(1)])
-                                } else if (typeof value === 'string') {
-                                    detailedMetrics.push([formatMetricName(key), value])
-                                }
-                            })
-                        }
-                    })
-                }
-            } catch (e) {
-                console.error('Error extracting detailed metrics:', e)
-            }
-
-            // Add detailed metrics table if we have any
-            if (detailedMetrics.length > 0) {
-                doc.setFontSize(16)
-                doc.setFont('helvetica', 'bold')
-                doc.text('Detailed Analysis', 20, currentY)
-
-                autoTable(doc, {
-                    startY: currentY + 5,
-                    head: [['Metric', 'Score']],
-                    body: detailedMetrics,
-                    theme: 'striped',
-                    headStyles: { fillColor: [37, 99, 235] },
-                    margin: { left: 20, right: 20 },
-                    styles: { fontSize: 9 }
-                })
-                currentY = (doc.lastAutoTable?.finalY || currentY + 40) + 15
-            }
-
-            // Suggestions
-            if (results && results.suggestions && Array.isArray(results.suggestions) && results.suggestions.length > 0) {
+            if (results.suggestions?.length > 0) {
+                if (currentY > 240) { doc.addPage(); currentY = 20; }
                 doc.setFontSize(16)
                 doc.setFont('helvetica', 'bold')
                 doc.text('Recommendations', 20, currentY)
 
-                // Helper function to extract readable text from suggestion
-                const getSuggestionText = (suggestion) => {
-                    if (!suggestion) return 'No details available'
-                    if (typeof suggestion === 'string') return suggestion
-                    if (suggestion.message) return String(suggestion.message)
-                    if (suggestion.suggestion) return String(suggestion.suggestion)
-                    if (suggestion.text) return String(suggestion.text)
-                    if (suggestion.suggestions && Array.isArray(suggestion.suggestions)) {
-                        return suggestion.suggestions.join('; ')
-                    }
-                    return 'See detailed analysis'
-                }
-
-                const getCategory = (suggestion) => {
-                    if (!suggestion || typeof suggestion === 'string') return 'General'
-                    return suggestion.category || suggestion.type || suggestion.metric || 'General'
-                }
-
-                const suggestionsData = results.suggestions.slice(0, 15).map((s, i) => [
-                    `${i + 1}`,
-                    getCategory(s),
-                    getSuggestionText(s)
-                ])
+                const suggestionsData = results.suggestions.slice(0, 10).map((s, i) => {
+                    const text = typeof s === 'string' ? s : (s.text || s.suggestion || s.message || 'N/A')
+                    const cat = typeof s === 'string' ? 'General' : (s.category || 'General')
+                    return [`${i + 1}`, cat, text]
+                })
 
                 autoTable(doc, {
                     startY: currentY + 5,
@@ -188,30 +108,8 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
                     theme: 'striped',
                     headStyles: { fillColor: [59, 130, 246] },
                     margin: { left: 20, right: 20 },
-                    columnStyles: {
-                        0: { cellWidth: 10 },
-                        1: { cellWidth: 30 },
-                        2: { cellWidth: 'auto' }
-                    },
-                    styles: {
-                        fontSize: 9,
-                        cellPadding: 4
-                    }
+                    styles: { fontSize: 9 }
                 })
-            }
-
-            // Footer
-            const pageCount = doc.internal.getNumberOfPages()
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i)
-                doc.setFontSize(8)
-                doc.setTextColor(128, 128, 128)
-                doc.text(
-                    `Generated by GEO Agent | Page ${i} of ${pageCount}`,
-                    doc.internal.pageSize.getWidth() / 2,
-                    doc.internal.pageSize.getHeight() - 10,
-                    { align: 'center' }
-                )
             }
 
             doc.save(`GEO_Report_${new Date().toISOString().split('T')[0]}.pdf`)
@@ -219,11 +117,101 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
             setTimeout(() => setExportSuccess(null), 2000)
         } catch (error) {
             console.error('PDF export failed:', error)
-            alert(`Failed to export PDF: ${error.message || 'Unknown error'}. Please try CSV or contact support.`)
+            alert('Failed to export PDF.')
         } finally {
             setExporting(false)
             setShowOptions(false)
         }
+    }
+
+    const exportToMarkdown = () => {
+        setExporting(true)
+        try {
+            let md = `# GEO Analysis Report\n\n`
+            md += `*Generated: ${new Date().toLocaleString()}*\n\n`
+            md += `## Overall Score: ${calculateOverallScore()}/100\n\n`
+            md += `### Core Metrics\n`
+            md += `| Metric | Score |\n`
+            md += `| :--- | :--- |\n`
+            md += `| Structural Score | ${(results.structural_score?.score || results.ai_visibility_score || 0).toFixed(1)} |\n`
+            md += `| Semantic Probability | ${(results.semantic_score?.score || results.semantic_coverage_score || 0).toFixed(1)} |\n`
+            md += `| Citation Worthiness | ${(results.citation_worthiness_score || 0).toFixed(1)} |\n`
+            md += `| Technical Readability | ${(results.technical_readability_score || 0).toFixed(1)} |\n\n`
+            
+            if (results.suggestions?.length > 0) {
+                md += `### Recommendations\n`
+                results.suggestions.forEach((s, i) => {
+                    const text = typeof s === 'string' ? s : (s.text || s.suggestion || s.message || 'N/A')
+                    md += `${i+1}. ${text}\n`
+                })
+            }
+
+            const blob = new Blob([md], { type: 'text/markdown' })
+            const link = document.createElement('a')
+            link.href = URL.createObjectURL(blob)
+            link.download = `GEO_Report_${new Date().toISOString().split('T')[0]}.md`
+            link.click()
+            setExportSuccess('md')
+            setTimeout(() => setExportSuccess(null), 2000)
+        } catch (err) { alert('Markdown export failed') }
+        finally { setExporting(false); setShowOptions(false); }
+    }
+
+    const exportToHTML = () => {
+        setExporting(true)
+        try {
+            const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GEO Analysis Report</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #1f2937; max-width: 800px; margin: 0 auto; padding: 2rem; }
+        h1 { color: #2563eb; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; }
+        .score-box { background: #f3f4f6; padding: 2rem; border-radius: 1rem; text-align: center; margin: 2rem 0; }
+        .score-val { font-size: 4rem; font-weight: 800; color: #2563eb; }
+        table { width: 100%; border-collapse: collapse; margin: 2rem 0; }
+        th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f9fafb; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <h1>GEO Analysis Report</h1>
+    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+    <div class="score-box">
+        <div style="font-size: 0.875rem; text-transform: uppercase; color: #6b7280;">Overall GEO Score</div>
+        <div class="score-val">${calculateOverallScore()}</div>
+        <div style="font-weight: 600;">/ 100</div>
+    </div>
+    <h2>Core Metrics</h2>
+    <table>
+        <thead><tr><th>Metric</th><th>Score</th></tr></thead>
+        <tbody>
+            <tr><td>Structural Score</td><td>${(results.structural_score?.score || results.ai_visibility_score || 0).toFixed(1)}</td></tr>
+            <tr><td>Semantic Probability</td><td>${(results.semantic_score?.score || results.semantic_coverage_score || 0).toFixed(1)}</td></tr>
+            <tr><td>Citation Worthiness</td><td>${(results.citation_worthiness_score || 0).toFixed(1)}</td></tr>
+            <tr><td>Technical Readability</td><td>${(results.technical_readability_score || 0).toFixed(1)}</td></tr>
+        </tbody>
+    </table>
+    <h2>Recommendations</h2>
+    <ul>
+        ${(results.suggestions || []).map(s => {
+            const text = typeof s === 'string' ? s : (s.text || s.suggestion || s.message || 'N/A')
+            return `<li>${text}</li>`
+        }).join('')}
+    </ul>
+</body>
+</html>`
+            const blob = new Blob([html], { type: 'text/html' })
+            const link = document.createElement('a')
+            link.href = URL.createObjectURL(blob)
+            link.download = `GEO_Report_${new Date().toISOString().split('T')[0]}.html`
+            link.click()
+            setExportSuccess('html')
+            setTimeout(() => setExportSuccess(null), 2000)
+        } catch (err) { alert('HTML export failed') }
+        finally { setExporting(false); setShowOptions(false); }
     }
 
     const exportToCSV = () => {
@@ -232,55 +220,71 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
             const rows = [
                 ['GEO Analysis Report'],
                 ['Generated', new Date().toISOString()],
-                [''],
                 ['Metric', 'Score'],
                 ['Overall Score', calculateOverallScore()],
                 ['Structural Score', results.structural_score?.score || results.ai_visibility_score || 0],
                 ['Semantic Probability', results.semantic_score?.score || results.semantic_coverage_score || 0],
                 ['Citation Worthiness', results.citation_worthiness_score || 0],
-                ['Technical Readability', results.technical_readability_score || 0],
-                [''],
-                ['Recommendations']
+                ['Technical Readability', results.technical_readability_score || 0]
             ]
-
-            if (results.suggestions) {
-                // Reuse the same helper logic
-                const getSuggestionText = (suggestion) => {
-                    if (typeof suggestion === 'string') return suggestion
-                    if (suggestion.message) return suggestion.message
-                    if (suggestion.suggestion) return suggestion.suggestion
-                    if (suggestion.text) return suggestion.text
-                    if (suggestion.suggestions && Array.isArray(suggestion.suggestions)) {
-                        return suggestion.suggestions.join('; ')
-                    }
-                    return 'See detailed analysis'
-                }
-                const getCategory = (suggestion) => {
-                    if (typeof suggestion === 'string') return 'General'
-                    return suggestion.category || suggestion.type || suggestion.metric || 'General'
-                }
-
-                results.suggestions.forEach((s, i) => {
-                    rows.push([`${i + 1}`, getCategory(s), getSuggestionText(s)])
-                })
-            }
-
-            const csvContent = rows.map(row => row.join(',')).join('\n')
+            const csvContent = rows.map(row => `"${row.join('","')}"`).join('\n')
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
             const link = document.createElement('a')
             link.href = URL.createObjectURL(blob)
             link.download = `GEO_Report_${new Date().toISOString().split('T')[0]}.csv`
             link.click()
-
             setExportSuccess('csv')
             setTimeout(() => setExportSuccess(null), 2000)
-        } catch (error) {
-            console.error('CSV export failed:', error)
-            alert('Failed to export CSV. Please try again.')
-        } finally {
-            setExporting(false)
-            setShowOptions(false)
-        }
+        } catch (error) { alert('Failed to export CSV.') }
+        finally { setExporting(false); setShowOptions(false); }
+    }
+
+    const exportToWord = () => {
+        setExporting(true)
+        try {
+            const html = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head><meta charset='utf-8'><title>GEO Report</title></head>
+            <body>
+                <h1>GEO Analysis Report</h1>
+                <p>Generated: ${new Date().toLocaleString()}</p>
+                <h2>Overall Score: ${calculateOverallScore()} / 100</h2>
+                <hr/>
+                <h2>Core Metrics</h2>
+                <ul>
+                    <li>Structural Score: ${(results.structural_score?.score || results.ai_visibility_score || 0).toFixed(1)}</li>
+                    <li>Semantic Probability: ${(results.semantic_score?.score || results.semantic_coverage_score || 0).toFixed(1)}</li>
+                    <li>Citation Worthiness: ${(results.citation_worthiness_score || 0).toFixed(1)}</li>
+                    <li>Technical Readability: ${(results.technical_readability_score || 0).toFixed(1)}</li>
+                </ul>
+                <h2>Recommendations</h2>
+                <ol>
+                    ${(results.suggestions || []).map(s => `<li>${typeof s === 'string' ? s : (s.text || s.suggestion || 'N/A')}</li>`).join('')}
+                </ol>
+            </body>
+            </html>`;
+            const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `GEO_Report_${new Date().toISOString().split('T')[0]}.doc`;
+            link.click();
+            setExportSuccess('doc');
+            setTimeout(() => setExportSuccess(null), 2000);
+        } catch (err) { alert('Word export failed') }
+        finally { setExporting(false); setShowOptions(false); }
+    }
+
+    const exportToJSON = () => {
+        const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `geo-analysis-${results.content_item_id || 'export'}.json`
+        a.click()
+        URL.revokeObjectURL(url)
+        setExportSuccess('json')
+        setTimeout(() => setExportSuccess(null), 2000)
+        setShowOptions(false)
     }
 
     if (!results) return null
@@ -295,18 +299,9 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
                 className="btn btn-outline"
                 style={{ gap: '0.5rem', fontSize: '0.875rem' }}
                 disabled={exporting}
-                aria-label="Export analysis report"
-                aria-haspopup="true"
-                aria-expanded={showOptions}
             >
-                {exporting ? (
-                    <Loader2 size={16} className="spin" />
-                ) : exportSuccess ? (
-                    <Check size={16} color="#10B981" />
-                ) : (
-                    <Download size={16} />
-                )}
-                {exportSuccess ? 'Exported!' : 'Export'}
+                {exporting ? <Loader2 size={16} className="spin" /> : exportSuccess ? <Check size={16} color="#10B981" /> : <Download size={16} />}
+                {exportSuccess ? 'Exported!' : 'Export Report'}
             </button>
 
             {showOptions && (
@@ -316,57 +311,39 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
                     right: 0,
                     marginTop: '0.5rem',
                     background: 'var(--bg-secondary)',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    border: '1px solid var(--card-border)',
                     borderRadius: '8px',
                     overflow: 'hidden',
                     zIndex: 100,
-                    minWidth: '160px',
+                    minWidth: '180px',
                     boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
                 }}>
-                    <button
-                        onClick={exportToPDF}
-                        style={{
-                            width: '100%',
-                            padding: '0.75rem 1rem',
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'var(--text-primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            cursor: 'pointer',
-                            fontSize: '0.875rem',
-                            transition: 'background 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                    >
-                        <FileText size={16} color="#EF4444" />
-                        Export as PDF
-                    </button>
-                    <button
-                        onClick={exportToCSV}
-                        style={{
-                            width: '100%',
-                            padding: '0.75rem 1rem',
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'var(--text-primary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            cursor: 'pointer',
-                            fontSize: '0.875rem',
-                            transition: 'background 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                    >
-                        <FileSpreadsheet size={16} color="#10B981" />
-                        Export as CSV
-                    </button>
+                    <button onClick={exportToPDF} className="export-option-btn"><FileText size={16} color="#EF4444" /> Export PDF</button>
+                    <button onClick={exportToWord} className="export-option-btn"><FileText size={16} color="#2B579A" /> Export Word (.doc)</button>
+                    <button onClick={exportToMarkdown} className="export-option-btn"><Code size={16} color="#3B82F6" /> Export MD</button>
+                    <button onClick={exportToHTML} className="export-option-btn"><Download size={16} color="#10B981" /> Export HTML</button>
+                    <button onClick={exportToCSV} className="export-option-btn"><FileSpreadsheet size={16} color="#10B981" /> Export CSV</button>
+                    <button onClick={exportToJSON} className="export-option-btn"><FileJson size={16} color="#8B5CF6" /> Export JSON</button>
                 </div>
             )}
+            <style>{`
+                .export-option-btn {
+                    width: 100%;
+                    padding: 0.75rem 1rem;
+                    background: transparent;
+                    border: none;
+                    color: var(--text-primary);
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    text-align: left;
+                }
+                .export-option-btn:hover {
+                    background: rgba(255,255,255,0.05);
+                }
+            `}</style>
         </div>
     )
 }

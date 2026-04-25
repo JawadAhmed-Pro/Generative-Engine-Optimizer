@@ -57,36 +57,37 @@ class CitationProbabilityModel:
         factors: List[Dict[str, Any]] = []
         multiplier_total = 1.0
 
-        # 2. DEPARTMENT-SPECIFIC DECAY SENSITIVITY
-        # Research shows AI search treats educational facts as 'Evergreen'
-        decay_config = {
-            "educational": {"penalty_weight": 0.15, "label": "Academic Evergreen"},
-            "ecommerce": {"penalty_weight": 0.75, "label": "Commercial Recency"},
-            "general": {"penalty_weight": 0.40, "label": "Standard Information"}
-        }
-        
-        config = decay_config.get(detected_category, decay_config["general"])
+        # 2. FRESHNESS FACTOR (Decay Curve)
         freshness_data = rule_scores.get('freshness', {})
-        has_recent_date = freshness_data.get('details', {}).get('has_update_info', False)
-
-        if not has_recent_date:
-            # Multiplier calculation: 1.0 - (base_penalty * engine_sensitivity)
-            engine_freshness_weight = {
-                "perplexity": 1.2, # Perplexity loves news
-                "chatgpt": 0.8,    # GPT is more static-friendly
-                "gemini": 1.0      # Gemini is balanced
-            }.get(engine, 1.0)
+        last_updated_year = freshness_data.get('details', {}).get('extracted_year', 2026)
+        is_evergreen = freshness_data.get('details', {}).get('is_evergreen', False)
+        
+        def get_freshness_factor(year, evergreen):
+            if evergreen: return 1.0
+            current_year = 2026
+            age = current_year - year
+            if age <= 1:   return 1.0
+            elif age <= 2: return 0.85
+            elif age <= 3: return 0.70
+            return 0.55 # age >= 4
             
-            penalty = config["penalty_weight"] * engine_freshness_weight
-            decay_multiplier = max(0.2, 1.0 - penalty) # Floor at 0.2
-            
+        decay_multiplier = get_freshness_factor(last_updated_year, is_evergreen)
+        
+        if decay_multiplier < 1.0:
             multiplier_total *= decay_multiplier
+            penalty_pct = int((1.0 - decay_multiplier) * 100)
             factors.append({
-                "factor": f"{config['label']} Penalty",
-                "impact": f"-{int(penalty*100)}%",
+                "factor": "Freshness Factor",
+                "impact": f"-{penalty_pct}%",
                 "type": "negative",
-                "description": f"{detected_category.title()} content values recency differently. " + 
-                               ("Legacy status hurts less for foundational topics." if detected_category == 'educational' else "Outdated info heavily penalizes commerce.")
+                "description": f"Content age ({2026 - last_updated_year} years) impacts extraction confidence. Update to 2026 standards to restore full score."
+            })
+        else:
+            factors.append({
+                "factor": "Freshness Factor",
+                "impact": "100%",
+                "type": "positive",
+                "description": "Content is evergreen or recently updated."
             })
 
         # 3. AUTHORITY & DEPTH LIFTS (High impact for Education)

@@ -63,8 +63,9 @@ def get_tenant_session(current_user: dict = __import__('fastapi').Depends(__impo
     db = SessionLocal()
     try:
         from sqlalchemy import text
-        # Set Context for RLS mathematically
-        db.execute(text("SET LOCAL app.current_tenant = :uid"), {"uid": current_user["id"]})
+        # Only set tenant context if using PostgreSQL (which supports SET LOCAL)
+        if sync_engine.url.drivername.startswith('postgresql'):
+            db.execute(text("SET LOCAL app.current_tenant = :uid"), {"uid": current_user["id"]})
         yield db
     finally:
         db.close()

@@ -5,6 +5,8 @@ import { useToast } from './ToastProvider'
 import RAGInsights from './RAGInsights'
 import SuggestionList from './SuggestionList'
 
+import ExportButton from './ExportButton'
+
 function AnalysisModal({ itemId, onClose }) {
     const [data, setData] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -40,18 +42,6 @@ function AnalysisModal({ itemId, onClose }) {
         if (score >= 70) return 'var(--success)'
         if (score >= 50) return 'var(--warning)'
         return 'var(--error)'
-    }
-
-    const handleExportJSON = () => {
-        if (!data) return
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `geo-analysis-${itemId}.json`
-        a.click()
-        URL.revokeObjectURL(url)
-        toast.success('Analysis exported as JSON')
     }
 
     const handleCopyResults = () => {
@@ -138,7 +128,7 @@ ${recommendationsText}
                             </a>
                         )}
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         {data && (
                             <>
                                 <button
@@ -154,29 +144,13 @@ ${recommendationsText}
                                         borderRadius: '6px',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: 'center'
+                                        justifyContent: 'center',
+                                        height: '38px'
                                     }}
                                 >
                                     {copied ? <Check size={18} color="var(--success)" aria-hidden="true" /> : <Copy size={18} aria-hidden="true" />}
                                 </button>
-                                <button
-                                    onClick={handleExportJSON}
-                                    title="Download JSON"
-                                    aria-label="Download analysis as JSON"
-                                    style={{
-                                        background: 'var(--bg-tertiary)',
-                                        border: 'none',
-                                        color: 'var(--text-secondary)',
-                                        cursor: 'pointer',
-                                        padding: '0.5rem',
-                                        borderRadius: '6px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                >
-                                    <Download size={18} aria-hidden="true" />
-                                </button>
+                                <ExportButton results={data.analysis || data} title={data.title} />
                             </>
                         )}
                         <button

@@ -435,7 +435,10 @@ You are an OBJECTIVE AUDITOR. Grade fairly based on industry standards.
 
 **METRICS TO EVALUATE (2025 Standards):**
 
-1. **Semantic Richness (Information Gain)**: Does it provide UNIQUE information, insights, or viewpoints?
+1. **Semantic Richness (Information Gain)**: Measure objective depth. 
+    - Count unique claims that contain a specific number, date, or named entity (+2 each).
+    - Penalize generic claims that could apply to any article on this topic (-1 each).
+    - Provide a score (0-100) and list the 3 weakest generic claims found.
 2. **User Intent Alignment (Direct Answers)**: Is there a concise direct answer immediately following queries?
 3. **Structural Integrity (Extraction Confidence)**: Ease of extraction for LLMs (lists, tables).
 4. **AI-Friendly Formatting**: Headings and 'hard grounding' markers.

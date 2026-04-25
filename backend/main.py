@@ -107,6 +107,31 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         },
     )
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch-all for 500 errors to ensure CORS headers are present and log details."""
+    app_logger.error(f"Global Exception: {str(exc)}")
+    import traceback
+    traceback.print_exc()
+    
+    # Extract origin for CORS response
+    origin = request.headers.get("origin", "*")
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "error": "Internal Server Error",
+            "detail": str(exc)
+        },
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*"
+        }
+    )
+
 competitor_analyzer = CompetitorAnalyzer(
     content_fetcher=content_fetcher,
     rule_scorer=rule_scorer,
@@ -1079,12 +1104,12 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     detection_context['raw_content'] = content
     detection_context['target_keyword'] = extracted.get('target_keyword', '')
 
-    # Calculate initial probability baseline
+    # Calculate initial probability baseline (Pillar weights: 25% each)
     current_overall = (
-        final_scores['citation_worthiness_score'] * 0.4 +
-        final_scores['ai_visibility_score'] * 0.3 + 
-        final_scores['semantic_coverage_score'] * 0.2 + 
-        final_scores['technical_readability_score'] * 0.1
+        final_scores['citation_worthiness_score'] * 0.25 +
+        final_scores['structural_clarity_score'] * 0.25 + 
+        final_scores['semantic_coverage_score'] * 0.25 + 
+        final_scores['freshness_authority_score'] * 0.25
     )
     
     prob_calc = probability_model.calculate_probability(
@@ -1095,34 +1120,25 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
         engine=engine
     )
     
-    # Format probability_metrics to match the ScoreMetric pydantic schema before saving
-    
     # ---------------------------------------------------------
-    # NEW: Live Validation Layer & Error Gap
+    # FIX 2: Live Validation Reduction (1 Query Only)
     # ---------------------------------------------------------
     from live_verifier import live_verifier
     
-    # Generate Multi-Query Variations (Using simple heuristics for now, in prod use LLM)
-    base_kw = extracted.get('target_keyword', 'the topic')
-    if not base_kw:
-         base_kw = "the topic"
-    validation_queries = [
-        f"What is {base_kw}?",
-        f"Best {base_kw} for beginners",
-        f"Explain {base_kw} in detail",
-        f"{base_kw} pros and cons",
-        f"How does {base_kw} work?"
-    ]
+    target_kw = extracted.get('target_keyword', 'the topic')
+    if not target_kw:
+         target_kw = "the topic"
     
-    # Run Live Verification (Simulation wrapper)
+    # Run Live Verification for 1 target keyword only
     predicted_anchor = prob_calc.get('probability', 60.0)
-    live_results = await live_verifier.verify_citations(url=extracted.get('url', ''), queries=validation_queries, predicted_score=predicted_anchor)
+    live_results = await live_verifier.verify_citations(url=extracted.get('url', ''), queries=[target_kw], predicted_score=predicted_anchor)
     actual_rate = live_results["actual_citation_rate"]
     
     # NEW: Grounding Audit (Identify missing stats/facts)
     # Optimization: Use global singleton geo_optimizer instead of re-instantiating (prevents duplicate spacy loads)
     grounding_audit = await geo_optimizer.suggest_hard_grounding(content, extracted.get('content_type', 'general'))
     missing_citations = grounding_audit.get('suggestions', [])
+    
     if isinstance(missing_citations, str):
         missing_citations = [missing_citations]
     elif not isinstance(missing_citations, list):
@@ -1132,9 +1148,10 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     error_gap = predicted_score - actual_rate
     
     prob_calc['validation_layer'] = {
-        "queries_tested": validation_queries,
-        "total_checks": live_results["validation_queries_run"],
-        "actual_citation_rate": round(actual_rate, 1),
+        "queries_tested": [target_kw],
+        "total_checks": 1,
+        "citation_status": "Cited" if actual_rate > 0 else "Not Cited",
+        "snapshot_label": "Point-in-time snapshot — results vary per query",
         "error_gap": round(error_gap, 1),
         "status": "Validated" if abs(error_gap) <= 15 else "High Variance"
     }
@@ -1147,10 +1164,10 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     # Save results to database
     analysis_result = AnalysisResult(
         content_item_id=content_item_id,
-        ai_visibility_score=final_scores['ai_visibility_score'],
+        structural_clarity_score=final_scores['structural_clarity_score'],
         citation_worthiness_score=final_scores['citation_worthiness_score'],
         semantic_coverage_score=final_scores['semantic_coverage_score'],
-        technical_readability_score=final_scores['technical_readability_score'],
+        freshness_authority_score=final_scores['freshness_authority_score'],
         rule_based_scores=final_scores['rule_based_scores'],
         llm_scores=final_scores['llm_scores'],
         suggestions=final_scores['suggestions']
@@ -1167,31 +1184,31 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     newest_score = current_overall # Default fallback for first-time analysis
     
     if len(history) > 1:
-        # Null-safe calculation for historical scores
-        h0_vis = history[0].ai_visibility_score or 0
+        # Null-safe calculation for historical scores (25% weight each)
+        h0_str = history[0].structural_clarity_score or 0
         h0_cit = history[0].citation_worthiness_score or 0
         h0_sem = history[0].semantic_coverage_score or 0
-        h0_tec = history[0].technical_readability_score or 0
+        h0_frh = history[0].freshness_authority_score or 0
         
-        h_last_vis = history[-1].ai_visibility_score or 0
+        h_last_str = history[-1].structural_clarity_score or 0
         h_last_cit = history[-1].citation_worthiness_score or 0
         h_last_sem = history[-1].semantic_coverage_score or 0
-        h_last_tec = history[-1].technical_readability_score or 0
+        h_last_frh = history[-1].freshness_authority_score or 0
 
-        oldest_score = (h0_cit * 0.4 + h0_vis * 0.3 + h0_sem * 0.2 + h0_tec * 0.1)
-        newest_score = (h_last_cit * 0.4 + h_last_vis * 0.3 + h_last_sem * 0.2 + h_last_tec * 0.1)
+        oldest_score = (h0_str * 0.25 + h0_cit * 0.25 + h0_sem * 0.25 + h0_frh * 0.25)
+        newest_score = (h_last_str * 0.25 + h_last_cit * 0.25 + h_last_sem * 0.25 + h_last_frh * 0.25)
         score_delta = newest_score - oldest_score
 
     # Create response
     response = AnalysisResponse(
         content_item_id=content_item_id,
         overall_score=round(newest_score if len(history) > 0 else current_overall, 1),
-        ai_visibility_score=final_scores['ai_visibility_score'],
+        structural_clarity_score=final_scores['structural_clarity_score'],
         citation_worthiness_score=final_scores['citation_worthiness_score'],
         semantic_coverage_score=final_scores['semantic_coverage_score'],
-        technical_readability_score=final_scores['technical_readability_score'],
-        structural_score=final_scores['rule_based_scores'].get('structure'), # Fallback to rule structure
-        semantic_score=final_scores['llm_scores'].get('semantic_richness'),
+        freshness_authority_score=final_scores['freshness_authority_score'],
+        structural_score=final_scores['llm_scores'].get('structural_clarity'),
+        semantic_score=final_scores['llm_scores'].get('semantic_coverage'),
         probability_metrics=prob_calc,
         missing_citations=missing_citations,
         rule_based_scores=final_scores['rule_based_scores'],
@@ -1200,7 +1217,9 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
         timestamp=datetime.utcnow(),
         raw_content=content,
         score_delta=round(score_delta, 1),
-        previous_analyses_count=len(history)
+        previous_analyses_count=len(history),
+        benchmark_version=settings.GEO_BENCHMARK_VERSION,
+        analysis_disclaimer="Citation status is a snapshot sampled at this moment. AI engine citations are non-deterministic and change with every query."
     )
     
     return response
