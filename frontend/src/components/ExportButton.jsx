@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Download, FileText, FileSpreadsheet, Check, Loader2 } from 'lucide-react'
-import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 function ExportButton({ results, title = 'GEO Analysis Report' }) {
     const [exporting, setExporting] = useState(false)
@@ -84,13 +84,13 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
             doc.text('Core Metrics', 20, 95)
 
             const metricsData = [
-                ['Structural Score', (results.structural_score?.score || results.ai_visibility_score || 0).toFixed(1)],
-                ['Semantic Probability', (results.semantic_score?.score || results.semantic_coverage_score || 0).toFixed(1)],
-                ['Citation Worthiness', (results.citation_worthiness_score || 0).toFixed(1)],
-                ['Technical Readability', (results.technical_readability_score || 0).toFixed(1)]
+                ['Structural Score', Number(results.structural_score?.score || results.ai_visibility_score || 0).toFixed(1)],
+                ['Semantic Probability', Number(results.semantic_score?.score || results.semantic_coverage_score || 0).toFixed(1)],
+                ['Citation Worthiness', Number(results.citation_worthiness_score || 0).toFixed(1)],
+                ['Technical Readability', Number(results.technical_readability_score || 0).toFixed(1)]
             ]
 
-            doc.autoTable({
+            autoTable(doc, {
                 startY: 100,
                 head: [['Metric', 'Score']],
                 body: metricsData,
@@ -128,12 +128,12 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
 
             // Add detailed metrics table if we have any
             if (detailedMetrics.length > 0) {
-                const detailedY = doc.lastAutoTable.finalY + 15
+                const detailedY = (doc).lastAutoTable.finalY + 15
                 doc.setFontSize(16)
                 doc.setFont('helvetica', 'bold')
                 doc.text('Detailed Analysis', 20, detailedY)
 
-                doc.autoTable({
+                autoTable(doc, {
                     startY: detailedY + 5,
                     head: [['Metric', 'Score']],
                     body: detailedMetrics,
@@ -145,7 +145,7 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
             }
 
             // Suggestions
-            const suggestionsY = doc.lastAutoTable.finalY + 15
+            const suggestionsY = (doc).lastAutoTable.finalY + 15
             doc.setFontSize(16)
             doc.setFont('helvetica', 'bold')
             doc.text('Recommendations', 20, suggestionsY)
@@ -180,7 +180,7 @@ function ExportButton({ results, title = 'GEO Analysis Report' }) {
                     getSuggestionText(s)
                 ])
 
-                doc.autoTable({
+                autoTable(doc, {
                     startY: suggestionsY + 5,
                     head: [['#', 'Category', 'Recommendation']],
                     body: suggestionsData,
