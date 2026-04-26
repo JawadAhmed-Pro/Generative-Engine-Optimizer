@@ -33,21 +33,39 @@ def init_db():
     """Initialize database tables synchronously and ensure schema is up to date."""
     Base.metadata.create_all(bind=sync_engine)
     
-    # Manual Migration for standalone user_id (Self-healing for Render/Deployment)
     from sqlalchemy import text, inspect
     inspector = inspect(sync_engine)
-    columns = [c['name'] for c in inspector.get_columns('content_items')]
     
-    if 'user_id' not in columns:
+    # 1. Migration for 'content_items'
+    ci_columns = [c['name'] for c in inspector.get_columns('content_items')]
+    if 'user_id' not in ci_columns:
         print("Migrating: Adding user_id to content_items...")
         with sync_engine.connect() as conn:
-            # Check DB type
             if sync_engine.url.drivername.startswith('sqlite'):
-                # SQLite supports simple ADD COLUMN
                 conn.execute(text("ALTER TABLE content_items ADD COLUMN user_id INTEGER REFERENCES users(id)"))
             else:
-                # PostgreSQL and others
                 conn.execute(text("ALTER TABLE content_items ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)"))
+            conn.commit()
+
+    # 2. Migration for 'analysis_results' (New GEO Pillars)
+    ar_columns = [c['name'] for c in inspector.get_columns('analysis_results')]
+    target_pillars = [
+        'structural_clarity_score',
+        'citation_worthiness_score',
+        'semantic_coverage_score',
+        'freshness_authority_score'
+    ]
+    
+    missing_pillars = [p for p in target_pillars if p not in ar_columns]
+    
+    if missing_pillars:
+        print(f"Migrating: Adding missing pillars to analysis_results: {missing_pillars}")
+        with sync_engine.connect() as conn:
+            for pillar in missing_pillars:
+                if sync_engine.url.drivername.startswith('sqlite'):
+                    conn.execute(text(f"ALTER TABLE analysis_results ADD COLUMN {pillar} FLOAT"))
+                else:
+                    conn.execute(text(f"ALTER TABLE analysis_results ADD COLUMN IF NOT EXISTS {pillar} FLOAT"))
             conn.commit()
 
 def get_db() -> Generator[Session, None, None]:
