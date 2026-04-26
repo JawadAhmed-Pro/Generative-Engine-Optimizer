@@ -668,7 +668,7 @@ def get_analysis_by_item(
         for i in stored_insights
     ]
     # Calculate Citation Probability
-    probability_metrics = probability_model.calculate_probability(
+    probability_metrics = services.probability_model.calculate_probability(
         overall_score=overall_score,
         rule_scores=analysis.rule_based_scores or {},
         llm_scores=analysis.llm_scores or {},
@@ -744,7 +744,7 @@ async def analyze_url(
     
     try:
         # Fetch content (Async)
-        extracted = await content_fetcher.async_fetch_url(payload.url)
+        extracted = await services.content_fetcher.async_fetch_url(payload.url)
         
         # Check if URL already exists in this project
         content_item = db.query(ContentItem).filter(
@@ -780,7 +780,7 @@ async def analyze_url(
         
         # Chunk and store in vector DB (optional - don't fail if this errors)
         try:
-            chunks = chunker.chunk_content(
+            chunks = services.chunker.chunk_content(
                 extracted['content'],
                 {
                     'title': extracted['title'],
@@ -788,7 +788,7 @@ async def analyze_url(
                     **extracted['metadata']
                 }
             )
-            vector_store.add_chunks(chunks, content_item.id)
+            services.vector_store.add_chunks(chunks, content_item.id)
         except Exception as e:
             print(f"Warning: Vector storage failed (this is OK): {str(e)}")
         
@@ -860,11 +860,11 @@ async def analyze_text(
         
         # Chunk and store (optional)
         try:
-            chunks = chunker.chunk_content(
+            chunks = services.chunker.chunk_content(
                 clean_content,
                 {'title': clean_title}
             )
-            vector_store.add_chunks(chunks, content_item.id)
+            services.vector_store.add_chunks(chunks, content_item.id)
         except Exception as e:
             print(f"Warning: Vector storage failed (this is OK): {str(e)}")
         
@@ -916,7 +916,7 @@ async def optimize_content(payload: OptimizeContentRequest = Body(...)):
             result = await geo_optimizer.suggest_hard_grounding(payload.content, payload.content_type)
             return result
         else:
-            optimized_text = await llm_scorer.optimize(
+            optimized_text = await services.llm_scorer.optimize(
                 content=payload.content,
                 mode=payload.mode,
                 content_type=payload.content_type
@@ -950,7 +950,7 @@ async def optimize_entity_schema(payload: OptimizeEntitySchemaRequest = Body(...
 async def simulate_ai(payload: SimulateAIRequest = Body(...)):
     """Simulate AI perception - test if AI would cite user content."""
     try:
-        result = await llm_scorer.simulate_ai_response(
+        result = await services.llm_scorer.simulate_ai_response(
             query=payload.query,
             content=payload.content,
             domain=payload.domain
@@ -1671,7 +1671,7 @@ async def generate_targeted_injection(
 ):
     """Generate a specific missing block for the Smart Injection Auto-Writer."""
     try:
-        injected_markdown = await llm_scorer.generate_targeted_injection(
+        injected_markdown = await services.llm_scorer.generate_targeted_injection(
             context_text=payload.context_text,
             injection_target=payload.injection_target,
             tone=payload.tone
@@ -1690,9 +1690,9 @@ async def validate_citation(
     try:
         # Full pseudo-analysis for validation
         extracted = {'content': payload.content, 'content_type': payload.content_type}
-        rule_scores = rule_scorer.analyze(payload.content, extracted, payload.content_type)
-        llm_scores_res = await llm_scorer.analyze(payload.content, extracted)
-        final_scores = aggregator.aggregate(rule_scores, llm_scores_res)
+        rule_scores = services.rule_scorer.analyze(payload.content, extracted, payload.content_type)
+        llm_scores_res = await services.llm_scorer.analyze(payload.content, extracted)
+        final_scores = services.aggregator.aggregate(rule_scores, llm_scores_res)
         
         overall_score = (
             final_scores['citation_worthiness_score'] * 0.4 +
@@ -1701,7 +1701,8 @@ async def validate_citation(
             final_scores['technical_readability_score'] * 0.1
         )
         
-        prob_calc = probability_model.calculate_probability(
+        # Cross-reference with probability model
+        prob_calc = services.probability_model.calculate_probability(
             overall_score=overall_score,
             rule_scores=final_scores['rule_based_scores'],
             llm_scores=final_scores['llm_scores'],
