@@ -1407,7 +1407,7 @@ async def compare_competitors(
             user_url=payload.user_url,
             competitor_urls=payload.competitor_urls,
             keyword=keyword,
-            niche=getattr(payload, 'niche', 'general'),
+            niche=payload.niche,
             content_type=payload.content_type
         )
         return {"status": "pending", "job_id": job_id, "message": "Competitor analysis started"}
@@ -1607,19 +1607,49 @@ class PromptDiscoveryRequest(BaseModel):
 
 async def _run_discover_prompts(keyword, niche):
     if len(keyword.split()) <= 2:
-         results = await services.discovery_engine.generate_niche_library(keyword)
+        # generate_niche_library returns a LIST of prompt dicts
+        raw = await services.discovery_engine.generate_niche_library(keyword)
+        prompts_list = raw if isinstance(raw, list) else raw.get("top_prompts", [])
     else:
-         results = await services.discovery_engine.discover_prompts(
+        # discover_prompts returns a DICT with "top_prompts" key
+        raw = await services.discovery_engine.discover_prompts(
             keyword=keyword,
             niche=niche
-         )
+        )
+        prompts_list = raw.get("top_prompts", []) if isinstance(raw, dict) else raw
+
+    # Normalize each prompt to ensure consistent fields for the frontend
+    normalized = []
+    for p in prompts_list:
+        if not isinstance(p, dict):
+            continue
+        normalized.append({
+            "prompt": p.get("prompt", ""),
+            "intent": p.get("intent", "informational"),
+            "search_volume_estimate": p.get("search_volume_estimate", _score_to_volume(p.get("value_score"))),
+            "content_gap": p.get("content_gap", "No gap analysis available."),
+            "value_score": p.get("value_score", 50),
+            "source_signal": p.get("source_signal", "Synthesized"),
+        })
+
     return {
         "success": True,
         "keyword": keyword,
         "niche": niche,
-        "data": results,
-        "prompts": results.get("top_prompts", [])
+        "data": raw,
+        "prompts": normalized
     }
+
+
+def _score_to_volume(score):
+    """Convert a numeric value_score to a volume label for display."""
+    if score is None:
+        return "medium"
+    if score >= 70:
+        return "high"
+    if score >= 40:
+        return "medium"
+    return "low"
 
 @app.post("/api/discover-prompts")
 async def discover_prompts(

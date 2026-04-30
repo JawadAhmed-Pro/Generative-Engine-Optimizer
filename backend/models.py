@@ -365,5 +365,6 @@ class CompetitorCompareRequest(BaseModel):
     user_url: str = Field(..., pattern=r'^https?://')
     competitor_urls: List[str] = Field(..., min_length=1, max_length=5)
     content_type: str = Field(default="general", pattern=r'^(general|ecommerce|educational)$')
+    niche: Optional[str] = Field(default="general")
     target_keyword: Optional[str] = None
 

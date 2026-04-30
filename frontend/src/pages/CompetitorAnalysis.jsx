@@ -77,7 +77,8 @@ function CompetitorAnalysis() {
             const response = await axios.post('/api/competitor-compare', {
                 user_url: userUrl.trim(),
                 competitor_urls: validCompetitors,
-                content_type: contentType
+                content_type: contentType,
+                niche: contentType
             })
             if (response.data.job_id) {
                 pollJobStatus(response.data.job_id);
@@ -113,17 +114,13 @@ function CompetitorAnalysis() {
                 keyword: targetKeyword,
                 niche: contentType
             });
-            // Job-based discovery handled via feedback
-            if (response.data.job_id) {
-                // For this MVP discovery, we just alert success
-                alert("Discovery engine started. Top competitors will be automatically populated.");
-            } else if (response.data.competitors && response.data.competitors.length > 0) {
+            if (response.data.competitors && response.data.competitors.length > 0) {
                 setCompetitorUrls(response.data.competitors);
             } else {
-                setError("No competitors found for this keyword.");
+                setError("No competitors auto-discovered for this keyword. Please add competitor URLs manually below.");
             }
         } catch (err) {
-            setError("Discovery failed. Please enter competitors manually.");
+            setError("Auto-discovery is currently unavailable. Please enter competitor URLs manually.");
         } finally {
             setDiscovering(false);
         }

@@ -104,6 +104,7 @@ class PromptDiscoveryEngine:
         - source_signal: "PAA", "Social", or "Synthesized"
         - intent: "informational", "commercial", or "navigational"
         - value_score: 1-100 (Based on how much this prompt drives citation potential)
+        - search_volume_estimate: "high", "medium", or "low"
         - content_gap: Why current content fails (1 sentence)
         
         Return ONLY valid JSON array of objects.
@@ -150,7 +151,7 @@ class PromptDiscoveryEngine:
         2. Format them as 15 "AI Prompts" that drive citation volume.
         
         Return exactly and ONLY a JSON array of objects with:
-        - prompt, source_signal, intent, value_score, content_gap
+        - prompt, source_signal, intent, value_score, search_volume_estimate ("high"/"medium"/"low"), content_gap
         """
         
         try:
@@ -239,19 +240,25 @@ class PromptDiscoveryEngine:
             {
                 "prompt": f"What is the best {keyword} for {niche}?",
                 "intent": "commercial",
+                "value_score": 85,
                 "search_volume_estimate": "high",
+                "source_signal": "Synthesized",
                 "content_gap": "Usually lacks direct feature comparisons."
             },
             {
                 "prompt": f"How to use {keyword} effectively?",
                 "intent": "informational",
+                "value_score": 70,
                 "search_volume_estimate": "medium",
+                "source_signal": "Synthesized",
                 "content_gap": "Most answers are too academic and lack practical examples."
             },
             {
                 "prompt": f"Is {keyword} worth it in 2026?",
                 "intent": "commercial",
+                "value_score": 80,
                 "search_volume_estimate": "high",
+                "source_signal": "Synthesized",
                 "content_gap": "Content is often outdated and doesn't factor in recent AI updates."
             }
         ]

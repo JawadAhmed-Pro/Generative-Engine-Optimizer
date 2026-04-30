@@ -33,7 +33,7 @@ export default function ContentStrategy() {
             analysisResults: null,
             optimizedContent: ''
         });
-        navigate('/optimize');
+        navigate('/app/optimization');
     };
 
     const pollJobStatus = async (jobId) => {
@@ -261,7 +261,8 @@ export default function ContentStrategy() {
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                                     {prompts.map((item, index) => {
-                                        const volStyle = getVolumeColor(item.search_volume_estimate);
+                                        const volLabel = item.search_volume_estimate || (item.value_score >= 70 ? 'high' : item.value_score >= 40 ? 'medium' : 'low');
+                                        const volStyle = getVolumeColor(volLabel);
 
                                         return (
                                             <motion.div 
@@ -295,7 +296,7 @@ export default function ContentStrategy() {
                                                             alignItems: 'center',
                                                             gap: '0.4rem'
                                                         }}>
-                                                            <TrendingUp size={14} /> VOL: {item.search_volume_estimate?.toUpperCase() || 'UNKNOWN'}
+                                                            <TrendingUp size={14} /> VOL: {volLabel?.toUpperCase() || 'UNKNOWN'}
                                                         </div>
                                                         <div style={{
                                                             padding: '0.5rem 1rem',
