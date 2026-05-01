@@ -62,11 +62,12 @@ def init_db():
         print(f"Migrating: Adding missing pillars to analysis_results: {missing_pillars}")
         with sync_engine.connect() as conn:
             for pillar in missing_pillars:
-                if sync_engine.url.drivername.startswith('sqlite'):
+                try:
                     conn.execute(text(f"ALTER TABLE analysis_results ADD COLUMN {pillar} FLOAT"))
-                else:
-                    conn.execute(text(f"ALTER TABLE analysis_results ADD COLUMN IF NOT EXISTS {pillar} FLOAT"))
-            conn.commit()
+                    conn.commit()
+                except Exception as e:
+                    print(f"Column {pillar} might already exist or migration failed: {e}")
+                    conn.rollback()
 
 def get_db() -> Generator[Session, None, None]:
     """Base Dependency to get synchronous database session (No RLS)."""

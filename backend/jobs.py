@@ -43,12 +43,19 @@ class JobManager:
     async def _run_job(self, job_id: str, user_id: int, db_sessionmaker: Callable, func: Callable, *args, **kwargs):
         """Execute the job and update DB status."""
         from sqlalchemy import text
+        from models import AnalysisJob
+        from sqlalchemy import select
+
+        async def set_tenant_context(session, uid):
+            # Only set tenant context if using PostgreSQL
+            if session.bind.dialect.name == 'postgresql':
+                try:
+                    await session.execute(text("SET LOCAL app.current_tenant = :uid"), {"uid": uid})
+                except Exception as e:
+                    print(f"Failed to set tenant context: {e}")
+
         async with db_sessionmaker() as db:
-            # Inject RLS Context
-            await db.execute(text("SET LOCAL app.current_tenant = :uid"), {"uid": user_id})
-            
-            from models import AnalysisJob
-            from sqlalchemy import select
+            await set_tenant_context(db, user_id)
             
             # Set to running
             job = (await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))).scalars().first()
@@ -61,7 +68,7 @@ class JobManager:
             result = await func(*args, **kwargs)
             
             async with db_sessionmaker() as db:
-                await db.execute(text("SET LOCAL app.current_tenant = :uid"), {"uid": user_id})
+                await set_tenant_context(db, user_id)
                 job = (await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))).scalars().first()
                 if job:
                     job.status = "completed"
@@ -72,13 +79,16 @@ class JobManager:
                     
         except Exception as e:
             traceback.print_exc()
-            async with db_sessionmaker() as db:
-                await db.execute(text("SET LOCAL app.current_tenant = :uid"), {"uid": user_id})
-                job = (await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))).scalars().first()
-                if job:
-                    job.status = "failed"
-                    job.error_message = str(e)
-                    job.completed_at = datetime.utcnow()
-                    await db.commit()
+            try:
+                async with db_sessionmaker() as db:
+                    await set_tenant_context(db, user_id)
+                    job = (await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))).scalars().first()
+                    if job:
+                        job.status = "failed"
+                        job.error_message = str(e)
+                        job.completed_at = datetime.utcnow()
+                        await db.commit()
+            except Exception as inner_e:
+                print(f"Critical: Failed to update job status to 'failed': {inner_e}")
 
 job_manager = JobManager()

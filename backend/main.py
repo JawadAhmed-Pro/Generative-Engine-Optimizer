@@ -465,10 +465,10 @@ def get_history(
         score = None
         if analysis:
             scores = [
-                analysis.ai_visibility_score,
+                analysis.structural_clarity_score,
                 analysis.citation_worthiness_score,
                 analysis.semantic_coverage_score,
-                analysis.technical_readability_score
+                analysis.freshness_authority_score
             ]
             valid_scores = [s for s in scores if s is not None]
             if valid_scores:

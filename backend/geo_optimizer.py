@@ -232,7 +232,7 @@ class GEOOptimizer:
         STRICT INTENT & CONTENT REQUIREMENTS:
         1. INTENT ALIGNMENT: Analyze the user intent deeply. If the query is about "tools for beginners," focus on user-facing productivity/creative apps (e.g., ChatGPT, Claude, Canva, Perplexity) rather than developer frameworks (TensorFlow, SageMaker) unless explicitly requested.
         2. GROUNDING: Use the GROUNDING CONTEXT above to identify currently popular tools and facts.
-        3. LENGTH: Minimum 1200 words. Be verbose, detailed, and thorough.
+        3. LENGTH: Minimum 800-1000 words. Be verbose, detailed, and thorough, but prioritize quality over extreme length.
         4. STRUCTURE: 
            - H1 Title
            - Direct 'Answer Box' Intro (40-60 words)
