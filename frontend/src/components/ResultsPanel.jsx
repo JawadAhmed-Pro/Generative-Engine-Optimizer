@@ -6,11 +6,30 @@ import ExportButton from './ExportButton'
 import RAGInsights from './RAGInsights'
 import axios from 'axios'
 
-function ResultsPanel({ results, onReset, context = 'url' }) {
+function ResultsPanel({ results, onReset, onApplyInjection, context = 'url' }) {
     const [fixingIndex, setFixingIndex] = useState(null);
     const [fixedContent, setFixedContent] = useState(null);
+    const [injectingGap, setInjectingGap] = useState(null);
 
     if (!results) return null;
+
+    const handleInjectGap = async (gap) => {
+        setInjectingGap(gap);
+        try {
+            const response = await axios.post('/api/optimize/inject', {
+                context_text: results.raw_content || "",
+                injection_target: gap,
+                tone: 'professional'
+            });
+            if (response.data.injection) {
+                onApplyInjection(response.data.injection);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setInjectingGap(null);
+        }
+    };
 
     // Label mappings based on context
     const LABELS = {
@@ -275,9 +294,41 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                                 const warningList = Array.isArray(warnings) ? warnings : (typeof warnings === 'string' ? [warnings] : []);
                                 
                                 return warningList.map((flag, i) => (
-                                    <div key={i} style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', gap: '0.6rem' }}>
-                                        <span style={{ color: 'var(--error)' }}>⚠️</span>
-                                        <span>{flag}</span>
+                                    <div key={i} style={{ 
+                                        fontSize: '0.9rem', 
+                                        color: 'var(--text-secondary)', 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between', 
+                                        alignItems: 'center', 
+                                        gap: '1rem',
+                                        background: 'rgba(0,0,0,0.2)',
+                                        padding: '0.6rem 1rem',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(239, 68, 68, 0.1)'
+                                    }}>
+                                        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                                            <span style={{ color: 'var(--error)' }}>⚠️</span>
+                                            <span>{flag}</span>
+                                        </div>
+                                        <button 
+                                            className="btn btn-outline" 
+                                            style={{ 
+                                                padding: '0.3rem 0.75rem', 
+                                                fontSize: '0.75rem', 
+                                                border: '1px solid rgba(239, 68, 68, 0.4)', 
+                                                color: '#ef4444',
+                                                background: 'transparent',
+                                                whiteSpace: 'nowrap',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.4rem'
+                                            }}
+                                            onClick={() => handleInjectGap(flag)}
+                                            disabled={injectingGap === flag}
+                                        >
+                                            {injectingGap === flag ? <RefreshCw size={12} className="spin" /> : <Wand2 size={12} />}
+                                            {injectingGap === flag ? 'Injecting...' : 'Auto-Inject'}
+                                        </button>
                                     </div>
                                 ));
                             })()}
@@ -377,6 +428,7 @@ function ResultsPanel({ results, onReset, context = 'url' }) {
                     contentItemId={results.content_item_id}
                     context={context}
                     rawContent={results.raw_content || ""}
+                    onApplyInjection={onApplyInjection}
                 />
             )}
         </div>

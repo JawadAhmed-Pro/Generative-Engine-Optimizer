@@ -4,7 +4,7 @@ import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
-function SuggestionList({ suggestions, contentItemId, context = 'url', rawContent = "" }) {
+function SuggestionList({ suggestions, contentItemId, context = 'url', rawContent = "", onApplyInjection }) {
     const [fixingId, setFixingId] = useState(null)
     const [fixes, setFixes] = useState({}) // suggestion_text -> fix_data
 
@@ -148,21 +148,43 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-primary)', fontSize: '0.85rem', fontWeight: '700' }}>
                                                     <Check size={16} /> SURGICAL IMPROVEMENT GENERATED
                                                 </div>
-                                                <button 
-                                                    onClick={() => copyToClipboard(fixes[suggestion.text].optimized_content)}
-                                                    style={{ 
-                                                        background: 'transparent', 
-                                                        border: 'none', 
-                                                        color: 'var(--text-tertiary)', 
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.4rem',
-                                                        fontSize: '0.8rem'
-                                                    }}
-                                                >
-                                                    <Copy size={14} /> Copy
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                                    <button 
+                                                        onClick={() => onApplyInjection(fixes[suggestion.text].optimized_content)}
+                                                        style={{ 
+                                                            background: 'var(--accent-primary)', 
+                                                            border: 'none', 
+                                                            color: 'white', 
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.4rem',
+                                                            fontSize: '0.8rem',
+                                                            padding: '0.3rem 0.75rem',
+                                                            borderRadius: '6px',
+                                                            fontWeight: '700'
+                                                        }}
+                                                    >
+                                                        <Zap size={14} /> Inject into Editor
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => copyToClipboard(fixes[suggestion.text].optimized_content)}
+                                                        style={{ 
+                                                            background: 'rgba(255,255,255,0.05)', 
+                                                            border: '1px solid var(--card-border)', 
+                                                            color: 'var(--text-secondary)', 
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.4rem',
+                                                            fontSize: '0.8rem',
+                                                            padding: '0.3rem 0.75rem',
+                                                            borderRadius: '6px'
+                                                        }}
+                                                    >
+                                                        <Copy size={14} /> Copy
+                                                    </button>
+                                                </div>
                                             </div>
                                             
                                             <div className="markdown-content" style={{ fontSize: '0.95rem', color: 'var(--text-secondary)' }}>

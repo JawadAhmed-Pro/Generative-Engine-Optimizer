@@ -105,7 +105,7 @@ class CompetitorAnalyzer:
         """
         # Auto-discover opponents if none provided
         if not competitor_urls and keyword:
-            competitor_urls = self.search_service.get_top_competitors(keyword, limit=3)
+            competitor_urls = await self.search_service.get_top_competitors(keyword, limit=3)
             
         # Limit competitors
         competitor_urls = competitor_urls[:3] # Ensure speed

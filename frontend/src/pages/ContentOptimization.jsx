@@ -124,6 +124,7 @@ function ContentOptimization() {
     const [optimizationAudience, setOptimizationAudience] = useState('intermediate')
     const [optimizationStrength, setOptimizationStrength] = useState(50)
     const [showSplitView, setShowSplitView] = useState(false)
+    const [additionalInstructions, setAdditionalInstructions] = useState('')
     const [selection, setSelection] = useState({ text: '', top: 0, left: 0, visible: false })
     const [history, setHistory] = useState([])
     const [versionHistory, setVersionHistory] = useState([])
@@ -406,7 +407,8 @@ function ContentOptimization() {
             const response = await axios.post('/api/optimize/inject', {
                 context_text: content,
                 injection_target: targetToUse,
-                tone: 'professional'
+                tone: 'professional',
+                additional_instructions: additionalInstructions
             });
             
             if (response.data.injection) {
@@ -492,6 +494,59 @@ function ContentOptimization() {
         }
     }
 
+    const pollJobStatus = async (jobId, isGenerate = false) => {
+        try {
+            const res = await axios.get(`/api/jobs/${jobId}`);
+            if (res.data.status === 'completed') {
+                const optimizationResult = res.data.result;
+                
+                let analysisData;
+                if (isGenerate) {
+                     // Default analysis for generated content
+                     analysisData = {
+                        scores: {
+                            structural: optimizationResult.structural_score?.score || 85,
+                            semantic: 85,
+                            geo_lift: 85
+                        },
+                        suggestions: ["Content generated from idea. Refine with specific data for higher ranking."]
+                    };
+                } else {
+                    // For rewrite, we might need a separate analysis if not included in result
+                    // But usually, geo_optimizer returns analysis-like data
+                    analysisData = optimizationResult.analysis || {
+                        scores: {
+                            structural: optimizationResult.structural_score?.score || 80,
+                            semantic: 80,
+                            geo_lift: 80
+                        },
+                        suggestions: optimizationResult.changes_made || []
+                    };
+                }
+
+                updateOptimization({
+                    analysisResults: analysisData,
+                    optimizedContent: optimizationResult.optimized_content
+                });
+
+                setLoading(false);
+                setViewMode('result');
+                setShowSplitView(true);
+                fetchHistory();
+            } else if (res.data.status === 'failed') {
+                setError(res.data.error || 'Optimization job failed');
+                setLoading(false);
+            } else {
+                // Poll every 3 seconds
+                setTimeout(() => pollJobStatus(jobId, isGenerate), 3000);
+            }
+        } catch (err) {
+            console.error('Job polling failed:', err);
+            setError('Failed to track optimization progress');
+            setLoading(false);
+        }
+    };
+
     const handleOptimize = async () => {
         if (!content.trim()) return
 
@@ -500,68 +555,38 @@ function ContentOptimization() {
         updateOptimization({ analysisResults: null, optimizedContent: '' })
 
         try {
-            let analysisRes, optimizationRes;
+            const payload = {
+                content: content,
+                mode: activeTab === 'generate' ? 'generate' : 'rewrite',
+                strategy: optimizationStrategy,
+                tone: optimizationTone,
+                audience: optimizationAudience,
+                strength: optimizationStrength,
+                target_keyword: selectedKeyword || customKeyword || undefined,
+                additional_instructions: additionalInstructions
+            };
 
-            if (activeTab === 'generate') {
-                // For Generation, only call /api/optimize (faster, avoids redundant analysis of a single sentence)
-                optimizationRes = await axios.post('/api/optimize', {
-                    content: content,
-                    mode: 'generate',
-                    strategy: optimizationStrategy,
-                    tone: optimizationTone,
-                    audience: optimizationAudience,
-                    strength: optimizationStrength,
-                    target_keyword: selectedKeyword || customKeyword || undefined
-                });
-                
-                // Provide a default analysis structure for the UI
-                analysisRes = {
-                    data: {
-                        scores: {
-                            structural: optimizationRes.data.structural_score?.score || 85,
-                            semantic: 85,
-                            geo_lift: 85
-                        },
-                        suggestions: ["Content generated from idea. Refine with specific data for higher ranking."]
-                    }
-                };
+            const response = await axios.post('/api/optimize', payload);
+            
+            if (response.data.job_id) {
+                pollJobStatus(response.data.job_id, activeTab === 'generate');
             } else {
-                // For Rewrite, run in parallel as both are needed
-                [analysisRes, optimizationRes] = await Promise.all([
-                    axios.post('/api/analyze-text', {
-                        content: content,
-                        title: "Original Draft",
-                        content_type: contentType,
-                        target_keyword: selectedKeyword || customKeyword || undefined
-                    }),
-                    axios.post('/api/optimize', {
-                        content: content,
-                        mode: 'rewrite',
-                        strategy: optimizationStrategy,
-                        tone: optimizationTone,
-                        audience: optimizationAudience,
-                        strength: optimizationStrength,
-                        target_keyword: selectedKeyword || customKeyword || undefined
-                    })
-                ]);
+                // Fallback for immediate results (if any)
+                const optimizationRes = response.data;
+                updateOptimization({
+                    analysisResults: optimizationRes.analysis || { scores: { structural: 80, semantic: 80, geo_lift: 80 }, suggestions: [] },
+                    optimizedContent: optimizationRes.optimized_content
+                });
+                setLoading(false);
+                setViewMode('result');
+                setShowSplitView(true);
+                fetchHistory();
             }
-
-            updateOptimization({
-                analysisResults: analysisRes.data,
-                optimizedContent: optimizationRes.data.optimized_content
-            })
-
-            // Auto switch to result view (Optimized tab) immediately
-            setViewMode('result')
-            setShowSplitView(true)
-
-            fetchHistory()
         } catch (err) {
             console.error(err)
             const msg = err.response?.data?.detail || err.message || 'Optimization failed'
             setError(msg)
             toast.error(msg)
-        } finally {
             setLoading(false)
         }
     }
@@ -1527,7 +1552,17 @@ function ContentOptimization() {
                             </div>
 
                             {viewMode === 'analysis' && analysisResults && (
-                                <ResultsPanel results={analysisResults} onReset={() => updateOptimization({ analysisResults: null, optimizedContent: '' })} context="text" />
+                                <ResultsPanel 
+                                    results={analysisResults} 
+                                    onReset={() => updateOptimization({ analysisResults: null, optimizedContent: '' })} 
+                                    onApplyInjection={(snippet) => {
+                                        const newContent = content + "\n\n" + snippet;
+                                        updateOptimization({ content: newContent });
+                                        toast.success("Injection applied to content!");
+                                        // Optional: Switch back to editor tab if needed
+                                    }}
+                                    context="text" 
+                                />
                             )}
                             {viewMode === 'result' && optimizedContent && (
                                 <div className="depth-card animate-fade-in" style={{ padding: '2.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--card-border)' }}>
@@ -1726,6 +1761,29 @@ function ContentOptimization() {
                                         <span style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)' }}>Light</span>
                                         <span style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)' }}>Aggressive</span>
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: '700' }}>
+                                        SPECIFIC INSTRUCTIONS
+                                    </label>
+                                    <textarea
+                                        value={additionalInstructions}
+                                        onChange={(e) => setAdditionalInstructions(e.target.value)}
+                                        placeholder="e.g. 'Focus on creative tools', 'Keep it non-technical', 'Mention the latest 2026 trends'..."
+                                        style={{
+                                            ...inputStyle,
+                                            height: '100px',
+                                            resize: 'none',
+                                            fontSize: '0.8rem',
+                                            lineHeight: '1.4',
+                                            background: 'rgba(255,255,255,0.03)',
+                                            border: '1px dashed rgba(59, 130, 246, 0.4)'
+                                        }}
+                                    />
+                                    <p style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginTop: '0.5rem' }}>
+                                        Guide the AI on specific focus areas, exclusions, or unique angles.
+                                    </p>
                                 </div>
                             </div>
                         </div>

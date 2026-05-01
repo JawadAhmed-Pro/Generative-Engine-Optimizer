@@ -142,7 +142,7 @@ Keep it brief, extremely direct, and highly actionable. No fluff.
                 
         return "No significant structural gaps identified."
 
-    async def generate_targeted_injection(self, context_text: str, injection_target: str, tone: str = "professional") -> str:
+    async def generate_targeted_injection(self, context_text: str, injection_target: str, tone: str = "professional", grounding_context: str = "", additional_instructions: str = None) -> str:
         """
         Generates a specific missing block (table, faq, paragraph) to fulfill a gap,
         matching the tone of the surrounding context.
@@ -157,12 +157,24 @@ CONTEXT OF THE EXISTING ARTICLE (Use to match Topic & Tone):
 REQUESTED INJECTION / MISSING PIECE:
 {injection_target}
 
+GROUNDING CONTEXT (Real-world search signals):
+---
+{grounding_context}
+---
+
+USER SPECIFIC INSTRUCTIONS:
+---
+{additional_instructions or "None"}
+---
+
 TONE: {tone}
 
 INSTRUCTIONS:
 1. Generate the exact block requested (e.g. if requested a Pricing Table, build a Markdown Table).
 2. Ensure the facts or structure aligns with typical AI extraction expectations (use clear headings, bullet points, or tables if applicable).
-3. Output ONLY the new section content, no conversational preamble. DO NOT wrap it in ```markdown unless it is a code block. 
+3. USE THE GROUNDING CONTEXT to ensure factual accuracy.
+4. PRIORITIZE any USER SPECIFIC INSTRUCTIONS provided above.
+5. Output ONLY the new section content, no conversational preamble. DO NOT wrap it in ```markdown unless it is a code block. 
 """
         if self.groq_api_key:
             try:

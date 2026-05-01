@@ -961,32 +961,53 @@ async def simulate_ai(payload: SimulateAIRequest = Body(...)):
 
 
 @app.post("/api/optimize")
-async def optimize_full_content(payload: OptimizeContentRequest = Body(...)):
-    """Deep optimization: rewrite existing content OR generate from idea."""
+async def optimize_full_content(
+    payload: OptimizeContentRequest = Body(...),
+    current_user: dict = Depends(require_auth)
+):
+    """Deep optimization: rewrite existing content OR generate from idea (background execution)."""
     try:
-        from geo_optimizer import geo_optimizer
+        from database import get_async_db
         
-        if payload.mode == 'generate':
-            # Generate comprehensive content from a topic/idea
-            result = await geo_optimizer.generate_from_idea(
-                idea=payload.content,
-                strategy=payload.strategy,
-                tone=payload.tone,
-                audience=payload.audience,
-                strength=payload.strength,
-                target_query=payload.target_keyword
-            )
-        else:
-            # Rewrite/optimize existing content
-            result = await geo_optimizer.rewrite(
-                content=payload.content,
-                strategy=payload.strategy,
-                tone=payload.tone,
-                audience=payload.audience,
-                strength=payload.strength,
-                target_query=payload.target_keyword
-            )
-        return result
+        async def _run_optimization_job(**kwargs):
+            from geo_optimizer import geo_optimizer
+            from search_service import search_service
+            
+            if kwargs.get('mode') == 'generate':
+                # Grounding Step: Fetch current top search results for the topic
+                idea = kwargs.get('content', '')
+                app_logger.info(f"Grounding generation for: {idea}")
+                grounding_context = await search_service.search_and_ground(idea)
+                
+                return await geo_optimizer.generate_from_idea(
+                    idea=idea,
+                    strategy=kwargs.get('strategy'),
+                    tone=kwargs.get('tone'),
+                    audience=kwargs.get('audience'),
+                    strength=kwargs.get('strength'),
+                    target_query=kwargs.get('target_keyword'),
+                    grounding_context=grounding_context,
+                    additional_instructions=kwargs.get('additional_instructions')
+                )
+            else:
+                return await geo_optimizer.rewrite(
+                    content=kwargs.get('content'),
+                    strategy=kwargs.get('strategy'),
+                    tone=kwargs.get('tone'),
+                    audience=kwargs.get('audience'),
+                    strength=kwargs.get('strength'),
+                    target_query=kwargs.get('target_keyword'),
+                    additional_instructions=kwargs.get('additional_instructions')
+                )
+
+        job_id = await job_manager.submit_job(
+            db_sessionmaker=get_async_db,
+            job_type="content_optimization",
+            user_id=current_user["id"],
+            func=_run_optimization_job,
+            **payload.dict()
+        )
+        return {"job_id": job_id, "status": "pending"}
     except Exception as e:
         app_logger.error(f"Optimization failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1383,6 +1404,9 @@ async def _run_competitor_comparison(user_url, competitor_urls, keyword, niche, 
     )
 
     async with AsyncSessionLocal() as db:
+        from sqlalchemy import text
+        await db.execute(text("SET LOCAL app.current_tenant = :uid"), {"uid": user_id})
+        
         comparison = CompetitorComparison(
             user_id=user_id,
             user_url=user_url,
@@ -1407,18 +1431,22 @@ async def compare_competitors(
     payload: CompetitorCompareRequest = Body(...), 
     current_user: dict = Depends(require_auth)
 ):
-    """Compare user content against competitors (inline execution)."""
-    keyword = payload.target_keyword if payload.target_keyword else None
+    """Discovery Engine: Find top competitor URLs for a keyword."""
     try:
-        results = await _run_competitor_comparison(
+        from database import get_async_db
+        job_id = await job_manager.submit_job(
+            db_sessionmaker=get_async_db,
+            job_type="competitor_comparison",
+            user_id=current_user["id"],
+            func=_run_competitor_comparison,
             user_url=payload.user_url,
             competitor_urls=payload.competitor_urls,
-            keyword=keyword,
+            keyword=payload.target_keyword,
             niche=payload.niche,
             content_type=payload.content_type,
             user_id=current_user["id"]
         )
-        return results
+        return {"job_id": job_id, "status": "pending"}
     except Exception as e:
         app_logger.error(f"Competitor comparison failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1664,10 +1692,18 @@ async def discover_prompts(
     payload: PromptDiscoveryRequest = Body(...),
     current_user: dict = Depends(require_auth)
 ):
-    """Discovery Engine: Discover prompts for a keyword/niche (inline execution)."""
+    """Discovery Engine: Discover prompts for a keyword/niche (background execution)."""
     try:
-        result = await _run_discover_prompts(keyword=payload.keyword, niche=payload.niche)
-        return result
+        from database import get_async_db
+        job_id = await job_manager.submit_job(
+            db_sessionmaker=get_async_db,
+            job_type="prompt_discovery",
+            user_id=current_user["id"],
+            func=_run_discover_prompts,
+            keyword=payload.keyword,
+            niche=payload.niche
+        )
+        return {"job_id": job_id, "status": "pending"}
     except Exception as e:
         app_logger.error(f"Discovery Failed: {e}")
         raise HTTPException(status_code=500, detail=f"Prompt discovery failed: {str(e)}")
@@ -1682,7 +1718,7 @@ async def discover_competitors(
     try:
         from search_service import SearchService
         search_service = SearchService()
-        competitors = search_service.get_top_competitors(payload.keyword)
+        competitors = await search_service.get_top_competitors(payload.keyword)
         
         return {
             "success": True,
@@ -1701,10 +1737,16 @@ async def generate_targeted_injection(
 ):
     """Generate a specific missing block for the Smart Injection Auto-Writer."""
     try:
+        from search_service import search_service
+        # Fetch real-world context for the injection target
+        grounding_context = await search_service.search_and_ground(payload.injection_target)
+        
         injected_markdown = await services.llm_scorer.generate_targeted_injection(
             context_text=payload.context_text,
             injection_target=payload.injection_target,
-            tone=payload.tone
+            tone=payload.tone,
+            grounding_context=grounding_context,
+            additional_instructions=payload.additional_instructions
         )
         return {"status": "success", "injection": injected_markdown}
     except Exception as e:

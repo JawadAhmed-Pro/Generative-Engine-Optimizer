@@ -37,7 +37,7 @@ class GEOOptimizer:
         doc = self.nlp(content)
         return list(set([ent.text for ent in doc.ents]))
 
-    async def rewrite(self, content: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "") -> Dict[str, Any]:
+    async def rewrite(self, content: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "", additional_instructions: str = None) -> Dict[str, Any]:
         """
         FIX 2: Section-by-Section Rewriting with FIX 1 (Anti-Hallucination) and FIX 4 (Entity Guardrails).
         """
@@ -93,6 +93,7 @@ class GEOOptimizer:
             SECTION HEADING: {section_label}
             STRATEGY: {strategy}
             TONE: {tone}
+            USER INSTRUCTIONS: {additional_instructions or "None"}
             
             RULES:
             1. Optimize for AI search visibility and citation probability.
@@ -121,45 +122,58 @@ class GEOOptimizer:
             result = await self._call_llm(rewrite_prompt)
             optimized = result.get("optimized_section", section_content)
             
-            # Strip any duplicate heading the LLM may have included at the start
             if has_header:
-                # Remove heading if LLM repeated it (e.g., "## 2. Performance & Speed\n...")
-                heading_text_clean = h2_text.lstrip('#').strip()
-                lines = optimized.split('\n')
-                if lines and lines[0].lstrip('#').strip() == heading_text_clean:
-                    optimized = '\n'.join(lines[1:]).strip()
-                # Also handle partial matches (LLM might slightly rephrase)
-                elif lines and lines[0].startswith('##') and heading_text_clean.lower() in lines[0].lower():
-                    optimized = '\n'.join(lines[1:]).strip()
+                # REFINED STRIPPING: LLMs often repeat the heading even when told not to.
+                # We need to be very aggressive in stripping it from the 'optimized' body.
+                heading_text_clean = re.sub(r'[#\s\d\.]+', '', h2_text).lower().strip()
                 
-                processed_sections.append(h2_text + "\n" + optimized)
+                lines = optimized.split('\n')
+                if lines:
+                    first_line_clean = re.sub(r'[#\s\d\.]+', '', lines[0]).lower().strip()
+                    # If first line matches the heading, drop it
+                    if first_line_clean == heading_text_clean or (len(first_line_clean) > 5 and first_line_clean in heading_text_clean):
+                        optimized = '\n'.join(lines[1:]).strip()
+                    # Also handle case where LLM wraps it in ##
+                    elif lines[0].strip().startswith('##'):
+                         optimized = '\n'.join(lines[1:]).strip()
+
+                processed_sections.append(h2_text.strip() + "\n\n" + optimized.strip())
             else:
                 # Intro section — no heading to prepend
-                processed_sections.append(optimized)
+                processed_sections.append(optimized.strip())
             
             all_missing_citations.extend(result.get("missing_citations", []))
             all_changes.extend(result.get("changes", []))
 
         # 4. Final Smoothing Pass (Lightweight)
         full_content = "\n\n".join(processed_sections)
+        
+        # Pre-smoothing cleanup: remove duplicates from concatenated sections
+        full_content = self._remove_duplicate_headings(full_content)
+        
         smoothing_prompt = f"""
-        Act as a final editor. Smooth the transitions between the following sections. 
-        Do NOT rewrite the core content. Only adjust the first/last sentences of sections if needed for flow.
-        Return the full smoothed content.
+        Act as a final content editor. Smooth the transitions between the following sections to ensure a cohesive flow.
+        IMPORTANT: 
+        1. Maintain the EXACT structure (headings, tables, etc.).
+        2. Do NOT remove existing headings.
+        3. Do NOT add new headings.
+        4. Do NOT duplicate any text.
+        5. Return the ENTIRE article from start to finish.
         
         Content:
         ---
-        {full_content[:6000]}
+        {full_content[:12000]}
         ---
         """
-        # Smoothing can be a simpler text response or JSON
-        final_result = await self._call_llm(smoothing_prompt)
         
-        smoothed_content = full_content
-        if isinstance(final_result, dict):
-            smoothed_content = final_result.get("optimized_content") or final_result.get("smoothed_content") or full_content
-        elif isinstance(final_result, str):
-            smoothed_content = final_result
+        # We use json_mode=False for the final smoothing pass to get raw text
+        smoothed_content = await self._call_llm(smoothing_prompt, json_mode=False, max_tokens=8192)
+        
+        if not smoothed_content or len(smoothed_content) < 500:
+             smoothed_content = full_content # Fallback to unsmoothed
+        
+        # Final cleanup pass for any duplicates re-introduced by smoothing
+        smoothed_content = self._remove_duplicate_headings(smoothed_content)
 
         # 5. Final Scoring (FIX 3)
         structural = self.get_structural_score(smoothed_content)
@@ -184,7 +198,7 @@ class GEOOptimizer:
             "geo_lift_estimate": f"Estimated +{structural['score']}% structural lift"
         }
 
-    async def generate_from_idea(self, idea: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "") -> Dict[str, Any]:
+    async def generate_from_idea(self, idea: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "", grounding_context: str = "", additional_instructions: str = None) -> Dict[str, Any]:
         """
         Generate a comprehensive, GEO-optimized article from a short topic or idea.
         Unlike rewrite(), this creates content from scratch rather than optimizing existing text.
@@ -204,54 +218,63 @@ class GEOOptimizer:
         TONE: {tone}
         AUDIENCE LEVEL: {audience}
         OPTIMIZATION STRENGTH: {strength}/100
+
+        GROUNDING CONTEXT (Current Real-World Search Signals):
+        ---
+        {grounding_context}
+        ---
+
+        USER SPECIFIC INSTRUCTIONS:
+        ---
+        {additional_instructions or "None provided. Use your expert judgment."}
+        ---
         
-        CRITICAL LENGTH REQUIREMENT: 
-        - Do NOT write a short summary or a single paragraph.
-        - You must generate a full-length article of at least 800-1000 words.
-        - If the topic is broad, cover multiple sub-topics in detail.
-        
-        ARTICLE STRUCTURE:
-        1. Compelling H1 Title
-        2. Introduction: Start with a direct, concise "Answer Box" paragraph (40-60 words) that directly addresses the target query.
-        3. Key Takeaways: A bulleted summary box with 3-5 high-density facts.
-        4. Detailed H2 Sections: At least 5-6 substantial sections (each with 2-3 paragraphs) covering:
-           - Core concepts and definitions
-           - Step-by-step guides or "How-to" instructions
-           - Comparison tables (Markdown format)
-           - Expert insights and industry trends
-        5. FAQ Section: 5 detailed Question & Answer pairs optimized for voice search.
-        6. Conclusion: Actionable summary and next steps.
-        
-        GEO OPTIMIZATION RULES:
-        - Use 'Bullet Traps' and 'Colon-led lead-ins'.
-        - Include specific, factual claims that can be cited.
-        - Use the [CITATION NEEDED: description] tag for any statistical claims.
-        - Ensure high 'Information Density'.
+        STRICT INTENT & CONTENT REQUIREMENTS:
+        1. INTENT ALIGNMENT: Analyze the user intent deeply. If the query is about "tools for beginners," focus on user-facing productivity/creative apps (e.g., ChatGPT, Claude, Canva, Perplexity) rather than developer frameworks (TensorFlow, SageMaker) unless explicitly requested.
+        2. GROUNDING: Use the GROUNDING CONTEXT above to identify currently popular tools and facts.
+        3. LENGTH: Minimum 1200 words. Be verbose, detailed, and thorough.
+        4. STRUCTURE: 
+           - H1 Title
+           - Direct 'Answer Box' Intro (40-60 words)
+           - 'Key Takeaways' box (bullets)
+           - 6-8 Detailed H2 Sections with 3-4 paragraphs each.
+           - At least 2 Markdown Tables for comparisons.
+           - 5-7 FAQ items with schema-ready answers.
+        5. DENSITY: Include specific entities, percentages (if grounded), and factual claims.
+        6. TAGGING: Use [CITATION NEEDED: source type] for statistical or specific factual claims.
         
         Return the content in valid JSON format:
         {{
             "optimized_content": "# [Title]\n\n[Intro...]\n\n## Section 1\n\n...",
             "title": "...",
-            "changes_made": ["Generated comprehensive article", "Added H2 sections", "Included FAQ"],
+            "changes_made": ["Generated comprehensive 1200+ word article", "Implemented inverted pyramid structure", "Added comparison tables"],
             "missing_citations": ["..."]
         }}
         """
         
-        result = await self._call_llm(generation_prompt)
+        # High max_tokens for full generation
+        result = await self._call_llm(generation_prompt, max_tokens=8192)
         
         # Ensure we have the required fields
         content = result.get("optimized_content", "")
         if not content or len(content) < 200:
-            # If the LLM didn't produce enough content, return error
-            return {
-                "optimized_content": f"# {idea}\n\nContent generation produced insufficient output. Please try again with more specific details about the topic.",
-                "changes_made": ["Generation produced minimal output"],
-                "missing_citations": [],
-                "citation_warnings": [],
-                "structural_score": {"score": 0, "breakdown": {}},
-                "semantic_score": {"score": 0, "breakdown": {}},
-                "geo_lift_estimate": "0%"
-            }
+            # Fallback: if optimized_content is missing but we have raw text
+            if isinstance(result, str) and len(result) > 200:
+                content = result
+            else:
+                # If the LLM didn't produce enough content, return error
+                return {
+                    "optimized_content": f"# {idea}\n\nContent generation produced insufficient output. Please try again with more specific details about the topic.",
+                    "changes_made": ["Generation produced minimal output"],
+                    "missing_citations": [],
+                    "citation_warnings": [],
+                    "structural_score": {"score": 0, "breakdown": {}},
+                    "semantic_score": {"score": 0, "breakdown": {}},
+                    "geo_lift_estimate": "0%"
+                }
+        
+        # Clean up any duplicated headings from the generated content
+        content = self._remove_duplicate_headings(content)
         
         # Run structural scoring on the generated content (fast)
         structural = self.get_structural_score(content)
@@ -265,8 +288,8 @@ class GEOOptimizer:
         
         return {
             "optimized_content": final_clean_content,
-            "title": result.get("title", idea),
-            "changes_made": result.get("changes_made", ["Generated comprehensive article from idea"]),
+            "title": result.get("title", idea) if isinstance(result, dict) else idea,
+            "changes_made": result.get("changes_made", ["Generated comprehensive article from idea"]) if isinstance(result, dict) else ["Generated comprehensive article from idea"],
             "missing_citations": result.get("missing_citations", []) + citation_warnings,
             "citation_warnings": citation_warnings,
             "structural_score": structural,
@@ -598,7 +621,31 @@ class GEOOptimizer:
             "explanation": "Why this change helps GEO"
         }}
         """
-        return await self._call_llm(prompt)
+        result = await self._call_llm(prompt)
+        if "optimized_content" in result:
+            result["optimized_content"] = self._remove_duplicate_headings(result["optimized_content"])
+        return result
+
+    def _remove_duplicate_headings(self, text: str) -> str:
+        """Aggressively removes duplicate H2 headings from the content."""
+        if not text: return ""
+        lines = text.split('\n')
+        seen_headings = set()
+        clean_lines = []
+        
+        for line in lines:
+            stripped = line.strip()
+            # Identify H2/H3 headings
+            if stripped.startswith('##') or (stripped.startswith('<h2') and stripped.endswith('</h2>')) or (stripped.startswith('<h3') and stripped.endswith('</h3>')):
+                # Normalize heading text: remove formatting, lowercase
+                norm = re.sub(r'[#\s\d\.<>h23/]+', '', stripped).lower().strip()
+                if norm and norm in seen_headings and len(norm) > 3:
+                    continue # Skip duplicate
+                if norm:
+                    seen_headings.add(norm)
+            
+            clean_lines.append(line)
+        return '\n'.join(clean_lines)
 
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """Robustly extract JSON block from conversational LLM output."""

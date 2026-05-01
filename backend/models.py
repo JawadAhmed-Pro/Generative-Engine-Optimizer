@@ -270,6 +270,7 @@ class OptimizeContentRequest(BaseModel):
     strength: int = 50 # 1-100
     target_keyword: Optional[str] = None
     content_type: str = 'general'
+    additional_instructions: Optional[str] = None
 
 
 class OptimizeRAGPayloadRequest(BaseModel):
@@ -310,6 +311,7 @@ class InjectRequest(BaseModel):
     context_text: str
     injection_target: str
     tone: str = "professional"
+    additional_instructions: Optional[str] = None
 
 
 class ValidateCitationRequest(BaseModel):
