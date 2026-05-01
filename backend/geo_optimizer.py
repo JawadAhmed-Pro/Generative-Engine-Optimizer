@@ -5,6 +5,7 @@ import re
 import textstat
 from bs4 import BeautifulSoup
 from typing import Dict, Any, List
+import google.generativeai as genai
 from config import settings
 from logger import app_logger
 
@@ -672,7 +673,44 @@ class GEOOptimizer:
             app_logger.error(f"JSON Extraction Failed in Optimizer: {e}")
             return {}
 
-    async def _call_llm(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096) -> Any:
+    async def _call_llm(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, prefer_gemini: bool = False) -> Any:
+        """Helper to call LLM (Groq or Gemini) with fallback logic."""
+        
+        # Use Gemini for long generation OR if explicitly requested
+        if prefer_gemini or max_tokens > 4096:
+            return await self._call_gemini(prompt, json_mode, max_tokens)
+        
+        # Default to Groq for speed on shorter tasks
+        return await self._call_groq(prompt, json_mode, max_tokens)
+
+    async def _call_gemini(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096) -> Any:
+        """Call Google Gemini API."""
+        try:
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            model = genai.GenerativeModel(settings.GEMINI_MODEL)
+            
+            # Configure generation
+            config = genai.types.GenerationConfig(
+                temperature=0.2,
+                max_output_tokens=max_tokens,
+                response_mime_type="application/json" if json_mode else "text/plain"
+            )
+            
+            app_logger.info(f"Calling Gemini ({settings.GEMINI_MODEL}) for generation...")
+            response = await model.generate_content_async(prompt, generation_config=config)
+            
+            if response and response.text:
+                if json_mode:
+                    return self._extract_json(response.text)
+                return response.text
+            else:
+                raise Exception("Gemini returned empty response")
+        except Exception as e:
+            app_logger.error(f"Gemini Call Failed: {e}. Falling back to Groq.")
+            return await self._call_groq(prompt, json_mode, max_tokens)
+
+    async def _call_groq(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096) -> Any:
+        """Call Groq Llama API."""
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.groq_api_key}",
@@ -690,7 +728,7 @@ class GEOOptimizer:
             payload["response_format"] = {"type": "json_object"}
         
         try:
-            timeout = aiohttp.ClientTimeout(total=120)
+            timeout = aiohttp.ClientTimeout(total=180) # Increased to 180s for deep optimization
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(url, headers=headers, json=payload) as resp:
                     if resp.status == 200:
@@ -698,24 +736,13 @@ class GEOOptimizer:
                         response_text = data["choices"][0]["message"]["content"]
                         
                         if json_mode:
-                            result = self._extract_json(response_text)
-                            # Fallback for missing keys
-                            if not result and "optimized_content" in prompt:
-                                return {
-                                    "optimized_content": "Error: Could not parse LLM response.",
-                                    "changes_made": ["Analysis failed"],
-                                    "geo_lift_estimate": "0%"
-                                }
-                            return result
+                            return self._extract_json(response_text)
                         return response_text
                     else:
-                        app_logger.error(f"LLM Error: {resp.status}")
-                        # Fallback for network/API error if we have partial results
-                        if "optimized_content" in prompt:
-                            return {"optimized_content": "Error: AI engine unreachable. Please try again."}
+                        app_logger.error(f"Groq Error: {resp.status}")
                         return {"error": f"LLM Error: {resp.status}"}
         except Exception as e:
-            app_logger.error(f"GEO Optimizer LLM Call Failed: {e}")
+            app_logger.error(f"Groq Call Failed: {e}")
             return {"error": str(e)}
 
 # Singleton instance

@@ -13,6 +13,16 @@ class JobManager:
     def __init__(self):
         pass
 
+    async def update_job_progress(self, job_id: str, progress: int, db_sessionmaker: Callable):
+        """Update progress percentage of a job."""
+        from models import AnalysisJob
+        from sqlalchemy import select
+        async with db_sessionmaker() as db:
+            job = (await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))).scalars().first()
+            if job:
+                job.progress = progress
+                await db.commit()
+
     async def submit_job(self, db_sessionmaker: Callable, job_type: str, user_id: int, func: Callable, *args, **kwargs) -> str:
         """
         Submit a background job.
@@ -64,7 +74,10 @@ class JobManager:
                 await db.commit()
             
         try:
-            # Execute actual heavy lifting function
+            # Execute actual heavy lifting function with injected context
+            kwargs['job_id'] = job_id
+            kwargs['user_id'] = user_id
+            kwargs['db_sessionmaker'] = db_sessionmaker
             result = await func(*args, **kwargs)
             
             async with db_sessionmaker() as db:

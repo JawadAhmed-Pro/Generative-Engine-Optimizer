@@ -973,32 +973,53 @@ async def optimize_full_content(
             from geo_optimizer import geo_optimizer
             from search_service import search_service
             
-            if kwargs.get('mode') == 'generate':
-                # Grounding Step: Fetch current top search results for the topic
-                idea = kwargs.get('content', '')
-                app_logger.info(f"Grounding generation for: {idea}")
-                grounding_context = await search_service.search_and_ground(idea)
-                
-                return await geo_optimizer.generate_from_idea(
-                    idea=idea,
-                    strategy=kwargs.get('strategy'),
-                    tone=kwargs.get('tone'),
-                    audience=kwargs.get('audience'),
-                    strength=kwargs.get('strength'),
-                    target_query=kwargs.get('target_keyword'),
-                    grounding_context=grounding_context,
-                    additional_instructions=kwargs.get('additional_instructions')
-                )
-            else:
-                return await geo_optimizer.rewrite(
-                    content=kwargs.get('content'),
-                    strategy=kwargs.get('strategy'),
-                    tone=kwargs.get('tone'),
-                    audience=kwargs.get('audience'),
-                    strength=kwargs.get('strength'),
-                    target_query=kwargs.get('target_keyword'),
-                    additional_instructions=kwargs.get('additional_instructions')
-                )
+            job_id = kwargs.get('job_id')
+            user_id = kwargs.get('user_id')
+            db_maker = kwargs.get('db_sessionmaker')
+
+            try:
+                if kwargs.get('mode') == 'generate':
+                    # Phase 1: Grounding
+                    if job_id: await job_manager.update_job_progress(job_id, 10, db_maker)
+                    idea = kwargs.get('content', '')
+                    app_logger.info(f"[{job_id}] Grounding generation for: {idea}")
+                    grounding_context = await search_service.search_and_ground(idea)
+                    
+                    # Phase 2: Generation
+                    if job_id: await job_manager.update_job_progress(job_id, 30, db_maker)
+                    app_logger.info(f"[{job_id}] Calling LLM for full generation")
+                    
+                    result = await geo_optimizer.generate_from_idea(
+                        idea=idea,
+                        strategy=kwargs.get('strategy'),
+                        tone=kwargs.get('tone'),
+                        audience=kwargs.get('audience'),
+                        strength=kwargs.get('strength'),
+                        target_query=kwargs.get('target_keyword'),
+                        grounding_context=grounding_context,
+                        additional_instructions=kwargs.get('additional_instructions')
+                    )
+                    if job_id: await job_manager.update_job_progress(job_id, 90, db_maker)
+                    return result
+                else:
+                    # Phase 1: Context Analysis
+                    if job_id: await job_manager.update_job_progress(job_id, 20, db_maker)
+                    app_logger.info(f"[{job_id}] Running rewrite optimization")
+                    
+                    result = await geo_optimizer.rewrite(
+                        content=kwargs.get('content'),
+                        strategy=kwargs.get('strategy'),
+                        tone=kwargs.get('tone'),
+                        audience=kwargs.get('audience'),
+                        strength=kwargs.get('strength'),
+                        target_query=kwargs.get('target_keyword'),
+                        additional_instructions=kwargs.get('additional_instructions')
+                    )
+                    if job_id: await job_manager.update_job_progress(job_id, 90, db_maker)
+                    return result
+            except Exception as e:
+                app_logger.error(f"[{job_id}] Job Logic Failed: {e}")
+                raise e
 
         job_id = await job_manager.submit_job(
             db_sessionmaker=AsyncSessionLocal,

@@ -125,6 +125,7 @@ function ContentOptimization() {
     const [optimizationStrength, setOptimizationStrength] = useState(50)
     const [showSplitView, setShowSplitView] = useState(false)
     const [additionalInstructions, setAdditionalInstructions] = useState('')
+    const [progress, setProgress] = useState(0)
     const [selection, setSelection] = useState({ text: '', top: 0, left: 0, visible: false })
     const [history, setHistory] = useState([])
     const [versionHistory, setVersionHistory] = useState([])
@@ -511,12 +512,13 @@ function ContentOptimization() {
                         },
                         suggestions: ["Content generated from idea. Refine with specific data for higher ranking."]
                     };
-                } else {
-                    // For rewrite, we might need a separate analysis if not included in result
-                    // But usually, geo_optimizer returns analysis-like data
-                    analysisData = optimizationResult.analysis || {
+                let analysisData = null;
+
+                if (optimizationResult.structural_score) {
+                    analysisData = {
                         scores: {
-                            structural: optimizationResult.structural_score?.score || 80,
+                            structural: optimizationResult.structural_score.score || 80,
+                            citation: optimizationResult.citation_worthiness_score || 80,
                             semantic: 80,
                             geo_lift: 80
                         },
@@ -529,6 +531,7 @@ function ContentOptimization() {
                     optimizedContent: optimizationResult.optimized_content
                 });
 
+                setProgress(100);
                 setLoading(false);
                 setViewMode('result');
                 setShowSplitView(true);
@@ -536,7 +539,12 @@ function ContentOptimization() {
             } else if (res.data.status === 'failed') {
                 setError(res.data.error || 'Optimization job failed');
                 setLoading(false);
+                setProgress(0);
             } else {
+                // Update progress from backend if available
+                if (res.data.progress) {
+                    setProgress(res.data.progress);
+                }
                 // Poll every 3 seconds
                 setTimeout(() => pollJobStatus(jobId, isGenerate), 3000);
             }
@@ -1341,7 +1349,15 @@ function ContentOptimization() {
                                 className="btn btn-primary"
                                 style={{ width: '100%', padding: '1rem' }}
                             >
-                                {loading ? (activeTab === 'generate' ? 'Generating Content (may take 60s)...' : 'Optimizing Content...') : (
+                                {loading ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                                        <span>{activeTab === 'generate' ? 'Generating Content...' : 'Optimizing Content...'}</span>
+                                        <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{progress}% Complete</div>
+                                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
+                                            <div style={{ width: `${progress}%`, height: '100%', background: 'white', transition: 'width 0.5s ease' }} />
+                                        </div>
+                                    </div>
+                                ) : (
                                     activeTab === 'generate'
                                         ? <><Sparkles size={18} /> Generate Content</>
                                         : <><Zap size={18} /> Optimize Content</>
