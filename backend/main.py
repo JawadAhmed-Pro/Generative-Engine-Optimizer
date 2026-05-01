@@ -25,7 +25,7 @@ from models import (
     GenerateSchemaRequest, InjectRequest, ValidateCitationRequest,
     CompetitorCompareRequest, CompetitorComparison, PromptDiscoveryRequest,
     OptimizeRAGPayloadRequest, OptimizeEntitySchemaRequest, DiagnosticMetrics,
-    AutoFixRequest
+    AutoFixRequest, JobStatusResponse
 )
 import models
 from content_fetcher import ContentFetcher
@@ -424,7 +424,7 @@ def get_stats(db: Session = Depends(get_db)):
     }
 
 
-@app.get("/api/history")
+@app.get("/api/history", response_model=HistoryResponse)
 def get_history(
     type: str = None, 
     limit: int = 10, 
@@ -480,7 +480,7 @@ def get_history(
             "url": item.url,
             "type": "url" if item.url else "text",
             "score": round(score, 1) if score is not None else 0.0,
-            "created_at": item.created_at.isoformat(),
+            "created_at": item.created_at,
             "project_id": item.project_id
         })
 
@@ -1472,7 +1472,7 @@ async def compare_competitors(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/jobs/{job_id}")
+@app.get("/api/jobs/{job_id}", response_model=JobStatusResponse)
 async def get_job_status(job_id: str):
     """Poll for background job status."""
     from database import AsyncSessionLocal

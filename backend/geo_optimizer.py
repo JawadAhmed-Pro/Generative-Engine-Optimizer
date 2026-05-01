@@ -121,6 +121,9 @@ class GEOOptimizer:
             }}
             """
             result = await self._call_llm(rewrite_prompt)
+            if not isinstance(result, dict):
+                result = {"optimized_section": str(result) if result else section_content}
+                
             optimized = result.get("optimized_section", section_content)
             
             if has_header:
@@ -256,6 +259,9 @@ class GEOOptimizer:
         # High max_tokens for full generation
         result = await self._call_llm(generation_prompt, max_tokens=8192)
         
+        if not isinstance(result, dict):
+            result = {"optimized_content": str(result) if result else ""}
+            
         # Ensure we have the required fields
         content = result.get("optimized_content", "")
         if not content or len(content) < 200:
@@ -702,11 +708,20 @@ class GEOOptimizer:
             # Robust extraction: handle blocked responses or empty candidates
             if response and hasattr(response, 'candidates') and len(response.candidates) > 0:
                 candidate = response.candidates[0]
+                if getattr(candidate, 'finish_reason', None) in (3, 4, 6): # 3=SAFETY, 4=RECITATION, 6=OTHER
+                    app_logger.warning(f"Gemini blocked response: {candidate.finish_reason}")
+                    raise Exception("Gemini blocked response due to safety/recitation.")
+                
                 if candidate.content and candidate.content.parts:
-                    text = candidate.content.parts[0].text
-                    if json_mode:
-                        return self._extract_json(text)
-                    return text
+                    try:
+                        text = candidate.content.parts[0].text
+                        if json_mode:
+                            res = self._extract_json(text)
+                            return res if isinstance(res, dict) else {"error": "Invalid JSON extracted"}
+                        return text
+                    except ValueError:
+                        app_logger.warning("Gemini part has no text (likely function call or blocked).")
+                        raise Exception("Gemini returned part with no text.")
             
             raise Exception("Gemini returned empty or blocked response")
         except Exception as e:

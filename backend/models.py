@@ -254,10 +254,20 @@ class HistoryItem(BaseModel):
     created_at: datetime
     score: Optional[float] = 0.0
     type: str  # 'url' or 'text'
+    project_id: Optional[int] = None
 
 
 class HistoryResponse(BaseModel):
     items: List[HistoryItem]
+
+
+class JobStatusResponse(BaseModel):
+    job_id: str
+    status: str
+    progress: int
+    result: Optional[Any] = None
+    error: Optional[str] = None
+    completed_at: Optional[datetime] = None
 
 
 class OptimizeContentRequest(BaseModel):
