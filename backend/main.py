@@ -1394,25 +1394,20 @@ async def compare_competitors(
     payload: CompetitorCompareRequest = Body(...), 
     current_user: dict = Depends(require_auth)
 ):
-    """Dispatch competitor comparison to background job."""
-    from database import AsyncSessionLocal
-    
+    """Compare user content against competitors (inline execution)."""
     keyword = payload.target_keyword if payload.target_keyword else None
     try:
-        job_id = await job_manager.submit_job(
-            AsyncSessionLocal,
-            "competitor_compare",
-            current_user["id"],
-            _run_competitor_comparison,
+        results = await _run_competitor_comparison(
             user_url=payload.user_url,
             competitor_urls=payload.competitor_urls,
             keyword=keyword,
             niche=payload.niche,
-            content_type=payload.content_type
+            content_type=payload.content_type,
+            user_id=current_user["id"]
         )
-        return {"status": "pending", "job_id": job_id, "message": "Competitor analysis started"}
+        return results
     except Exception as e:
-        app_logger.error(f"Job dispatch failed: {e}")
+        app_logger.error(f"Competitor comparison failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1656,18 +1651,10 @@ async def discover_prompts(
     payload: PromptDiscoveryRequest = Body(...),
     current_user: dict = Depends(require_auth)
 ):
-    """Discovery Engine: Discover prompts for a keyword/niche."""
-    from database import AsyncSessionLocal
+    """Discovery Engine: Discover prompts for a keyword/niche (inline execution)."""
     try:
-        job_id = await job_manager.submit_job(
-            AsyncSessionLocal,
-            "prompt_discovery",
-            current_user["id"],
-            _run_discover_prompts,
-            keyword=payload.keyword,
-            niche=payload.niche
-        )
-        return {"status": "pending", "job_id": job_id, "message": "Discovery started"}
+        result = await _run_discover_prompts(keyword=payload.keyword, niche=payload.niche)
+        return result
     except Exception as e:
         app_logger.error(f"Discovery Failed: {e}")
         raise HTTPException(status_code=500, detail=f"Prompt discovery failed: {str(e)}")
