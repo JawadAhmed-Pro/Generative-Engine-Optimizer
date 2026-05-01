@@ -10,7 +10,7 @@ import logging
 from datetime import datetime
 
 from config import settings
-from database import get_db, init_db, get_tenant_session, get_async_db
+from database import get_db, init_db, get_tenant_session, get_async_db, AsyncSessionLocal
 
 from jobs import job_manager
 from sqlalchemy import select
@@ -1001,7 +1001,7 @@ async def optimize_full_content(
                 )
 
         job_id = await job_manager.submit_job(
-            db_sessionmaker=get_async_db,
+            db_sessionmaker=AsyncSessionLocal,
             job_type="content_optimization",
             user_id=current_user["id"],
             func=_run_optimization_job,
@@ -1433,9 +1433,9 @@ async def compare_competitors(
 ):
     """Discovery Engine: Find top competitor URLs for a keyword."""
     try:
-        from database import get_async_db
+        from database import AsyncSessionLocal
         job_id = await job_manager.submit_job(
-            db_sessionmaker=get_async_db,
+            db_sessionmaker=AsyncSessionLocal,
             job_type="competitor_comparison",
             user_id=current_user["id"],
             func=_run_competitor_comparison,
@@ -1693,9 +1693,9 @@ async def discover_prompts(
 ):
     """Discovery Engine: Discover prompts for a keyword/niche (background execution)."""
     try:
-        from database import get_async_db
+        from database import AsyncSessionLocal
         job_id = await job_manager.submit_job(
-            db_sessionmaker=get_async_db,
+            db_sessionmaker=AsyncSessionLocal,
             job_type="prompt_discovery",
             user_id=current_user["id"],
             func=_run_discover_prompts,
