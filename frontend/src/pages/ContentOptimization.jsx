@@ -500,11 +500,10 @@ function ContentOptimization() {
             const res = await axios.get(`/api/jobs/${jobId}`);
             if (res.data.status === 'completed') {
                 const optimizationResult = res.data.result;
-                
-                let analysisData;
+                let analysisData = null;
+
                 if (isGenerate) {
-                     // Default analysis for generated content
-                     analysisData = {
+                    analysisData = {
                         scores: {
                             structural: optimizationResult.structural_score?.score || 85,
                             semantic: 85,
@@ -512,9 +511,7 @@ function ContentOptimization() {
                         },
                         suggestions: ["Content generated from idea. Refine with specific data for higher ranking."]
                     };
-                let analysisData = null;
-
-                if (optimizationResult.structural_score) {
+                } else if (optimizationResult.structural_score) {
                     analysisData = {
                         scores: {
                             structural: optimizationResult.structural_score.score || 80,
