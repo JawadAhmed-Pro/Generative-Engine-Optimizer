@@ -699,12 +699,16 @@ class GEOOptimizer:
             app_logger.info(f"Calling Gemini ({settings.GEMINI_MODEL}) for generation...")
             response = await model.generate_content_async(prompt, generation_config=config)
             
-            if response and response.text:
-                if json_mode:
-                    return self._extract_json(response.text)
-                return response.text
-            else:
-                raise Exception("Gemini returned empty response")
+            # Robust extraction: handle blocked responses or empty candidates
+            if response and hasattr(response, 'candidates') and len(response.candidates) > 0:
+                candidate = response.candidates[0]
+                if candidate.content and candidate.content.parts:
+                    text = candidate.content.parts[0].text
+                    if json_mode:
+                        return self._extract_json(text)
+                    return text
+            
+            raise Exception("Gemini returned empty or blocked response")
         except Exception as e:
             app_logger.error(f"Gemini Call Failed: {e}. Falling back to Groq.")
             return await self._call_groq(prompt, json_mode, max_tokens)

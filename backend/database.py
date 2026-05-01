@@ -69,6 +69,18 @@ def init_db():
                     print(f"Column {pillar} might already exist or migration failed: {e}")
                     conn.rollback()
 
+    # 3. Migration for 'analysis_jobs' (Progress)
+    aj_columns = [c['name'] for c in inspector.get_columns('analysis_jobs')]
+    if 'progress' not in aj_columns:
+        print("Migrating: Adding progress to analysis_jobs...")
+        with sync_engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE analysis_jobs ADD COLUMN progress INTEGER DEFAULT 0"))
+                conn.commit()
+            except Exception as e:
+                print(f"Progress column migration failed: {e}")
+                conn.rollback()
+
 def get_db() -> Generator[Session, None, None]:
     """Base Dependency to get synchronous database session (No RLS)."""
     db = SessionLocal()

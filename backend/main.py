@@ -408,10 +408,10 @@ def get_stats(db: Session = Depends(get_db)):
     
     # Calculate average score from analysis results
     avg_result = db.query(func.avg(
-        (AnalysisResult.ai_visibility_score + 
+        (AnalysisResult.structural_clarity_score + 
          AnalysisResult.citation_worthiness_score + 
          AnalysisResult.semantic_coverage_score + 
-         AnalysisResult.technical_readability_score) / 4
+         AnalysisResult.freshness_authority_score) / 4
     )).scalar()
     
     avg_score = round(float(avg_result), 1) if avg_result else 0
@@ -479,7 +479,7 @@ def get_history(
             "title": item.title or (item.url[:50] if item.url else "Text Content"),
             "url": item.url,
             "type": "url" if item.url else "text",
-            "score": round(score, 1) if score is not None else None,
+            "score": round(score, 1) if score is not None else 0.0,
             "created_at": item.created_at.isoformat(),
             "project_id": item.project_id
         })
@@ -605,9 +605,9 @@ def get_project_items(
         if latest:
             score = (
                 latest.citation_worthiness_score * 0.4 +
-                latest.ai_visibility_score * 0.3 + 
+                latest.structural_clarity_score * 0.3 + 
                 latest.semantic_coverage_score * 0.2 + 
-                latest.technical_readability_score * 0.1
+                latest.freshness_authority_score * 0.1
             )
         
         result.append({

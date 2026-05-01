@@ -252,7 +252,7 @@ class HistoryItem(BaseModel):
     title: Optional[str]
     url: Optional[str]
     created_at: datetime
-    score: float
+    score: Optional[float] = 0.0
     type: str  # 'url' or 'text'
 
 
