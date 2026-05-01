@@ -79,26 +79,32 @@ class GEOOptimizer:
             
             # Extract header if present
             header_match = re.match(r'(<h2.*?>.*?</h2>|## .*?\n)', section, flags=re.IGNORECASE | re.DOTALL)
-            h2_text = header_match.group(0) if header_match else "General Section"
-            section_content = section[len(h2_text):] if header_match else section
+            has_header = header_match is not None
+            h2_text = header_match.group(0).strip() if has_header else ""
+            section_content = section[len(header_match.group(0)):] if has_header else section
+
+            # For intro sections (no heading), use "Introduction" as context label
+            section_label = h2_text if has_header else "Introduction (no heading)"
 
             rewrite_prompt = f"""
             Act as a GEO Content Editor. You are rewriting ONE section of a larger article.
             
             PAGE CONTEXT: {json.dumps(page_context)}
-            SECTION HEADING: {h2_text}
+            SECTION HEADING: {section_label}
             STRATEGY: {strategy}
             TONE: {tone}
             
             RULES:
             1. Optimize for AI search visibility and citation probability.
             2. ENTITY GUARDRAIL: Only use entities from this list: {page_context['allowed_entity_pool']}. Do not introduce new ones.
-            8. ANTI-HALLUCINATION RULE: 
+            3. Do NOT include the section heading in your output — only rewrite the body content.
+            4. Do NOT repeat or duplicate the section heading.
+            5. ANTI-HALLUCINATION RULE: 
                If a claim already contains a statistic from the original content, preserve it exactly.
                If a claim has no statistic, do NOT invent one.
                Instead, append a tag: [CITATION NEEDED: <what type of source would support this claim>]
                Never generate percentages, figures, or numerical data that were not in the original input.
-            9. Stay scoped to this section. Do not reference other sections.
+            6. Stay scoped to this section. Do not reference other sections.
             
             Section Content:
             ---
@@ -107,13 +113,30 @@ class GEOOptimizer:
             
             Return JSON:
             {{
-                "optimized_section": "...",
+                "optimized_section": "The rewritten body text ONLY (no heading)...",
                 "missing_citations": ["..."],
                 "changes": ["..."]
             }}
             """
             result = await self._call_llm(rewrite_prompt)
-            processed_sections.append(h2_text + "\n" + result.get("optimized_section", section_content))
+            optimized = result.get("optimized_section", section_content)
+            
+            # Strip any duplicate heading the LLM may have included at the start
+            if has_header:
+                # Remove heading if LLM repeated it (e.g., "## 2. Performance & Speed\n...")
+                heading_text_clean = h2_text.lstrip('#').strip()
+                lines = optimized.split('\n')
+                if lines and lines[0].lstrip('#').strip() == heading_text_clean:
+                    optimized = '\n'.join(lines[1:]).strip()
+                # Also handle partial matches (LLM might slightly rephrase)
+                elif lines and lines[0].startswith('##') and heading_text_clean.lower() in lines[0].lower():
+                    optimized = '\n'.join(lines[1:]).strip()
+                
+                processed_sections.append(h2_text + "\n" + optimized)
+            else:
+                # Intro section — no heading to prepend
+                processed_sections.append(optimized)
+            
             all_missing_citations.extend(result.get("missing_citations", []))
             all_changes.extend(result.get("changes", []))
 
