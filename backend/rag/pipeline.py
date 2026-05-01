@@ -56,16 +56,16 @@ class RAGPipeline:
         content_snippets = [chunk['content'] for chunk in chunks[:12]]  # Increased context
         
         # Extract Pillar Scores (The UI Labels)
-        ai_vis = analysis_results.get('ai_visibility_score', 0)
+        ai_vis = analysis_results.get('structural_clarity_score', 0)
         citation = analysis_results.get('citation_worthiness_score', 0)
         semantic = analysis_results.get('semantic_coverage_score', 0)
-        readability = analysis_results.get('technical_readability_score', 0)
+        readability = analysis_results.get('freshness_authority_score', 0)
         
         # Extract Detailed Metrics (The "Under the Hood" data)
         llm_scores = analysis_results.get('llm_scores', {})
         
         # 1. Visibility Details
-        vis_details = llm_scores.get('ai_visibility', {}).get('details', {})
+        vis_details = llm_scores.get('structural_clarity', {}).get('details', {})
         ai_formatting = vis_details.get('ai_friendly_formatting', 0)
         structural = vis_details.get('structural_integrity', 0)
         
@@ -75,12 +75,12 @@ class RAGPipeline:
         facts = cite_details.get('facts_density', 0)
         
         # 3. Semantic Details
-        sem_details = llm_scores.get('semantic_richness', {}).get('details', {})
+        sem_details = llm_scores.get('semantic_coverage', {}).get('details', {})
         richness = sem_details.get('semantic_richness', 0)
         alignment = sem_details.get('user_intent_alignment', 0)
         
         # 4. Readability Details
-        read_details = llm_scores.get('technical_readability', {}).get('details', {})
+        read_details = llm_scores.get('freshness_authority', {}).get('details', {})
         ux_score = read_details.get('readability_ux', 0)
 
         context = f"""[DETAILED GEO PERFORMANCE DATA]

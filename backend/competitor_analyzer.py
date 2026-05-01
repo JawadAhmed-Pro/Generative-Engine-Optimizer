@@ -54,15 +54,15 @@ class CompetitorAnalyzer:
                 "title": extracted.get('title', 'Unknown'),
                 "status": "success",
                 "scores": {
-                    "ai_visibility": final_scores['ai_visibility_score'],
+                    "ai_visibility": final_scores['structural_clarity_score'],
                     "citation_worthiness": final_scores['citation_worthiness_score'],
                     "semantic_coverage": final_scores['semantic_coverage_score'],
-                    "technical_readability": final_scores['technical_readability_score'],
+                    "technical_readability": final_scores['freshness_authority_score'],
                     "overall": round(
-                        (final_scores['ai_visibility_score'] +
+                        (final_scores['structural_clarity_score'] +
                          final_scores['citation_worthiness_score'] +
                          final_scores['semantic_coverage_score'] +
-                         final_scores['technical_readability_score']) / 4, 1
+                         final_scores['freshness_authority_score']) / 4, 1
                     )
                 },
                 "rule_based_scores": final_scores['rule_based_scores'],

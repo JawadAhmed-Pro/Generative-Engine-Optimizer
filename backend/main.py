@@ -653,9 +653,9 @@ def get_analysis_by_item(
     # Calculate overall score (Weighted GEO Model)
     overall_score = (
         (analysis.citation_worthiness_score or 0) * 0.4 +
-        (analysis.ai_visibility_score or 0) * 0.3 +
+        (analysis.structural_clarity_score or 0) * 0.3 +
         (analysis.semantic_coverage_score or 0) * 0.2 +
-        (analysis.technical_readability_score or 0) * 0.1
+        (analysis.freshness_authority_score or 0) * 0.1
     )
     
     # Fetch stored insights
@@ -683,7 +683,7 @@ def get_analysis_by_item(
     historical_scores = [
         {
             "date": h.created_at.isoformat(),
-            "score": (h.citation_worthiness_score * 0.4 + h.ai_visibility_score * 0.3 + h.semantic_coverage_score * 0.2 + h.technical_readability_score * 0.1)
+            "score": (h.citation_worthiness_score * 0.4 + h.structural_clarity_score * 0.3 + h.semantic_coverage_score * 0.2 + h.freshness_authority_score * 0.1)
         }
         for h in history
     ]
@@ -694,9 +694,9 @@ def get_analysis_by_item(
         def get_weighted(h):
             return (
                 (h.citation_worthiness_score or 0) * 0.4 +
-                (h.ai_visibility_score or 0) * 0.3 +
+                (h.structural_clarity_score or 0) * 0.3 +
                 (h.semantic_coverage_score or 0) * 0.2 +
-                (h.technical_readability_score or 0) * 0.1
+                (h.freshness_authority_score or 0) * 0.1
             )
         oldest_score = get_weighted(history[0])
         newest_score = get_weighted(history[-1])
@@ -711,10 +711,10 @@ def get_analysis_by_item(
         "project_id": item.project_id,
         "analysis": {
             "overall_score": round(overall_score, 1),
-            "ai_visibility_score": analysis.ai_visibility_score,
+            "structural_clarity_score": analysis.structural_clarity_score,
             "citation_worthiness_score": analysis.citation_worthiness_score,
             "semantic_coverage_score": analysis.semantic_coverage_score,
-            "technical_readability_score": analysis.technical_readability_score,
+            "freshness_authority_score": analysis.freshness_authority_score,
             "llm_feedback": analysis.llm_scores.get('top_suggestion', '') if analysis.llm_scores else None,
             "rule_details": analysis.rule_based_scores,
             "recommendations": [s.get('text', str(s)) for s in (analysis.suggestions or [])[:8]],
@@ -1354,10 +1354,10 @@ async def generate_insights(payload: InsightRequest = Body(...), db: Session = D
     
     # Prepare analysis results
     analysis_dict = {
-        'ai_visibility_score': analysis.ai_visibility_score,
+        'structural_clarity_score': analysis.structural_clarity_score,
         'citation_worthiness_score': analysis.citation_worthiness_score,
         'semantic_coverage_score': analysis.semantic_coverage_score,
-        'technical_readability_score': analysis.technical_readability_score
+        'freshness_authority_score': analysis.freshness_authority_score
     }
     
     # Generate insights
@@ -1788,9 +1788,9 @@ async def validate_citation(
         
         overall_score = (
             final_scores['citation_worthiness_score'] * 0.4 +
-            final_scores['ai_visibility_score'] * 0.3 + 
+            final_scores['structural_clarity_score'] * 0.3 + 
             final_scores['semantic_coverage_score'] * 0.2 + 
-            final_scores['technical_readability_score'] * 0.1
+            final_scores['freshness_authority_score'] * 0.1
         )
         
         # Cross-reference with probability model
