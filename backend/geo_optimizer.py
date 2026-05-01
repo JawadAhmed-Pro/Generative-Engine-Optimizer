@@ -161,6 +161,101 @@ class GEOOptimizer:
             "geo_lift_estimate": f"Estimated +{structural['score']}% structural lift"
         }
 
+    async def generate_from_idea(self, idea: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "") -> Dict[str, Any]:
+        """
+        Generate a comprehensive, GEO-optimized article from a short topic or idea.
+        Unlike rewrite(), this creates content from scratch rather than optimizing existing text.
+        """
+        app_logger.info(f"Agent: Generating full article from idea: {idea[:80]}...")
+        
+        target = target_query or idea
+        
+        generation_prompt = f"""
+        Act as an expert GEO (Generative Engine Optimization) Content Writer.
+        
+        TASK: Generate a comprehensive, publication-ready article from this topic/idea.
+        
+        TOPIC/IDEA: "{idea}"
+        TARGET QUERY: "{target}"
+        STRATEGY: {strategy}
+        TONE: {tone}
+        AUDIENCE LEVEL: {audience}
+        OPTIMIZATION STRENGTH: {strength}/100
+        
+        REQUIREMENTS:
+        1. LENGTH: Write at least 1500 words of substantive, well-structured content.
+        2. STRUCTURE: Use proper markdown with:
+           - A compelling H1 title
+           - At least 5-7 H2 sections covering different aspects of the topic
+           - H3 sub-sections where appropriate
+           - Bullet points and numbered lists for scannability
+        3. GEO OPTIMIZATION:
+           - Start with a direct, concise answer paragraph (the "Featured Snippet" target)
+           - Include a "Key Takeaways" summary box near the top
+           - Add a FAQ section with at least 5 Q&A pairs
+           - Use data tables where relevant (markdown tables)
+           - Include "Expert Insight" callout blocks
+           - Every section should start with a direct statement, not filler
+        4. CITATION READINESS:
+           - Include specific, factual claims that AI engines can extract and cite
+           - Use the format: "According to [SOURCE TYPE], ..." where real data would go
+           - Mark any stats that need verification with [CITATION NEEDED: description]
+        5. ANTI-HALLUCINATION:
+           - Do NOT invent specific statistics, percentages, or study results
+           - Use qualitative claims backed by logical reasoning
+           - Where data would strengthen the content, use [CITATION NEEDED] tags
+        6. E-E-A-T SIGNALS:
+           - Demonstrate experience, expertise, authoritativeness, and trustworthiness
+           - Include practical examples and actionable advice
+           - Reference industry-standard frameworks or methodologies where relevant
+        
+        Return the content in valid JSON format:
+        {{
+            "optimized_content": "The full article in markdown format...",
+            "title": "The article title",
+            "word_count_estimate": 1500,
+            "sections_generated": ["Section 1 name", "Section 2 name", ...],
+            "changes_made": ["Generated comprehensive article from idea", "Added FAQ section", "Included data tables", ...],
+            "missing_citations": ["Areas where real data/sources should be added"],
+            "geo_lift_estimate": "Estimated visibility improvement"
+        }}
+        """
+        
+        result = await self._call_llm(generation_prompt)
+        
+        # Ensure we have the required fields
+        content = result.get("optimized_content", "")
+        if not content or len(content) < 200:
+            # If the LLM didn't produce enough content, return error
+            return {
+                "optimized_content": f"# {idea}\n\nContent generation produced insufficient output. Please try again with more specific details about the topic.",
+                "changes_made": ["Generation produced minimal output"],
+                "missing_citations": [],
+                "citation_warnings": [],
+                "structural_score": {"score": 0, "breakdown": {}},
+                "semantic_score": {"score": 0, "breakdown": {}},
+                "geo_lift_estimate": "0%"
+            }
+        
+        # Run structural and semantic scoring on the generated content
+        structural = self.get_structural_score(content)
+        semantic = await self.get_semantic_score(content)
+        
+        # Extract citation flags
+        final_clean_content, citation_warnings = self.extract_citation_flags(content)
+        
+        return {
+            "optimized_content": final_clean_content,
+            "title": result.get("title", idea),
+            "changes_made": result.get("changes_made", ["Generated comprehensive article from idea"]),
+            "missing_citations": result.get("missing_citations", []) + citation_warnings,
+            "citation_warnings": citation_warnings,
+            "structural_score": structural,
+            "semantic_score": semantic,
+            "geo_lift_estimate": result.get("geo_lift_estimate", f"Estimated +{structural['score']}% structural lift"),
+            "sections_generated": result.get("sections_generated", [])
+        }
+
     async def generate_rag_payload(self, content: str, target_keyword: str) -> Dict[str, Any]:
         """
         Phase 1: Split-Payload Architecture.

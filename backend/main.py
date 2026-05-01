@@ -962,17 +962,30 @@ async def simulate_ai(payload: SimulateAIRequest = Body(...)):
 
 @app.post("/api/optimize")
 async def optimize_full_content(payload: OptimizeContentRequest = Body(...)):
-    """Deep optimization using section-by-section rewrite engine."""
+    """Deep optimization: rewrite existing content OR generate from idea."""
     try:
         from geo_optimizer import geo_optimizer
-        result = await geo_optimizer.rewrite(
-            content=payload.content,
-            strategy=payload.strategy,
-            tone=payload.tone,
-            audience=payload.audience,
-            strength=payload.strength,
-            target_query=payload.target_keyword
-        )
+        
+        if payload.mode == 'generate':
+            # Generate comprehensive content from a topic/idea
+            result = await geo_optimizer.generate_from_idea(
+                idea=payload.content,
+                strategy=payload.strategy,
+                tone=payload.tone,
+                audience=payload.audience,
+                strength=payload.strength,
+                target_query=payload.target_keyword
+            )
+        else:
+            # Rewrite/optimize existing content
+            result = await geo_optimizer.rewrite(
+                content=payload.content,
+                strategy=payload.strategy,
+                tone=payload.tone,
+                audience=payload.audience,
+                strength=payload.strength,
+                target_query=payload.target_keyword
+            )
         return result
     except Exception as e:
         app_logger.error(f"Optimization failed: {str(e)}")

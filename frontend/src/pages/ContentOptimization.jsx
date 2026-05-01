@@ -511,6 +511,7 @@ function ContentOptimization() {
                 }),
                 axios.post('/api/optimize', {
                     content: content,
+                    mode: activeTab === 'generate' ? 'generate' : 'rewrite',
                     strategy: optimizationStrategy,
                     tone: optimizationTone,
                     audience: optimizationAudience,
