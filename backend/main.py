@@ -1443,8 +1443,7 @@ async def compare_competitors(
             competitor_urls=payload.competitor_urls,
             keyword=payload.target_keyword,
             niche=payload.niche,
-            content_type=payload.content_type,
-            user_id=current_user["id"]
+            content_type=payload.content_type
         )
         return {"job_id": job_id, "status": "pending"}
     except Exception as e:
