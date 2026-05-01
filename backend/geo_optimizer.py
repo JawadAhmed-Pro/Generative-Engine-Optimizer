@@ -194,9 +194,9 @@ class GEOOptimizer:
         target = target_query or idea
         
         generation_prompt = f"""
-        Act as an expert GEO (Generative Engine Optimization) Content Writer.
+        Act as an expert GEO (Generative Engine Optimization) Content Writer and Strategist.
         
-        TASK: Generate a comprehensive, publication-ready article from this topic/idea.
+        TASK: Generate a COMPREHENSIVE, in-depth, publication-ready article from the topic/idea provided.
         
         TOPIC/IDEA: "{idea}"
         TARGET QUERY: "{target}"
@@ -205,42 +205,35 @@ class GEOOptimizer:
         AUDIENCE LEVEL: {audience}
         OPTIMIZATION STRENGTH: {strength}/100
         
-        REQUIREMENTS:
-        1. LENGTH: Write at least 800-1000 words of substantive, well-structured content.
-        2. STRUCTURE: Use proper markdown with:
-           - A compelling H1 title
-           - At least 4-6 H2 sections covering different aspects of the topic
-           - H3 sub-sections where appropriate
-           - Bullet points and numbered lists for scannability
-        3. GEO OPTIMIZATION:
-           - Start with a direct, concise answer paragraph (the "Featured Snippet" target)
-           - Include a "Key Takeaways" summary box near the top
-           - Add a FAQ section with at least 3-5 Q&A pairs
-           - Use data tables where relevant (markdown tables)
-           - Include "Expert Insight" callout blocks
-           - Every section should start with a direct statement, not filler
-        4. CITATION READINESS:
-           - Include specific, factual claims that AI engines can extract and cite
-           - Use the format: "According to [SOURCE TYPE], ..." where real data would go
-           - Mark any stats that need verification with [CITATION NEEDED: description]
-        5. ANTI-HALLUCINATION:
-           - Do NOT invent specific statistics, percentages, or study results
-           - Use qualitative claims backed by logical reasoning
-           - Where data would strengthen the content, use [CITATION NEEDED] tags
-        6. E-E-A-T SIGNALS:
-           - Demonstrate experience, expertise, authoritativeness, and trustworthiness
-           - Include practical examples and actionable advice
-           - Reference industry-standard frameworks or methodologies where relevant
+        CRITICAL LENGTH REQUIREMENT: 
+        - Do NOT write a short summary or a single paragraph.
+        - You must generate a full-length article of at least 800-1000 words.
+        - If the topic is broad, cover multiple sub-topics in detail.
+        
+        ARTICLE STRUCTURE:
+        1. Compelling H1 Title
+        2. Introduction: Start with a direct, concise "Answer Box" paragraph (40-60 words) that directly addresses the target query.
+        3. Key Takeaways: A bulleted summary box with 3-5 high-density facts.
+        4. Detailed H2 Sections: At least 5-6 substantial sections (each with 2-3 paragraphs) covering:
+           - Core concepts and definitions
+           - Step-by-step guides or "How-to" instructions
+           - Comparison tables (Markdown format)
+           - Expert insights and industry trends
+        5. FAQ Section: 5 detailed Question & Answer pairs optimized for voice search.
+        6. Conclusion: Actionable summary and next steps.
+        
+        GEO OPTIMIZATION RULES:
+        - Use 'Bullet Traps' and 'Colon-led lead-ins'.
+        - Include specific, factual claims that can be cited.
+        - Use the [CITATION NEEDED: description] tag for any statistical claims.
+        - Ensure high 'Information Density'.
         
         Return the content in valid JSON format:
         {{
-            "optimized_content": "The full article in markdown format...",
-            "title": "The article title",
-            "word_count_estimate": 1500,
-            "sections_generated": ["Section 1 name", "Section 2 name", ...],
-            "changes_made": ["Generated comprehensive article from idea", "Added FAQ section", "Included data tables", ...],
-            "missing_citations": ["Areas where real data/sources should be added"],
-            "geo_lift_estimate": "Estimated visibility improvement"
+            "optimized_content": "# [Title]\n\n[Intro...]\n\n## Section 1\n\n...",
+            "title": "...",
+            "changes_made": ["Generated comprehensive article", "Added H2 sections", "Included FAQ"],
+            "missing_citations": ["..."]
         }}
         """
         
@@ -632,7 +625,7 @@ class GEOOptimizer:
             app_logger.error(f"JSON Extraction Failed in Optimizer: {e}")
             return {}
 
-    async def _call_llm(self, prompt: str) -> Dict[str, Any]:
+    async def _call_llm(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096) -> Any:
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.groq_api_key}",
@@ -643,8 +636,11 @@ class GEOOptimizer:
             "model": settings.GROQ_MODEL,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.2,
-            "response_format": {"type": "json_object"}
+            "max_tokens": max_tokens
         }
+        
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
         
         try:
             timeout = aiohttp.ClientTimeout(total=120)
@@ -653,16 +649,18 @@ class GEOOptimizer:
                     if resp.status == 200:
                         data = await resp.json()
                         response_text = data["choices"][0]["message"]["content"]
-                        result = self._extract_json(response_text)
                         
-                        # Fallback for missing keys
-                        if not result and "optimized_content" in prompt:
-                            return {
-                                "optimized_content": "Error: Could not parse LLM response.",
-                                "changes_made": ["Analysis failed"],
-                                "geo_lift_estimate": "0%"
-                            }
-                        return result
+                        if json_mode:
+                            result = self._extract_json(response_text)
+                            # Fallback for missing keys
+                            if not result and "optimized_content" in prompt:
+                                return {
+                                    "optimized_content": "Error: Could not parse LLM response.",
+                                    "changes_made": ["Analysis failed"],
+                                    "geo_lift_estimate": "0%"
+                                }
+                            return result
+                        return response_text
                     else:
                         app_logger.error(f"LLM Error: {resp.status}")
                         # Fallback for network/API error if we have partial results
