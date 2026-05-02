@@ -38,7 +38,6 @@ from competitor_analyzer import CompetitorAnalyzer
 from probability_model import CitationProbabilityModel
 from discovery_engine import PromptDiscoveryEngine
 from geo_optimizer import geo_optimizer
-from discovery_engine import PromptDiscoveryEngine
 from auth import (
     get_password_hash, verify_password, create_access_token,
     get_current_user, require_auth

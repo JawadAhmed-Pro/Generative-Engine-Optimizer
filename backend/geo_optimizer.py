@@ -5,7 +5,8 @@ import re
 import textstat
 from bs4 import BeautifulSoup
 from typing import Dict, Any, List
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from config import settings
 from logger import app_logger
 
@@ -15,6 +16,7 @@ class GEOOptimizer:
     def __init__(self):
         self.groq_api_key = settings.GROQ_API_KEY
         self.gemini_api_key = settings.GEMINI_API_KEY
+        self.gemini_client = genai.Client(api_key=self.gemini_api_key) if self.gemini_api_key else None
         self.nlp = None
         
         # Memory Optimization: Skip spacy if disabled via env var
@@ -690,43 +692,45 @@ class GEOOptimizer:
         return await self._call_groq(prompt, json_mode, max_tokens)
 
     async def _call_gemini(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096) -> Any:
-        """Call Google Gemini API."""
+        """Call Google Gemini API using new SDK."""
         try:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel(settings.GEMINI_MODEL)
+            if not self.gemini_client:
+                raise Exception("Gemini API Key not configured.")
             
             # Configure generation
-            config = genai.types.GenerationConfig(
+            config = types.GenerateContentConfig(
                 temperature=0.2,
                 max_output_tokens=max_tokens,
                 response_mime_type="application/json" if json_mode else "text/plain"
             )
             
             app_logger.info(f"Calling Gemini ({settings.GEMINI_MODEL}) for generation...")
-            response = await model.generate_content_async(prompt, generation_config=config)
             
-            # Robust extraction: handle blocked responses or empty candidates
-            if response and hasattr(response, 'candidates') and len(response.candidates) > 0:
-                candidate = response.candidates[0]
-                if getattr(candidate, 'finish_reason', None) in (3, 4, 6): # 3=SAFETY, 4=RECITATION, 6=OTHER
-                    app_logger.warning(f"Gemini blocked response: {candidate.finish_reason}")
-                    raise Exception("Gemini blocked response due to safety/recitation.")
-                
-                if candidate.content and candidate.content.parts:
-                    try:
-                        text = candidate.content.parts[0].text
-                        if json_mode:
-                            res = self._extract_json(text)
-                            return res if isinstance(res, dict) else {"error": "Invalid JSON extracted"}
-                        return text
-                    except ValueError:
-                        app_logger.warning("Gemini part has no text (likely function call or blocked).")
-                        raise Exception("Gemini returned part with no text.")
+            # Using the aio (async) client
+            response = await self.gemini_client.aio.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=prompt,
+                config=config
+            )
+            
+            if response and response.text:
+                text = response.text
+                if json_mode:
+                    res = self._extract_json(text)
+                    if isinstance(res, dict):
+                        return res
+                    else:
+                        # Sometimes JSON is wrapped in a string field or not quite right
+                        return {"optimized_content": text, "changes_made": ["Generated with formatting issues"]}
+                return text
             
             raise Exception("Gemini returned empty or blocked response")
         except Exception as e:
             app_logger.error(f"Gemini Call Failed: {e}. Falling back to Groq.")
-            return await self._call_groq(prompt, json_mode, max_tokens)
+            # Fallback to Groq if possible
+            if self.groq_api_key:
+                return await self._call_groq(prompt, json_mode, max_tokens)
+            raise e
 
     async def _call_groq(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096) -> Any:
         """Call Groq Llama API."""
