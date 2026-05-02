@@ -130,7 +130,6 @@ function ContentOptimization() {
     const [additionalInstructions, setAdditionalInstructions] = useState('')
     const [progress, setProgress] = useState(0)
     const [selection, setSelection] = useState({ text: '', top: 0, left: 0, visible: false })
-    const [history, setHistory] = useState([])
     const [versionHistory, setVersionHistory] = useState([])
 
     // Create project inline
