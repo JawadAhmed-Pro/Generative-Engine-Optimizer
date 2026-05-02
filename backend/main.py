@@ -433,15 +433,17 @@ def get_stats(db: Session = Depends(get_db)):
     }
 
 
-@app.get("/api/history", response_model=HistoryResponse)
+@app.get("/api/history")
 def get_history(
     type: str = None, 
     limit: int = 10, 
+    offset: int = 0,
+    search: str = None,
     db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
-    """Get recent content items with their scores."""
-    from sqlalchemy import or_
+    """Get recent content items with their scores, supports pagination and search."""
+    from sqlalchemy import or_, func
 
     # Include items that belong to user's projects OR have no project (direct text analysis)
     user_project_ids = [
@@ -461,8 +463,15 @@ def get_history(
     elif type == "text":
         query = query.filter(ContentItem.url.is_(None))
 
-    # Get recent items
-    items = query.order_by(ContentItem.created_at.desc()).limit(limit).all()
+    # Filter by search term
+    if search:
+        query = query.filter(ContentItem.title.ilike(f"%{search}%"))
+
+    # Get total count before pagination
+    total_count = query.count()
+
+    # Get paginated items
+    items = query.order_by(ContentItem.created_at.desc()).offset(offset).limit(limit).all()
 
     result = []
     for item in items:
@@ -493,7 +502,11 @@ def get_history(
             "project_id": item.project_id
         })
 
-    return {"items": result}
+    return {
+        "items": result,
+        "total": total_count,
+        "has_more": offset + limit < total_count
+    }
 
 
 @app.delete("/api/history")

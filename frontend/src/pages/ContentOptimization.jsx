@@ -115,8 +115,11 @@ function ContentOptimization() {
     const [selectedProject, setSelectedProject] = useState(projectFromUrl || '')
     const [projects, setProjects] = useState([])
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
+    const [history, setHistory] = useState([])
+    const [historyOffset, setHistoryOffset] = useState(0)
+    const [hasMoreHistory, setHasMoreHistory] = useState(false)
     const [loadingHistory, setLoadingHistory] = useState(false)
+    const [loadingMoreHistory, setLoadingMoreHistory] = useState(false)
     const [diagnostics, setDiagnostics] = useState(null)
     const [loadingDiagnostics, setLoadingDiagnostics] = useState(false)
     const [optimizationStrategy, setOptimizationStrategy] = useState('general')
@@ -148,10 +151,28 @@ function ContentOptimization() {
 
     const fetchHistory = async () => {
         try {
-            const response = await axios.get('/api/history?type=text&limit=5')
-            setHistory(response.data.items)
+            const response = await axios.get('/api/history?type=text&limit=10&offset=0')
+            setHistory(response.data.items || [])
+            setHasMoreHistory(response.data.has_more || false)
+            setHistoryOffset(0)
         } catch (error) {
             console.error('Failed to fetch history:', error)
+        }
+    }
+
+    const loadMoreHistory = async () => {
+        if (loadingMoreHistory || !hasMoreHistory) return;
+        setLoadingMoreHistory(true);
+        try {
+            const nextOffset = historyOffset + 10;
+            const response = await axios.get(`/api/history?type=text&limit=10&offset=${nextOffset}`)
+            setHistory(prev => [...prev, ...(response.data.items || [])])
+            setHasMoreHistory(response.data.has_more || false)
+            setHistoryOffset(nextOffset)
+        } catch (error) {
+            console.error('Failed to load more history:', error)
+        } finally {
+            setLoadingMoreHistory(false)
         }
     }
 
@@ -1620,6 +1641,42 @@ function ContentOptimization() {
                                             />
                                         </div>
                                     </div>
+
+                                    {/* SEO Metadata Panel */}
+                                    {analysisResults && analysisResults.seo_metadata && (
+                                        <div style={{
+                                            marginBottom: '2rem',
+                                            padding: '1.5rem',
+                                            background: 'rgba(59, 130, 246, 0.05)',
+                                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                                            borderRadius: '12px'
+                                        }}>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--accent-primary)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                SEO Metadata Generated
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                                <div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem', fontWeight: '700' }}>Meta Title</div>
+                                                    <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', background: 'var(--bg-tertiary)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--card-border)' }}>
+                                                        {analysisResults.seo_metadata.title_tag}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem', fontWeight: '700' }}>Meta Description</div>
+                                                    <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', background: 'var(--bg-tertiary)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--card-border)' }}>
+                                                        {analysisResults.seo_metadata.meta_description}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem', fontWeight: '700' }}>URL Slug</div>
+                                                    <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', background: 'var(--bg-tertiary)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--card-border)', fontFamily: 'monospace' }}>
+                                                        /{analysisResults.seo_metadata.slug}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="markdown-content" ref={resultRef} style={{
                                         lineHeight: '1.8',
                                         color: 'var(--text-primary)',
@@ -1893,12 +1950,35 @@ function ContentOptimization() {
                                     const title = item.title || '';
                                     const isSchema = title.toLowerCase().includes('schema') || title.toLowerCase().includes('json');
                                     if (activeTab === 'schema') return isSchema;
-                                    return !isSchema;
-                                }).length === 0 && (
+                                    }).length === 0 && (
                                         <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>
                                             No {activeTab === 'schema' ? 'schema' : 'content'} history found in this project.
                                         </div>
                                     )}
+                                
+                                {/* Load More Button */}
+                                {hasMoreHistory && (
+                                    <button 
+                                        onClick={loadMoreHistory}
+                                        disabled={loadingMoreHistory}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem',
+                                            background: 'rgba(255,255,255,0.02)',
+                                            border: 'none',
+                                            borderTop: '1px solid rgba(255,255,255,0.05)',
+                                            color: 'var(--accent-primary)',
+                                            fontSize: '0.8rem',
+                                            fontWeight: '700',
+                                            cursor: loadingMoreHistory ? 'wait' : 'pointer',
+                                            transition: 'background 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                                        onMouseLeave={(e) => e.target.style.background = 'rgba(255,255,255,0.02)'}
+                                    >
+                                        {loadingMoreHistory ? 'Loading...' : 'Load More'}
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
