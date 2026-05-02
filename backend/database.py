@@ -116,7 +116,7 @@ def get_tenant_session(current_user: dict = __import__('fastapi').Depends(__impo
         # Only set tenant context if using PostgreSQL (which supports SET LOCAL)
         if sync_engine.url.drivername.startswith('postgresql'):
             try:
-                db.execute(text("SET LOCAL app.current_tenant = :uid"), {"uid": current_user["id"]})
+                db.execute(text("SELECT set_config('app.current_tenant', :uid::text, true)"), {"uid": str(current_user["id"])})
             except Exception:
                 db.rollback()
         yield db

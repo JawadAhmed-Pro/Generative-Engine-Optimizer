@@ -65,7 +65,7 @@ class JobManager:
             # Only set tenant context if using PostgreSQL
             if session.bind.dialect.name == 'postgresql':
                 try:
-                    await session.execute(text("SET LOCAL app.current_tenant = :uid"), {"uid": uid})
+                    await session.execute(text("SELECT set_config('app.current_tenant', :uid::text, true)"), {"uid": str(uid)})
                 except Exception as e:
                     print(f"Failed to set tenant context: {e}")
                     await session.rollback()
