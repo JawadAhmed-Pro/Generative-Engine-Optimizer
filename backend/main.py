@@ -25,7 +25,7 @@ from models import (
     GenerateSchemaRequest, InjectRequest, ValidateCitationRequest,
     CompetitorCompareRequest, CompetitorComparison, PromptDiscoveryRequest,
     OptimizeRAGPayloadRequest, OptimizeEntitySchemaRequest, DiagnosticMetrics,
-    AutoFixRequest, JobStatusResponse
+    AutoFixRequest, JobStatusResponse, ProjectStatsResponse
 )
 import models
 from content_fetcher import ContentFetcher
