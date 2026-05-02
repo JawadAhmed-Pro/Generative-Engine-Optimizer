@@ -72,6 +72,16 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+@app.get("/")
+async def root():
+    """Root endpoint for health checks."""
+    return {"status": "ok", "message": "GEO Agent API is running"}
+
+@app.get("/health")
+async def health_check():
+    """Dedicated health check endpoint."""
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,

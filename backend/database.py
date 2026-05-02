@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from models import Base
 from config import settings
 from typing import Generator, AsyncGenerator
+import time
+import logging
 
 # Synchronous Engine (For fast, lightweight CRUD without event-loop migration overhead)
 sync_engine = create_engine(
@@ -70,16 +72,20 @@ def init_db():
                     conn.rollback()
 
     # 3. Migration for 'analysis_jobs' (Progress)
+    start_time = time.time()
     aj_columns = [c['name'] for c in inspector.get_columns('analysis_jobs')]
     if 'progress' not in aj_columns:
-        print("Migrating: Adding progress to analysis_jobs...")
+        print(f"Migrating: Adding progress to analysis_jobs... (Inspector took {time.time() - start_time:.2f}s)")
         with sync_engine.connect() as conn:
             try:
                 conn.execute(text("ALTER TABLE analysis_jobs ADD COLUMN progress INTEGER DEFAULT 0"))
                 conn.commit()
+                print("Migration successful.")
             except Exception as e:
                 print(f"Progress column migration failed: {e}")
                 conn.rollback()
+    else:
+        print(f"Migration: progress column already exists. (Check took {time.time() - start_time:.2f}s)")
 
 def get_db() -> Generator[Session, None, None]:
     """Base Dependency to get synchronous database session (No RLS)."""
