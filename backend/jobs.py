@@ -17,11 +17,14 @@ class JobManager:
         """Update progress percentage of a job."""
         from models import AnalysisJob
         from sqlalchemy import select
-        async with db_sessionmaker() as db:
-            job = (await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))).scalars().first()
-            if job:
-                job.progress = progress
-                await db.commit()
+        try:
+            async with db_sessionmaker() as db:
+                job = (await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))).scalars().first()
+                if job:
+                    job.progress = progress
+                    await db.commit()
+        except Exception as e:
+            print(f"Warning: Failed to update progress for job {job_id}: {e}")
 
     async def submit_job(self, db_sessionmaker: Callable, job_type: str, user_id: int, func: Callable, *args, **kwargs) -> str:
         """

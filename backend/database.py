@@ -7,21 +7,34 @@ from typing import Generator, AsyncGenerator
 import time
 import logging
 
+from sqlalchemy.pool import NullPool, QueuePool
+
+sync_kwargs = {"echo": False}
+if settings.DATABASE_URL.startswith("sqlite"):
+    sync_kwargs["poolclass"] = NullPool
+    sync_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    sync_kwargs["pool_size"] = 20
+    sync_kwargs["max_overflow"] = 10
+
 # Synchronous Engine (For fast, lightweight CRUD without event-loop migration overhead)
 sync_engine = create_engine(
     settings.DATABASE_URL,
-    pool_size=20,
-    max_overflow=10,
-    echo=False
+    **sync_kwargs
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
+
+async_kwargs = {"echo": False}
+if settings.async_database_url.startswith("sqlite"):
+    async_kwargs["poolclass"] = NullPool
+else:
+    async_kwargs["pool_size"] = 20
+    async_kwargs["max_overflow"] = 10
 
 # Async Engine (For JobManager and long-running Heavy DB logic to avoid IO blocks)
 async_engine = create_async_engine(
     settings.async_database_url,
-    pool_size=20,
-    max_overflow=10,
-    echo=False
+    **async_kwargs
 )
 AsyncSessionLocal = async_sessionmaker(
     bind=async_engine,
