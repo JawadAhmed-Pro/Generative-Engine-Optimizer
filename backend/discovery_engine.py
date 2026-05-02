@@ -6,6 +6,7 @@ from google import genai
 import json
 import re
 from logger import app_logger
+from search_service import search_service
 
 class PromptDiscoveryEngine:
     """Discovers 'People Also Ask' and niche queries using LLM / Search."""
@@ -38,8 +39,8 @@ class PromptDiscoveryEngine:
         app_logger.info(f"Starting real-world prompt discovery for: {keyword}")
         
         # 1. Scrape Real Data (Grounded Signals) - Run in parallel to save time
-        paa_task = self._scrape_jina_search(f"site:google.com \"People also ask\" {keyword}")
-        reddit_task = self._scrape_jina_search(f"site:reddit.com OR site:quora.com {keyword} \"question\"")
+        paa_task = search_service.search_and_ground(f"site:google.com \"People also ask\" {keyword}")
+        reddit_task = search_service.search_and_ground(f"site:reddit.com OR site:quora.com {keyword} \"question\"")
         paa_data, reddit_data = await asyncio.gather(paa_task, reddit_task)
         
         # 2. Synthesize with LLM
@@ -63,18 +64,8 @@ class PromptDiscoveryEngine:
         }
 
     async def _scrape_jina_search(self, query: str) -> str:
-        """Helper to use Jina Search API (s.jina.ai) for grounding."""
-        try:
-            url = f"https://s.jina.ai/{query}"
-            headers = {"Accept": "text/event-stream"} # Get clean markdown
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, headers=headers, timeout=20) as resp:
-                    if resp.status == 200:
-                        return await resp.text()
-                    return ""
-        except Exception as e:
-            app_logger.error(f"Jina Search Failed for query {query}: {e}")
-            return ""
+        """[DEPRECATED] Use search_service.search_and_ground instead."""
+        return await search_service.search_and_ground(query)
              
     async def _discover_via_groq(self, keyword: str, niche: str, signals: Dict[str, str]) -> List[Dict[str, Any]]:
         url = "https://api.groq.com/openai/v1/chat/completions"
