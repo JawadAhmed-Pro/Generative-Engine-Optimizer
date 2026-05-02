@@ -12,6 +12,7 @@ langchain-community
 chromadb
 beautifulsoup4
 requests
+readability-lxml
 textstat
 sqlalchemy
 psycopg2-binary

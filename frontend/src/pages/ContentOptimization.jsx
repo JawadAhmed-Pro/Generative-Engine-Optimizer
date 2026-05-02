@@ -164,13 +164,13 @@ function ContentOptimization() {
             
             // Update context state
             updateOptimization({
-                content: data.content,
+                content: data.title || '', // Put title as input context 
                 analysisResults: data.analysis,
-                optimizedContent: null // Reset optimization on history load
+                optimizedContent: data.content // Put the actual content in the result panel
             })
             
-            // Set view mode to analysis to show the results
-            setViewMode('analysis')
+            // Set view mode to result to immediately show the content
+            setViewMode('result')
             
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -747,7 +747,6 @@ function ContentOptimization() {
                                 }}
                             >
                                 <option value="general">General / Blog</option>
-                                <option value="ecommerce">E-commerce</option>
                                 <option value="educational">Educational</option>
                             </select>
                         </div>
@@ -1508,24 +1507,26 @@ function ContentOptimization() {
                         <div style={{ marginTop: '3rem' }} className="animate-fade-in">
                             {/* Result Tabs */}
                             <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '2rem' }}>
-                                <button
-                                    onClick={() => setViewMode('analysis')}
-                                    style={{
-                                        padding: '1rem 2rem',
-                                        background: 'none',
-                                        border: 'none',
-                                        borderBottom: viewMode === 'analysis' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                                        color: viewMode === 'analysis' ? 'white' : 'var(--text-tertiary)',
-                                        fontWeight: '700',
-                                        fontSize: '0.9rem',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.05em',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.3s ease'
-                                    }}
-                                >
-                                    📊 Analysis
-                                </button>
+                                {activeTab !== 'generate' && (
+                                    <button
+                                        onClick={() => setViewMode('analysis')}
+                                        style={{
+                                            padding: '1rem 2rem',
+                                            background: 'none',
+                                            border: 'none',
+                                            borderBottom: viewMode === 'analysis' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                                            color: viewMode === 'analysis' ? 'white' : 'var(--text-tertiary)',
+                                            fontWeight: '700',
+                                            fontSize: '0.9rem',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        📊 Analysis
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setViewMode('result')}
                                     style={{
@@ -1544,27 +1545,30 @@ function ContentOptimization() {
                                 >
                                     ✨ Optimized
                                 </button>
-                                <button
-                                    onClick={() => setViewMode('compare')}
-                                    style={{
-                                        padding: '1rem 2rem',
-                                        background: 'none',
-                                        border: 'none',
-                                        borderBottom: viewMode === 'compare' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                                        color: viewMode === 'compare' ? 'white' : 'var(--text-tertiary)',
-                                        fontWeight: '700',
-                                        fontSize: '0.9rem',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.05em',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.3s ease'
-                                    }}
-                                >
-                                    ⚖️ Compare
-                                </button>
+                                
+                                {activeTab !== 'generate' && (
+                                    <button
+                                        onClick={() => setViewMode('compare')}
+                                        style={{
+                                            padding: '1rem 2rem',
+                                            background: 'none',
+                                            border: 'none',
+                                            borderBottom: viewMode === 'compare' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                                            color: viewMode === 'compare' ? 'white' : 'var(--text-tertiary)',
+                                            fontWeight: '700',
+                                            fontSize: '0.9rem',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        ⚖️ Compare
+                                    </button>
+                                )}
                             </div>
 
-                            {viewMode === 'analysis' && analysisResults && (
+                            {activeTab !== 'generate' && viewMode === 'analysis' && analysisResults && (
                                 <ResultsPanel 
                                     results={analysisResults} 
                                     onReset={() => updateOptimization({ analysisResults: null, optimizedContent: '' })} 

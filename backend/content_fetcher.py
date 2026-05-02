@@ -73,7 +73,7 @@ class ContentFetcher:
         extracted = {
             'url': url,
             'title': self._extract_title(soup, driver_title),
-            'content': self._extract_text(soup),
+            'content': self._extract_text(soup, page_content),
             'metadata': self._extract_metadata(soup),
             'headings': self._extract_headings(soup),
             'schema': self._extract_schema(soup),
@@ -139,7 +139,7 @@ class ContentFetcher:
         extracted = {
             'url': url,
             'title': self._extract_title(soup, driver_title),
-            'content': self._extract_text(soup),
+            'content': self._extract_text(soup, page_content),
             'metadata': self._extract_metadata(soup),
             'headings': self._extract_headings(soup),
             'schema': self._extract_schema(soup),
@@ -181,8 +181,38 @@ class ContentFetcher:
             return driver_title
         return "Untitled"
     
-    def _extract_text(self, soup: BeautifulSoup) -> str:
+    def _extract_text(self, soup: BeautifulSoup, raw_html: str = "") -> str:
         """Extract main text content from the page."""
+        
+        # 1. Try Readability for pristine extraction (strips navs, sidebars, footers)
+        if raw_html:
+            try:
+                from readability import Document
+                doc = Document(raw_html)
+                clean_html = doc.summary()
+                clean_soup = BeautifulSoup(clean_html, 'lxml')
+                
+                # Convert common interactive elements to text
+                for img in clean_soup.find_all('img'):
+                    alt = img.get('alt', '').strip()
+                    if alt and len(alt) > 3:
+                        img.replace_with(f" [Image: {alt}] ")
+                for intent in clean_soup.find_all(['button', 'a']):
+                    text = intent.get_text(strip=True)
+                    if text and any(w in text.lower() for w in ['buy', 'cart', 'shop', 'order', 'purchase', 'get', 'checkout']):
+                        intent.replace_with(f" [CTA Button: {text}] ")
+                        
+                text = clean_soup.get_text(separator='\n', strip=True)
+                text = re.sub(r'\n\s*\n', '\n\n', text)
+                text = re.sub(r' +', ' ', text)
+                if len(text) > 200: # Ensure it actually found something
+                    return text.strip()
+            except ImportError:
+                app_logger.warning("readability-lxml not installed, falling back to basic extraction")
+            except Exception as e:
+                app_logger.warning(f"Readability extraction failed: {e}. Falling back to basic.")
+
+        # 2. Fallback to basic BeautifulSoup extraction
         # Remove script and style elements
         for script in soup(['script', 'style', 'nav', 'footer', 'header', 'aside', 'form', 'noscript', 'iframe']):
             script.decompose()
