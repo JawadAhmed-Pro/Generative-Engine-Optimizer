@@ -1058,6 +1058,7 @@ async def optimize_full_content(
                             project_id=project_id,
                             title=opt_res.get('title') or (kwargs.get('content')[:50] if kwargs.get('mode') == 'generate' else "Optimized Content"),
                             content=optimized_text,
+                            content_metadata={"original_content": kwargs.get('content'), "mode": kwargs.get('mode')},
                             created_at=datetime.utcnow()
                         )
                         db.add(new_item)

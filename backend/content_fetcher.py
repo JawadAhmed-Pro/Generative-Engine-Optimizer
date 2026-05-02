@@ -182,9 +182,10 @@ class ContentFetcher:
         return "Untitled"
     
     def _extract_text(self, soup: BeautifulSoup, raw_html: str = "") -> str:
-        """Extract main text content from the page."""
+        """Extract main text content from the page with aggressive garbage filtering."""
         
         # 1. Try Readability for pristine extraction (strips navs, sidebars, footers)
+        text = ""
         if raw_html:
             try:
                 from readability import Document
@@ -198,54 +199,88 @@ class ContentFetcher:
                     if alt and len(alt) > 3:
                         img.replace_with(f" [Image: {alt}] ")
                 for intent in clean_soup.find_all(['button', 'a']):
-                    text = intent.get_text(strip=True)
-                    if text and any(w in text.lower() for w in ['buy', 'cart', 'shop', 'order', 'purchase', 'get', 'checkout']):
-                        intent.replace_with(f" [CTA Button: {text}] ")
+                    btn_text = intent.get_text(strip=True)
+                    if btn_text and any(w in btn_text.lower() for w in ['buy', 'cart', 'shop', 'order', 'purchase', 'get', 'checkout']):
+                        intent.replace_with(f" [CTA Button: {btn_text}] ")
                         
                 text = clean_soup.get_text(separator='\n', strip=True)
-                text = re.sub(r'\n\s*\n', '\n\n', text)
-                text = re.sub(r' +', ' ', text)
-                if len(text) > 200: # Ensure it actually found something
-                    return text.strip()
-            except ImportError:
-                app_logger.warning("readability-lxml not installed, falling back to basic extraction")
             except Exception as e:
                 app_logger.warning(f"Readability extraction failed: {e}. Falling back to basic.")
 
-        # 2. Fallback to basic BeautifulSoup extraction
-        # Remove script and style elements
-        for script in soup(['script', 'style', 'nav', 'footer', 'header', 'aside', 'form', 'noscript', 'iframe']):
-            script.decompose()
-        
-        # Priority: article > main > body
-        main_content = soup.find('article') or soup.find('main') or soup.find('body')
-        
-        if not main_content:
-            return ""
-        
-        # Inject textual representations for important non-text elements
-        
-        # 1. Images with alt text
-        for img in main_content.find_all('img'):
-            alt = img.get('alt', '').strip()
-            if alt and len(alt) > 3: # Filter tiny icons
-                img.replace_with(f" [Image: {alt}] ")
+        # 2. Fallback to basic BeautifulSoup extraction if readability failed or produced too little
+        if not text or len(text) < 200:
+            # Remove script and style elements
+            for script in soup(['script', 'style', 'nav', 'footer', 'header', 'aside', 'form', 'noscript', 'iframe', 'svg']):
+                script.decompose()
+            
+            # Priority: article > main > body
+            main_content = soup.find('article') or soup.find('main') or soup.find('body')
+            
+            if main_content:
+                # Inject textual representations for images
+                for img in main_content.find_all('img'):
+                    alt = img.get('alt', '').strip()
+                    if alt and len(alt) > 3:
+                        img.replace_with(f" [Image: {alt}] ")
                 
-        # 2. Buttons and Links (CTA)
-        for intent in main_content.find_all(['button', 'a']):
-            text = intent.get_text(strip=True)
-            # Check if likely a CTA
-            if text and any(w in text.lower() for w in ['buy', 'cart', 'shop', 'order', 'purchase', 'get', 'checkout']):
-                intent.replace_with(f" [CTA Button: {text}] ")
+                text = main_content.get_text(separator='\n', strip=True)
+
+        if not text:
+            return ""
+
+        # 3. Post-Extraction Cleaning (Aggressive Garbage Removal)
+        lines = text.split('\n')
+        cleaned_lines = []
         
-        # Get text
-        text = main_content.get_text(separator='\n', strip=True)
+        # Common navigation / garbage keywords
+        garbage_keywords = {
+            'sign up', 'sign in', 'log in', 'subscribe', 'privacy policy', 'terms of service',
+            'cookie policy', 'sitemap', 'help center', 'careers', 'about us', 'contact us',
+            'follow us', 'share on', 'open in app', 'get the app', 'membership', 'write for us',
+            'status', 'blog', 'privacy', 'terms', 'about medium', 'verified', 'follower'
+        }
+
+        for line in lines:
+            line_strip = line.strip()
+            if not line_strip:
+                continue
+                
+            # Filter short navigational lines
+            line_lower = line_strip.lower()
+            
+            # 1. Exact match or very short lines with garbage keywords
+            if line_lower in garbage_keywords or (len(line_strip) < 30 and any(kw in line_lower for kw in garbage_keywords)):
+                continue
+                
+            # 2. Filter lines that look like social media sharing (e.g., "Share", "Tweet", "Pin")
+            if len(line_strip) < 15 and line_lower in ['share', 'tweet', 'pin', 'email', 'save']:
+                continue
+            
+            # 3. Filter lines that are likely just "Listen", "Share", "5 min read" (Medium specific)
+            if line_lower in ['listen', 'share', 'follow']:
+                continue
+
+            # 4. Filter Markdown links that are just navigation (e.g. [Sitemap](...))
+            if re.match(r'^\[.*?\]\(.*?\)$', line_strip):
+                # If the link text is a garbage keyword, skip it
+                link_text = re.search(r'^\[(.*?)\]', line_strip)
+                if link_text and link_text.group(1).lower() in garbage_keywords:
+                    continue
+                # If it's a sitemap or help link, skip it
+                if any(kw in line_lower for kw in ['sitemap', 'help', 'app']):
+                    continue
+                
+            # 5. Filter dates/timestamps that are just single lines (often near top)
+            if re.match(r'^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}$', line_strip):
+                continue
+
+            cleaned_lines.append(line_strip)
+
+        # Reconstruct and fix double newlines
+        final_text = '\n\n'.join(cleaned_lines)
+        final_text = re.sub(r'\n\s*\n+', '\n\n', final_text)
         
-        # Clean up whitespace
-        text = re.sub(r'\n\s*\n', '\n\n', text)
-        text = re.sub(r' +', ' ', text)
-        
-        return text.strip()
+        return final_text.strip()
     
     def _extract_metadata(self, soup: BeautifulSoup) -> Dict[str, str]:
         """Extract metadata from meta tags."""

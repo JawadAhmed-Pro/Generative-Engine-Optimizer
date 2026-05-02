@@ -108,7 +108,13 @@ function ContentOptimization() {
 
     // Use context for persistent state
     const { optimizationState, updateOptimization } = useAnalysisState()
-    const { content, activeTab, contentType, analysisResults, optimizedContent } = optimizationState
+    const { 
+        content = '', 
+        activeTab = 'rewrite', 
+        contentType = 'general', 
+        analysisResults = null, 
+        optimizedContent = '' 
+    } = optimizationState || {}
     const toast = useToast()
 
     // Local-only state
@@ -120,6 +126,7 @@ function ContentOptimization() {
     const [hasMoreHistory, setHasMoreHistory] = useState(false)
     const [loadingHistory, setLoadingHistory] = useState(false)
     const [loadingMoreHistory, setLoadingMoreHistory] = useState(false)
+    const [error, setError] = useState(null)
     const [diagnostics, setDiagnostics] = useState(null)
     const [loadingDiagnostics, setLoadingDiagnostics] = useState(false)
     const [optimizationStrategy, setOptimizationStrategy] = useState('general')
@@ -151,11 +158,12 @@ function ContentOptimization() {
     const fetchHistory = async () => {
         try {
             const response = await axios.get('/api/history?type=text&limit=10&offset=0')
-            setHistory(response.data.items || [])
-            setHasMoreHistory(response.data.has_more || false)
+            setHistory(Array.isArray(response.data?.items) ? response.data.items : [])
+            setHasMoreHistory(response.data?.has_more || false)
             setHistoryOffset(0)
         } catch (error) {
             console.error('Failed to fetch history:', error)
+            setHistory([])
         }
     }
 
@@ -165,8 +173,8 @@ function ContentOptimization() {
         try {
             const nextOffset = historyOffset + 10;
             const response = await axios.get(`/api/history?type=text&limit=10&offset=${nextOffset}`)
-            setHistory(prev => [...prev, ...(response.data.items || [])])
-            setHasMoreHistory(response.data.has_more || false)
+            setHistory(prev => [...prev, ...(Array.isArray(response.data?.items) ? response.data.items : [])])
+            setHasMoreHistory(response.data?.has_more || false)
             setHistoryOffset(nextOffset)
         } catch (error) {
             console.error('Failed to load more history:', error)
@@ -184,12 +192,14 @@ function ContentOptimization() {
             
             // Update context state
             updateOptimization({
-                content: data.title || '', // Put title as input context 
+                // If it's a rewrite, we might have stored original content in metadata
+                content: data.metadata?.original_content || data.title || '', 
                 analysisResults: data.analysis,
-                optimizedContent: data.content // Put the actual content in the result panel
+                optimizedContent: data.content,
+                activeTab: data.metadata?.mode || 'rewrite'
             })
             
-            // Set view mode to result to immediately show the content
+            // Switch to result view to show the optimized content
             setViewMode('result')
             
             // Scroll to top
@@ -205,9 +215,10 @@ function ContentOptimization() {
     const fetchProjects = async () => {
         try {
             const response = await axios.get('/api/projects')
-            setProjects(response.data)
+            setProjects(Array.isArray(response.data) ? response.data : [])
         } catch (error) {
             console.error('Failed to fetch projects:', error)
+            setProjects([])
         }
     }
 
@@ -284,9 +295,9 @@ function ContentOptimization() {
                 updateOptimization({ content: response.data.content })
                 setShowUrlImport(false)
                 setImportUrl('')
-                // Auto switch to ecommerce if not already
-                if (contentType !== 'ecommerce') {
-                    // Optional: could auto-detect but let's just hint
+                // Auto hint or process if needed
+                if (contentType !== 'general') {
+                    // Optional hints
                 }
             }
         } catch (err) {
@@ -1209,8 +1220,8 @@ function ContentOptimization() {
                                     <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                         SCHEMA TYPE
                                     </label>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.6rem' }}>
-                                        {['article', 'product', 'faq', 'howto'].map((type) => (
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem' }}>
+                                        {['article', 'faq', 'howto'].map((type) => (
                                             <button
                                                 key={type}
                                                 onClick={() => setSchemaType(type)}
@@ -1243,21 +1254,6 @@ function ContentOptimization() {
                                         </div>
                                     )}
 
-                                    {schemaType === 'product' && (
-                                        <div style={{ display: 'grid', gap: '1.25rem' }}>
-                                            <SchemaInput label="Product Name *" value={schemaMetadata.productName} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, productName: v })} placeholder="iPhone 15 Pro Max" />
-                                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
-                                                <SchemaInput label="Price *" value={schemaMetadata.price} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, price: v })} placeholder="999.00" type="number" />
-                                                <SchemaInput label="Currency" value={schemaMetadata.currency} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, currency: v })} placeholder="USD" />
-                                            </div>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                                <SchemaInput label="Brand" value={schemaMetadata.brand} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, brand: v })} placeholder="Apple" />
-                                                <SchemaInput label="Availability" value={schemaMetadata.availability} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, availability: v })} placeholder="InStock" />
-                                            </div>
-                                            <SchemaInput label="Image URL" value={schemaMetadata.imageUrl} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, imageUrl: v })} placeholder="https://..." />
-                                            <SchemaInput label="Product Description" value={schemaMetadata.description} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, description: v })} placeholder="Highlights and key features" />
-                                        </div>
-                                    )}
 
                                     {schemaType === 'faq' && (
                                         <div>
@@ -1705,7 +1701,7 @@ function ContentOptimization() {
                                             textAlign: 'center',
                                             border: '1px solid rgba(239, 68, 68, 0.1)'
                                         }}>
-                                            <div style={{ fontSize: '2rem', fontWeight: '800', color: '#ef4444' }}>{content.split(/\s+/).filter(Boolean).length}</div>
+                                            <div style={{ fontSize: '2rem', fontWeight: '800', color: '#ef4444' }}>{(content || '').split(/\s+/).filter(Boolean).length}</div>
                                             <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Original Words</div>
                                         </div>
                                         <div className="depth-card" style={{
@@ -1715,7 +1711,7 @@ function ContentOptimization() {
                                             textAlign: 'center',
                                             border: '1px solid rgba(16, 185, 129, 0.1)'
                                         }}>
-                                            <div style={{ fontSize: '2rem', fontWeight: '800', color: '#10b981' }}>{optimizedContent.split(/\s+/).filter(Boolean).length}</div>
+                                            <div style={{ fontSize: '2rem', fontWeight: '800', color: '#10b981' }}>{(optimizedContent || '').split(/\s+/).filter(Boolean).length}</div>
                                             <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Optimized Words</div>
                                         </div>
                                     </div>
@@ -1887,12 +1883,14 @@ function ContentOptimization() {
                             <div style={{ maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' }}>
                                 {history
                                     .filter(item => {
+                                        if (!item) return false;
                                         const title = item.title || '';
                                         const isSchema = title.toLowerCase().includes('schema') || title.toLowerCase().includes('json');
                                         if (activeTab === 'schema') return isSchema;
                                         return !isSchema;
                                     })
                                     .map(item => {
+                                        if (!item) return null;
                                         const title = item.title || '';
                                         const isSchema = title.toLowerCase().includes('schema') || title.toLowerCase().includes('json');
                                         return (
@@ -1946,6 +1944,7 @@ function ContentOptimization() {
                                     })
                                 }
                                 {history.filter(item => {
+                                    if (!item) return false;
                                     const title = item.title || '';
                                     const isSchema = title.toLowerCase().includes('schema') || title.toLowerCase().includes('json');
                                         if (activeTab === 'schema') return isSchema;
@@ -2011,7 +2010,7 @@ function ContentOptimization() {
                             </div>
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                                 <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--accent-primary)' }}>
-                                    {activeTab === 'schema' ? '98%' : (history.length > 0 ? (history.reduce((acc, curr) => acc + (curr.score || 0), 0) / history.length).toFixed(0) + '%' : '0%')}
+                                    {activeTab === 'schema' ? '98%' : (Array.isArray(history) && history.length > 0 ? (history.reduce((acc, curr) => acc + (curr?.score || 0), 0) / history.length).toFixed(0) + '%' : '0%')}
                                 </span>
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                     {activeTab === 'schema' ? 'Standardized Output' : `tracked across ${history.length} runs`}
