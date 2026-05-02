@@ -1491,7 +1491,7 @@ def factory_reset(db: Session = Depends(get_db)):
 # Competitor Analysis
 # ========================
 
-async def _run_competitor_comparison(user_url, competitor_urls, keyword, niche, content_type, user_id):
+async def _run_competitor_comparison(user_url, competitor_urls, keyword, niche, content_type, user_id, **kwargs):
     from database import AsyncSessionLocal
     results = await services.competitor_analyzer.compare(
         user_url=user_url,
@@ -1738,7 +1738,7 @@ class PromptDiscoveryRequest(BaseModel):
     keyword: str
     niche: Optional[str] = "general"
 
-async def _run_discover_prompts(keyword, niche):
+async def _run_discover_prompts(keyword, niche, **kwargs):
     if len(keyword.split()) <= 2:
         # generate_niche_library returns a LIST of prompt dicts
         raw = await services.discovery_engine.generate_niche_library(keyword)
