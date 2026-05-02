@@ -977,29 +977,31 @@ async def optimize_full_content(
 ):
     """Deep optimization: rewrite existing content OR generate from idea (background execution)."""
     try:
-        from database import get_async_db
+        from database import AsyncSessionLocal
         
         async def _run_optimization_job(**kwargs):
             from geo_optimizer import geo_optimizer
             from search_service import search_service
+            import time
             
             job_id = kwargs.get('job_id')
             user_id = kwargs.get('user_id')
             db_maker = kwargs.get('db_sessionmaker')
+            project_id = kwargs.get('project_id')
+            content_item_id = kwargs.get('content_item_id')
 
             try:
+                # 1. GENERATION / REWRITE PHASE
                 if kwargs.get('mode') == 'generate':
-                    # Phase 1: Grounding
                     if job_id: await job_manager.update_job_progress(job_id, 10, db_maker)
                     idea = kwargs.get('content', '')
                     app_logger.info(f"[{job_id}] Grounding generation for: {idea}")
                     grounding_context = await search_service.search_and_ground(idea)
                     
-                    # Phase 2: Generation
                     if job_id: await job_manager.update_job_progress(job_id, 30, db_maker)
                     app_logger.info(f"[{job_id}] Calling LLM for full generation")
                     
-                    result = await geo_optimizer.generate_from_idea(
+                    opt_res = await geo_optimizer.generate_from_idea(
                         idea=idea,
                         strategy=kwargs.get('strategy'),
                         tone=kwargs.get('tone'),
@@ -1009,14 +1011,12 @@ async def optimize_full_content(
                         grounding_context=grounding_context,
                         additional_instructions=kwargs.get('additional_instructions')
                     )
-                    if job_id: await job_manager.update_job_progress(job_id, 90, db_maker)
-                    return result
+                    optimized_text = opt_res.get('optimized_content', '')
                 else:
-                    # Phase 1: Context Analysis
                     if job_id: await job_manager.update_job_progress(job_id, 20, db_maker)
                     app_logger.info(f"[{job_id}] Running rewrite optimization")
                     
-                    result = await geo_optimizer.rewrite(
+                    opt_res = await geo_optimizer.rewrite(
                         content=kwargs.get('content'),
                         strategy=kwargs.get('strategy'),
                         tone=kwargs.get('tone'),
@@ -1025,8 +1025,63 @@ async def optimize_full_content(
                         target_query=kwargs.get('target_keyword'),
                         additional_instructions=kwargs.get('additional_instructions')
                     )
-                    if job_id: await job_manager.update_job_progress(job_id, 90, db_maker)
-                    return result
+                    optimized_text = opt_res.get('optimized_content', '')
+
+                # 2. ANALYSIS & PERSISTENCE PHASE
+                if job_id: await job_manager.update_job_progress(job_id, 70, db_maker)
+                app_logger.info(f"[{job_id}] Running analysis on optimized content")
+                
+                # Perform full audit on optimized content
+                extracted = {'content': optimized_text, 'content_type': 'article'}
+                rule_scores = services.rule_scorer.analyze(optimized_text, extracted)
+                llm_scores_res = await services.llm_scorer.analyze(optimized_text, extracted)
+                final_scores = services.aggregator.aggregate(rule_scores, llm_scores_res)
+
+                # Save results to DB
+                async with db_maker() as db:
+                    # Create ContentItem if generating new
+                    if not content_item_id:
+                        new_item = ContentItem(
+                            user_id=user_id,
+                            project_id=project_id,
+                            title=opt_res.get('title') or (kwargs.get('content')[:50] if kwargs.get('mode') == 'generate' else "Optimized Content"),
+                            content=optimized_text,
+                            created_at=datetime.utcnow()
+                        )
+                        db.add(new_item)
+                        await db.commit()
+                        await db.refresh(new_item)
+                        content_item_id = new_item.id
+
+                    # Save AnalysisResult
+                    analysis = AnalysisResult(
+                        content_item_id=content_item_id,
+                        structural_clarity_score=final_scores['structural_clarity_score'],
+                        citation_worthiness_score=final_scores['citation_worthiness_score'],
+                        semantic_coverage_score=final_scores['semantic_coverage_score'],
+                        freshness_authority_score=final_scores['freshness_authority_score'],
+                        rule_based_scores=final_scores['rule_based_scores'],
+                        llm_scores=final_scores['llm_scores'],
+                        suggestions=final_scores['suggestions'],
+                        created_at=datetime.utcnow()
+                    )
+                    db.add(analysis)
+                    await db.commit()
+
+                # 3. FINAL RESPONSE MAPPING (For Frontend Compatibility)
+                if job_id: await job_manager.update_job_progress(job_id, 100, db_maker)
+                
+                return {
+                    "optimized_content": optimized_text,
+                    "changes_made": opt_res.get('changes_made', []),
+                    "missing_citations": opt_res.get('missing_citations', []),
+                    "structural_score": {"score": final_scores['structural_clarity_score']},
+                    "semantic_score": {"score": final_scores['semantic_coverage_score']},
+                    "citation_worthiness_score": final_scores['citation_worthiness_score'],
+                    "overall_score": final_scores['overall_visibility_score'],
+                    "content_item_id": content_item_id
+                }
+
             except Exception as e:
                 app_logger.error(f"[{job_id}] Job Logic Failed: {e}")
                 raise e
