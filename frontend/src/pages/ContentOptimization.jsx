@@ -1924,7 +1924,7 @@ function ContentOptimization() {
                                                         textTransform: 'uppercase',
                                                         fontWeight: '800'
                                                     }}>
-                                                        {isSchema ? 'Schema' : (item.title.toLowerCase().includes('idea') ? 'Gen' : 'Rewrite')}
+                                                        {isSchema ? 'Schema' : (title.toLowerCase().includes('idea') ? 'Gen' : 'Rewrite')}
                                                     </span>
                                                 </div>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
@@ -1948,7 +1948,8 @@ function ContentOptimization() {
                                 {history.filter(item => {
                                     const title = item.title || '';
                                     const isSchema = title.toLowerCase().includes('schema') || title.toLowerCase().includes('json');
-                                    if (activeTab === 'schema') return isSchema;
+                                        if (activeTab === 'schema') return isSchema;
+                                        return !isSchema;
                                     }).length === 0 && (
                                         <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>
                                             No {activeTab === 'schema' ? 'schema' : 'content'} history found in this project.
