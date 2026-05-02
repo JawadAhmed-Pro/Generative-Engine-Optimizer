@@ -68,6 +68,7 @@ class JobManager:
                     await session.execute(text("SET LOCAL app.current_tenant = :uid"), {"uid": uid})
                 except Exception as e:
                     print(f"Failed to set tenant context: {e}")
+                    await session.rollback()
 
         async with db_sessionmaker() as db:
             await set_tenant_context(db, user_id)
