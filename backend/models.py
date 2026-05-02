@@ -380,3 +380,13 @@ class CompetitorCompareRequest(BaseModel):
     niche: Optional[str] = Field(default="general")
     target_keyword: Optional[str] = None
 
+
+class ProjectStatsResponse(BaseModel):
+    """Aggregate stats for a project's GEO performance."""
+    project_id: int
+    total_articles: int
+    average_visibility_score: float
+    visibility_growth_pct: float
+    top_performing_article_title: Optional[str]
+    last_analyzed: datetime
+

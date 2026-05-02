@@ -56,10 +56,14 @@ class PromptDiscoveryEngine:
         else:
              prompts = self._fallback_prompts(keyword, niche)
 
+        # 3. Phase B: Topical Clustering
+        clusters = await self._cluster_prompts(prompts) if len(prompts) > 5 else []
+
         return {
             "keyword": keyword,
             "niche": niche,
             "top_prompts": prompts,
+            "clusters": clusters,
             "sourced_from": ["Google PAA", "Reddit", "Quora"]
         }
 
@@ -183,48 +187,118 @@ class PromptDiscoveryEngine:
         return list(sorted_prompts)[:50]
 
     async def simulate_search(self, content: str, prompts: List[str]) -> Dict[str, Any]:
-        """Tests content against real prompts to see if AI Search would cite it."""
-        app_logger.info(f"Simulating AI search citation for {len(prompts)} prompts")
+        """Phase C Improvement: Robust AI Search Citation Simulation with attribution feedback."""
+        app_logger.info(f"Simulating AI search citation for {len(prompts)} prompts...")
         
-        url = "https://api.groq.com/openai/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {self.groq_api_key}", "Content-Type": "application/json"}
+        # Test a larger sample of 15 prompts for statistical significance
+        test_prompts = prompts[:15]
         
-        # Test a sample of 5 highly relevant prompts for citation probability
-        test_prompts = prompts[:5]
-        simulation_results = []
-        
-        for p in test_prompts:
+        async def _run_single_sim(p: str):
             check_prompt = f"""
             AI SEARCH SIMULATION:
             Query: "{p}"
-            Candidate Content:
+            Candidate Content Sample:
             ---
-            {content[:1500]}
+            {content[:2500]}
             ---
-            Task: If you were an AI Search engine (Perplexity), would you cite this content to answer the query?
-            Return JSON: {{"cited": true/false, "reason": "...", "confidence": 1-100}}
+            TASK: 
+            1. Would you cite this content? (true/false)
+            2. If false, what SPECIFICALLY is missing? (e.g., 'missing price comparison', 'lacks expert quote')
+            3. Confidence (1-100)
+            
+            Return JSON: {{"cited": true/false, "attribution_feedback": "...", "confidence": 0-100}}
             """
             
-            payload = {
-                "model": settings.GROQ_MODEL,
-                "messages": [{"role": "user", "content": check_prompt}],
-                "temperature": 0.1
-            }
-            
-            async with aiohttp.ClientSession() as session:
-                 async with session.post(url, headers=headers, json=payload) as resp:
-                     if resp.status == 200:
-                         data = await resp.json()
-                         content = data["choices"][0]["message"]["content"]
-                         sim = self._extract_json(content)
-                         if sim:
-                             sim['prompt'] = p
-                             simulation_results.append(sim)
+            # Using Gemini for simulation due to better citation reasoning
+            if self.gemini_client:
+                try:
+                    from google.genai import types
+                    config = types.GenerateContentConfig(temperature=0.1, response_mime_type="application/json")
+                    response = await self.gemini_client.aio.models.generate_content(
+                        model=settings.GEMINI_MODEL,
+                        contents=check_prompt,
+                        config=config
+                    )
+                    sim = self._extract_json(response.text)
+                    if sim:
+                        sim['prompt'] = p
+                        return sim
+                except Exception: pass
+            return None
+
+        # Run simulations in parallel
+        tasks = [_run_single_sim(p) for p in test_prompts]
+        simulation_results = await asyncio.gather(*tasks)
+        simulation_results = [s for s in simulation_results if s is not None]
 
         return {
             "simulation_runs": simulation_results,
-            "overall_citation_rate": sum(1 for s in simulation_results if s['cited']) / len(simulation_results) if simulation_results else 0
+            "overall_citation_rate": sum(1 for s in simulation_results if s.get('cited')) / len(simulation_results) if simulation_results else 0,
+            "sample_size": len(simulation_results)
         }
+
+    async def _cluster_prompts(self, prompts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Phase B Improvement: Cluster prompts into thematic silos for strategic planning.
+        """
+        if not self.gemini_client and not self.groq_api_key:
+            return []
+            
+        p_list = [p['prompt'] for p in prompts]
+        
+        prompt = f"""
+        Act as a GEO Strategist.
+        Group the following AI Prompts into 3-5 logical "Topical Clusters" (Silos).
+        
+        PROMPTS:
+        {json.dumps(p_list)}
+        
+        TASK:
+        1. Identify the primary themes.
+        2. Assign each prompt to a cluster.
+        3. For each cluster, provide:
+           - name: A short thematic name (e.g., "Technical Specifications")
+           - description: 1 sentence on why this cluster is important for GEO.
+           - prompts: List of prompt strings belonging to this cluster.
+        
+        Return exactly and ONLY a JSON array of objects.
+        """
+        
+        try:
+            # Using Gemini for better categorization logic
+            if self.gemini_client:
+                from google.genai import types
+                config = types.GenerateContentConfig(
+                    temperature=0.1,
+                    response_mime_type="application/json"
+                )
+                response = await self.gemini_client.aio.models.generate_content(
+                    model=settings.GEMINI_MODEL,
+                    contents=prompt,
+                    config=config
+                )
+                result = self._extract_json(response.text)
+                if result: return result
+            
+            # Fallback to Groq
+            if self.groq_api_key:
+                url = "https://api.groq.com/openai/v1/chat/completions"
+                headers = {"Authorization": f"Bearer {self.groq_api_key}", "Content-Type": "application/json"}
+                payload = {
+                    "model": settings.GROQ_MODEL,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.1,
+                    "response_format": {"type": "json_object"}
+                }
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, headers=headers, json=payload) as resp:
+                        if resp.status == 200:
+                            data = await resp.json()
+                            return self._extract_json(data["choices"][0]["message"]["content"])
+        except Exception as e:
+            app_logger.error(f"Clustering Failed: {e}")
+            
+        return []
 
     def _fallback_prompts(self, keyword: str, niche: str) -> List[Dict[str, Any]]:
         return [

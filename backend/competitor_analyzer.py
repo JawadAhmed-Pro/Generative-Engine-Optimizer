@@ -168,35 +168,37 @@ class CompetitorAnalyzer:
         }
 
     async def _analyze_prompt_coverage(self, user: Dict[str, Any], competitors: List[Dict[str, Any]], prompts: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Analyze which prompts are covered by whom and where the grounding gaps are."""
-        coverage_results = []
-        
-        for p in prompts:
-            p_text = p['prompt']
-            # Simple heuristic coverage check (in real production, this would be another LLM pass)
-            user_text = str(user.get('headings', {})) + str(user.get('title', ''))
-            comp_best_text = ""
-            best_comp_url = ""
+        """Phase A: LLM-powered mapping of which prompts are covered by whom."""
+        if not competitors or not prompts:
+            return {"top_prompts": [], "citation_gap_score": 0}
             
-            if competitors:
-                best_comp = competitors[0]
-                comp_best_text = str(best_comp.get('headings', {})) + str(best_comp.get('title', ''))
-                best_comp_url = best_comp.get('url', '')
-
-            user_has = any(word.lower() in user_text.lower() for word in p_text.split() if len(word) > 4)
-            comp_has = any(word.lower() in comp_best_text.lower() for word in p_text.split() if len(word) > 4)
-
-            coverage_results.append({
-                "prompt": p_text,
-                "user_coverage": "High" if user_has else "None",
-                "competitor_coverage": "High" if comp_has else "None",
-                "gap": not user_has and comp_has,
-                "winning_url": best_comp_url if comp_has and not user_has else (user['url'] if user_has else "Neither")
-            })
+        p_texts = [p['prompt'] for p in prompts]
+        user_text = user.get('raw_text_sample', '') or str(user.get('headings', {}))
+        
+        # We compare against the #1 competitor for mapping to keep it fast
+        best_comp = competitors[0]
+        comp_text = best_comp.get('raw_text_sample', '') or str(best_comp.get('headings', {}))
+        
+        coverage_results = await self.llm_scorer.map_coverage(user_text, comp_text, p_texts)
+        
+        # Inject winning URL into results for UI
+        for res in coverage_results:
+            user_level = res.get('user_coverage', 'None')
+            comp_level = res.get('competitor_coverage', 'None')
+            
+            if comp_level != 'None' and (user_level == 'None' or (comp_level == 'High' and user_level == 'Medium')):
+                res['winning_url'] = best_comp.get('url', '')
+                res['gap'] = True
+            elif user_level != 'None':
+                res['winning_url'] = user.get('url', 'Your Content')
+                res['gap'] = False
+            else:
+                res['winning_url'] = "Neither"
+                res['gap'] = False
 
         return {
             "top_prompts": coverage_results,
-            "citation_gap_score": sum(1 for r in coverage_results if r['gap'])
+            "citation_gap_score": sum(1 for r in coverage_results if r.get('gap'))
         }
 
     def _generate_comparison(

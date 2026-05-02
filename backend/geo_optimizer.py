@@ -9,6 +9,7 @@ from google import genai
 from google.genai import types
 from config import settings
 from logger import app_logger
+from schema_generator import schema_generator
 
 class GEOOptimizer:
     """The 'Action Layer' - AI Agent that rewrites content for GEO optimization."""
@@ -151,34 +152,17 @@ class GEOOptimizer:
             all_missing_citations.extend(result.get("missing_citations", []))
             all_changes.extend(result.get("changes", []))
 
-        # 4. Final Smoothing Pass (Lightweight)
+        # 4. Phase A Improvement: Multi-Agent Structural Audit
         full_content = "\n\n".join(processed_sections)
-        
-        # Pre-smoothing cleanup: remove duplicates from concatenated sections
         full_content = self._remove_duplicate_headings(full_content)
         
-        smoothing_prompt = f"""
-        Act as a final content editor. Smooth the transitions between the following sections to ensure a cohesive flow.
-        IMPORTANT: 
-        1. Maintain the EXACT structure (headings, tables, etc.).
-        2. Do NOT remove existing headings.
-        3. Do NOT add new headings.
-        4. Do NOT duplicate any text.
-        5. Return the ENTIRE article from start to finish.
+        app_logger.info("Agent: Running Phase A Structural Audit...")
+        audit_result = await self._structural_audit(full_content, strategy, tone)
         
-        Content:
-        ---
-        {full_content[:12000]}
-        ---
-        """
+        smoothed_content = audit_result.get("audited_content", full_content)
+        all_changes.extend(audit_result.get("audit_fixes", []))
         
-        # We use json_mode=False for the final smoothing pass to get raw text
-        smoothed_content = await self._call_llm(smoothing_prompt, json_mode=False, max_tokens=8192)
-        
-        if not smoothed_content or len(smoothed_content) < 500:
-             smoothed_content = full_content # Fallback to unsmoothed
-        
-        # Final cleanup pass for any duplicates re-introduced by smoothing
+        # Final cleanup pass for any duplicates re-introduced by audit
         smoothed_content = self._remove_duplicate_headings(smoothed_content)
 
         # 5. Final Scoring (FIX 3)
@@ -194,8 +178,18 @@ class GEOOptimizer:
         # 7. Extract Citation Flags
         final_clean_content, citation_warnings = self.extract_citation_flags(smoothed_content)
 
-        # 8. Generate SEO Metadata
-        seo_meta = await self._generate_seo_metadata(final_clean_content)
+        # 8. Phase B Improvement: Entity Linking & Schema Generation
+        linked_entities = await self._link_entities(new_entities)
+        
+        schema_data = schema_generator.detect_schema_type(final_clean_content)
+        schema_result = schema_generator.generate_schema(
+            final_clean_content,
+            content_type=schema_data,
+            metadata={
+                "title": seo_meta.get("title"),
+                "entities": linked_entities
+            }
+        )
 
         return {
             "optimized_content": final_clean_content,
@@ -205,8 +199,88 @@ class GEOOptimizer:
             "structural_score": structural,
             "semantic_score": semantic,
             "seo_metadata": seo_meta,
+            "schema_markup": schema_result,
             "geo_lift_estimate": f"Estimated +{structural['score']}% structural lift"
         }
+
+    async def _structural_audit(self, content: str, strategy: str, tone: str) -> Dict[str, Any]:
+        """
+        Phase A Improvement: Specialized Editorial Agent that checks structural integrity
+        and flows without aggressive rewriting.
+        """
+        audit_prompt = f"""
+        Act as a Senior Content Editor and GEO Specialist.
+        Your task is to perform a Structural Audit of the following content.
+        
+        GOAL: Ensure cohesive flow, fix transition gaps, and remove any remaining redundancy or duplicate headings.
+        
+        RULES:
+        1. Maintain the EXACT structure (headings, tables, lists).
+        2. Do NOT remove or add headings.
+        3. Do NOT invent new facts or statistics.
+        4. Focus on 'Semantic Bridges': Ensure each section flows logically into the next.
+        5. Respect the strategy: {strategy} and tone: {tone}.
+        6. Return the ENTIRE audited article.
+        
+        Return JSON format:
+        {{
+            "audited_content": "The full article text here...",
+            "audit_fixes": ["Fixed transition between X and Y", "Removed duplicate info in Z"]
+        }}
+        
+        Content:
+        ---
+        {content[:15000]}
+        ---
+        """
+        # Using Gemini for the large context window and better reasoning on flow
+        result = await self._call_llm(audit_prompt, prefer_gemini=True, max_tokens=16384)
+        
+        if not isinstance(result, dict) or "audited_content" not in result:
+            return {"audited_content": content, "audit_fixes": ["Audit pass failed, returned raw content"]}
+            
+        return result
+
+    async def _link_entities(self, entity_names: List[str]) -> List[Dict[str, str]]:
+        """
+        Phase B Improvement: Link entities to Wikidata/Wikipedia URIs using LLM.
+        """
+        if not entity_names:
+            return []
+            
+        link_prompt = f"""
+        Act as a Knowledge Graph Specialist.
+        For the following entities, provide their corresponding official Wikipedia or Wikidata URI.
+        
+        ENTITIES:
+        {json.dumps(entity_names[:20])}
+        
+        TASK:
+        Return exactly a JSON array of objects:
+        [
+            {{"name": "Entity Name", "uri": "https://en.wikipedia.org/wiki/..."}}
+        ]
+        If no certain URI exists, skip it.
+        """
+        # Prefer Gemini for its vast knowledge base
+        try:
+            from google.genai import types
+            config = types.GenerateContentConfig(
+                temperature=0.1,
+                response_mime_type="application/json"
+            )
+            response = await self.gemini_client.aio.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=link_prompt,
+                config=config
+            )
+            result = json.loads(response.text)
+            if isinstance(result, list):
+                return result
+        except Exception as e:
+            app_logger.error(f"Entity Linking Failed: {e}")
+            
+        return []
 
     async def generate_from_idea(self, idea: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "", grounding_context: str = "", additional_instructions: str = None) -> Dict[str, Any]:
         """

@@ -52,7 +52,7 @@ class SchemaGenerator:
         }
     
     def _generate_article_schema(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate Article schema."""
+        """Generate Article schema with Phase B Entity Linking."""
         # Extract first paragraph as description
         paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
         description = paragraphs[0][:200] if paragraphs else content[:200]
@@ -72,6 +72,20 @@ class SchemaGenerator:
             "datePublished": metadata.get("date_published", datetime.now().isoformat()),
             "dateModified": metadata.get("date_modified", datetime.now().isoformat()),
         }
+        
+        # Phase B: Add Mentions (Knowledge Graph Entities)
+        entities = metadata.get("entities", [])
+        if entities:
+            mentions = []
+            for ent in entities:
+                if isinstance(ent, dict) and "name" in ent and "uri" in ent:
+                    mentions.append({
+                        "@type": "Thing",
+                        "name": ent["name"],
+                        "sameAs": ent["uri"]
+                    })
+            if mentions:
+                schema["mentions"] = mentions
         
         # Add URL if provided
         if metadata.get("url"):

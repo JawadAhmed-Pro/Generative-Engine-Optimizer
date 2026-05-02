@@ -142,6 +142,66 @@ Keep it brief, extremely direct, and highly actionable. No fluff.
                 
         return "No significant structural gaps identified."
 
+    async def map_coverage(self, user_content: str, competitor_content: str, prompts: List[str]) -> List[Dict[str, Any]]:
+        """
+        Phase A Improvement: LLM-powered mapping of prompt coverage.
+        """
+        prompt = f"""
+        Act as a GEO Coverage Auditor.
+        Compare how well the User's Content and the Competitor's Content cover the following specific AI Prompts.
+        
+        USER CONTENT:
+        {user_content[:2000]}
+        
+        COMPETITOR CONTENT:
+        {competitor_content[:2000]}
+        
+        PROMPTS TO CHECK:
+        {json.dumps(prompts)}
+        
+        TASK:
+        For each prompt, determine if it is covered by the User and the Competitor.
+        Coverage levels: "High", "Medium", "None".
+        
+        Return exactly a JSON array of objects:
+        [
+            {{
+                "prompt": "...",
+                "user_coverage": "High/Medium/None",
+                "competitor_coverage": "High/Medium/None",
+                "gap": true/false (true if competitor is better than user),
+                "reason": "1-sentence explanation"
+            }}
+        ]
+        """
+        # Using Gemini for better reasoning on semantic coverage
+        result = await self._call_gemini_json(prompt, max_tokens=2000)
+        if isinstance(result, list):
+            return result
+        return []
+
+    async def _call_gemini_json(self, prompt: str, max_tokens: int = 4096) -> Any:
+        """Internal helper for Gemini JSON calls."""
+        if not self.gemini_client:
+            return None
+        try:
+            from google.genai import types
+            config = types.GenerateContentConfig(
+                temperature=0.1,
+                max_output_tokens=max_tokens,
+                response_mime_type="application/json"
+            )
+            response = await self.gemini_client.aio.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=prompt,
+                config=config
+            )
+            if response.text:
+                return json.loads(response.text)
+        except Exception as e:
+            app_logger.error(f"Gemini JSON Call Failed: {e}")
+        return None
+
     async def generate_targeted_injection(self, context_text: str, injection_target: str, tone: str = "professional", grounding_context: str = "", additional_instructions: str = None) -> str:
         """
         Generates a specific missing block (table, faq, paragraph) to fulfill a gap,

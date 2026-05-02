@@ -574,6 +574,78 @@ def get_project(
     return project
 
 
+@app.get("/api/projects/{project_id}/stats", response_model=ProjectStatsResponse)
+def get_project_stats(
+    project_id: int,
+    db: Session = Depends(get_tenant_session),
+    current_user: dict = Depends(require_auth)
+):
+    """Phase C Improvement: Get aggregate GEO growth stats for a project."""
+    from sqlalchemy import func
+    
+    project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user["id"]).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    content_items = db.query(ContentItem).filter(ContentItem.project_id == project_id).all()
+    item_ids = [item.id for item in content_items]
+    
+    if not item_ids:
+        return {
+            "project_id": project_id,
+            "total_articles": 0,
+            "average_visibility_score": 0.0,
+            "visibility_growth_pct": 0.0,
+            "top_performing_article_title": None,
+            "last_analyzed": datetime.now()
+        }
+        
+    # Get all analysis results for these items
+    results = db.query(AnalysisResult).filter(AnalysisResult.content_item_id.in_(item_ids)).order_by(AnalysisResult.created_at.asc()).all()
+    
+    if not results:
+         return {
+            "project_id": project_id,
+            "total_articles": len(content_items),
+            "average_visibility_score": 0.0,
+            "visibility_growth_pct": 0.0,
+            "top_performing_article_title": None,
+            "last_analyzed": datetime.now()
+        }
+        
+    scores = []
+    for r in results:
+        avg = (r.structural_clarity_score + r.citation_worthiness_score + r.semantic_coverage_score + r.freshness_authority_score) / 4
+        scores.append(avg)
+        
+    avg_visibility = sum(scores) / len(scores)
+    
+    # Calculate growth (First vs Last result)
+    first_score = scores[0]
+    last_score = scores[-1]
+    growth = ((last_score - first_score) / first_score * 100) if first_score > 0 else 0
+    
+    # Find top performing article
+    top_score = -1
+    top_title = None
+    for item in content_items:
+        latest = db.query(AnalysisResult).filter(AnalysisResult.content_item_id == item.id).order_by(AnalysisResult.created_at.desc()).first()
+        if latest:
+            score = (latest.structural_clarity_score + latest.citation_worthiness_score + latest.semantic_coverage_score + latest.freshness_authority_score) / 4
+            if score > top_score:
+                top_score = score
+                top_title = item.title
+                
+    return {
+        "project_id": project_id,
+        "total_articles": len(content_items),
+        "average_visibility_score": round(avg_visibility, 1),
+        "visibility_growth_pct": round(growth, 1),
+        "top_performing_article_title": top_title,
+        "last_analyzed": results[-1].created_at
+    }
+
+
 @app.delete("/api/projects/{project_id}")
 def delete_project(
     project_id: int, 
