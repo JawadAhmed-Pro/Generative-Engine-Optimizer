@@ -11,7 +11,7 @@ class JobManager:
     For this MVP scaling step, we use asyncio.create_task and track status in the DB.
     """
     def __init__(self):
-        pass
+        self.background_tasks = set()
 
     async def update_job_progress(self, job_id: str, progress: int, db_sessionmaker: Callable):
         """Update progress percentage of a job."""
@@ -49,7 +49,9 @@ class JobManager:
             
         # 2. Dispatch to event loop
         # Pass the db_sessionmaker down to the runner so it can manage its own lifecycle
-        asyncio.create_task(self._run_job(job_id, user_id, db_sessionmaker, func, *args, **kwargs))
+        task = asyncio.create_task(self._run_job(job_id, user_id, db_sessionmaker, func, *args, **kwargs))
+        self.background_tasks.add(task)
+        task.add_done_callback(self.background_tasks.discard)
         
         return job_id
 
