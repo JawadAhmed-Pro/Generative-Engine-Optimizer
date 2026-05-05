@@ -121,6 +121,19 @@ def init_db():
                     print(f"updated_at column migration for {table_name} failed: {e}")
                     conn.rollback()
 
+    # 5. Migration for 'target_engine' in 'analysis_results'
+    columns = [c['name'] for c in inspector.get_columns('analysis_results')]
+    if 'target_engine' not in columns:
+        print("Migrating: Adding target_engine to analysis_results...")
+        with sync_engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE analysis_results ADD COLUMN target_engine VARCHAR(50) DEFAULT 'perplexity'"))
+                conn.commit()
+                print("Migration for analysis_results.target_engine successful.")
+            except Exception as e:
+                print(f"target_engine column migration failed: {e}")
+                conn.rollback()
+
 def get_db() -> Generator[Session, None, None]:
     """Base Dependency to get synchronous database session (No RLS)."""
     db = SessionLocal()

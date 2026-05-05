@@ -161,7 +161,12 @@ function ResultsPanel({ results, onReset, onApplyInjection, context = 'url' }) {
             {/* Probability Score Header */}
             <div className="depth-card" style={{ marginBottom: '2rem', textAlign: 'center', position: 'relative', overflow: 'visible' }}>
                 <h2 style={{ marginBottom: '1.5rem', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                    <Sparkles size={24} color="var(--accent-primary)" /> ChatGPT Visibility Analysis
+                    <Sparkles size={24} color="var(--accent-primary)" /> {
+                        results.engine === 'perplexity' ? 'Perplexity AI' : 
+                        results.engine === 'chatgpt' ? 'ChatGPT Search' : 
+                        results.engine === 'google_sge' ? 'Google SGE' : 
+                        'AI'
+                    } Visibility Analysis
                 </h2>
 
                 <div style={{ marginBottom: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.6rem', padding: '0.4rem 1rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '100px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>

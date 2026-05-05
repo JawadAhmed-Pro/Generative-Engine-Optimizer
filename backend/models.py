@@ -73,6 +73,7 @@ class AnalysisResult(Base):
     rule_based_scores = Column(JSON)
     llm_scores = Column(JSON)
     suggestions = Column(JSON)
+    target_engine = Column(String, nullable=True, default="perplexity")
     
     created_at = Column(DateTime, default=datetime.utcnow)
     
@@ -233,6 +234,7 @@ class AnalysisResponse(BaseModel):
     score_delta: Optional[float] = 0.0
     previous_analyses_count: Optional[int] = 0
     benchmark_version: Optional[str] = "2025.1"
+    engine: Optional[str] = "perplexity"
     analysis_disclaimer: Optional[str] = "Citation status is a snapshot sampled at this moment. AI engine citations are non-deterministic and change with every query."
 
 

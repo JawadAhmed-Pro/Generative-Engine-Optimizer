@@ -499,7 +499,14 @@ def get_history(
             "type": "url" if item.url else "text",
             "score": round(score, 1) if score is not None else 0.0,
             "created_at": item.updated_at,
-            "project_id": item.project_id
+            "project_id": item.project_id,
+            "analysis": {
+                "structural_clarity_score": analysis.structural_clarity_score if analysis else 0,
+                "citation_worthiness_score": analysis.citation_worthiness_score if analysis else 0,
+                "semantic_coverage_score": analysis.semantic_coverage_score if analysis else 0,
+                "freshness_authority_score": analysis.freshness_authority_score if analysis else 0,
+                "engine": getattr(analysis, 'target_engine', 'perplexity') if analysis else 'perplexity'
+            }
         })
 
     return {
@@ -766,7 +773,8 @@ def get_analysis_by_item(
         overall_score=overall_score,
         rule_scores=analysis.rule_based_scores or {},
         llm_scores=analysis.llm_scores or {},
-        content_type=item.content_metadata.get('content_type', 'general') if item.content_metadata else "general"
+        content_type=item.content_metadata.get('content_type', 'general') if item.content_metadata else "general",
+        engine=getattr(analysis, 'target_engine', 'perplexity') or 'perplexity'
     )
 
     # Get historical analyses for this content item
@@ -818,7 +826,8 @@ def get_analysis_by_item(
             "probability_metrics": probability_metrics,
             "historical_trend": historical_scores,
             "score_delta": round(score_delta, 1),
-            "previous_analyses_count": len(history)
+            "previous_analyses_count": len(history),
+            "engine": getattr(analysis, 'target_engine', 'perplexity') or 'perplexity'
         },
         "insights": insights_data
     }
@@ -866,7 +875,8 @@ async def analyze_url(
                 url=payload.url,
                 content=extracted['content'],
                 title=extracted['title'],
-                content_metadata=extracted['metadata']
+                content_metadata=extracted['metadata'],
+                updated_at=datetime.utcnow()
             )
             db.add(content_item)
             
@@ -947,7 +957,8 @@ async def analyze_text(
             user_id=current_user["id"], # Track ownership
             content=clean_content,
             title=clean_title,
-            content_metadata={}
+            content_metadata={},
+            updated_at=datetime.utcnow()
         )
         db.add(content_item)
         db.commit()
@@ -1441,7 +1452,8 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
         freshness_authority_score=final_scores['freshness_authority_score'],
         rule_based_scores=final_scores['rule_based_scores'],
         llm_scores=final_scores['llm_scores'],
-        suggestions=final_scores['suggestions']
+        suggestions=final_scores['suggestions'],
+        target_engine=engine
     )
     db.add(analysis_result)
     db.commit()
@@ -1490,6 +1502,7 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
         score_delta=round(score_delta, 1),
         previous_analyses_count=len(history),
         benchmark_version=settings.GEO_BENCHMARK_VERSION,
+        engine=engine,
         analysis_disclaimer="Citation status is a snapshot sampled at this moment. AI engine citations are non-deterministic and change with every query."
     )
     
