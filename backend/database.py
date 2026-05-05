@@ -100,19 +100,26 @@ def init_db():
     else:
         print(f"Migration: progress column already exists. (Check took {time.time() - start_time:.2f}s)")
 
-    # 4. Migration for 'updated_at' in 'content_items'
-    if 'updated_at' not in ci_columns:
-        print("Migrating: Adding updated_at to content_items...")
-        with sync_engine.connect() as conn:
-            try:
-                conn.execute(text("ALTER TABLE content_items ADD COLUMN updated_at DATETIME"))
-                # Set initial values to created_at
-                conn.execute(text("UPDATE content_items SET updated_at = created_at"))
-                conn.commit()
-                print("Migration successful.")
-            except Exception as e:
-                print(f"updated_at column migration failed: {e}")
-                conn.rollback()
+    # 4. Migration for 'updated_at' in 'content_items', 'users', and 'projects'
+    tables_to_migrate = ['content_items', 'users', 'projects']
+    for table_name in tables_to_migrate:
+        columns = [c['name'] for c in inspector.get_columns(table_name)]
+        if 'updated_at' not in columns:
+            print(f"Migrating: Adding updated_at to {table_name}...")
+            with sync_engine.connect() as conn:
+                try:
+                    if sync_engine.url.drivername.startswith('postgresql'):
+                        conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN updated_at TIMESTAMP WITHOUT TIME ZONE"))
+                    else:
+                        conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN updated_at DATETIME"))
+                    
+                    # Set initial values to created_at
+                    conn.execute(text(f"UPDATE {table_name} SET updated_at = created_at"))
+                    conn.commit()
+                    print(f"Migration for {table_name} successful.")
+                except Exception as e:
+                    print(f"updated_at column migration for {table_name} failed: {e}")
+                    conn.rollback()
 
 def get_db() -> Generator[Session, None, None]:
     """Base Dependency to get synchronous database session (No RLS)."""
