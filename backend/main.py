@@ -1093,7 +1093,8 @@ async def optimize_full_content(
                         strength=kwargs.get('strength'),
                         target_query=kwargs.get('target_keyword'),
                         grounding_context=grounding_context,
-                        additional_instructions=kwargs.get('additional_instructions')
+                        additional_instructions=kwargs.get('additional_instructions'),
+                        competitor_gaps=kwargs.get('competitor_gaps')
                     )
                     optimized_text = opt_res.get('optimized_content', '')
                 else:
@@ -1107,7 +1108,8 @@ async def optimize_full_content(
                         audience=kwargs.get('audience'),
                         strength=kwargs.get('strength'),
                         target_query=kwargs.get('target_keyword'),
-                        additional_instructions=kwargs.get('additional_instructions')
+                        additional_instructions=kwargs.get('additional_instructions'),
+                        competitor_gaps=kwargs.get('competitor_gaps')
                     )
                     optimized_text = opt_res.get('optimized_content', '')
 

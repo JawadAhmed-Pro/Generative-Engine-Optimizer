@@ -41,12 +41,18 @@ class GEOOptimizer:
         doc = self.nlp(content)
         return list(set([ent.text for ent in doc.ents]))
 
-    async def rewrite(self, content: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "", additional_instructions: str = None) -> Dict[str, Any]:
+    async def rewrite(self, content: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "", additional_instructions: str = None, competitor_gaps: str = None) -> Dict[str, Any]:
         """
         FIX 2: Section-by-Section Rewriting with FIX 1 (Anti-Hallucination) and FIX 4 (Entity Guardrails).
+        Now includes Integrated Intelligence from competitor gaps and active entity linking.
         """
         app_logger.info(f"Agent: Section-by-section rewrite for strategy: {strategy}")
         
+        # Merge competitor gaps into additional instructions if provided
+        if competitor_gaps:
+            gap_instruction = f"\nCOMPETITOR ANALYSIS GAPS (Integrate these missing elements): {competitor_gaps}"
+            additional_instructions = (additional_instructions or "") + gap_instruction
+
         # 1. Build Page Context
         entities = self._extract_entities(content)
         page_context = {
@@ -181,6 +187,9 @@ class GEOOptimizer:
         # 8. Phase B Improvement: Entity Linking & Schema Generation
         linked_entities = await self._link_entities(new_entities)
         
+        # NEW: Apply active hyperlinks for citation readiness
+        final_clean_content = self._apply_entity_links(final_clean_content, linked_entities)
+
         seo_meta = await self._generate_seo_metadata(final_clean_content)
         schema_data = schema_generator.detect_schema_type(final_clean_content)
         schema_result = schema_generator.generate_schema(
@@ -283,13 +292,44 @@ class GEOOptimizer:
             
         return []
 
-    async def generate_from_idea(self, idea: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "", grounding_context: str = "", additional_instructions: str = None) -> Dict[str, Any]:
+    def _apply_entity_links(self, content: str, linked_entities: List[Dict[str, str]]) -> str:
+        """
+        Surgically injects Markdown hyperlinks for entities found in the content.
+        Prevents multiple links to the same entity to avoid 'link-spam'.
+        """
+        if not linked_entities:
+            return content
+            
+        processed_entities = set()
+        for ent in linked_entities:
+            name = ent.get("name")
+            uri = ent.get("uri")
+            if not name or not uri or name.lower() in processed_entities:
+                continue
+                
+            # Use regex to find the name but only if NOT already part of a link
+            # This is a 'negative lookahead' to ensure we don't break existing markdown links
+            pattern = rf'(?<!\[){re.escape(name)}(?!!\[)(?![^\[]*\])'
+            
+            # We only link the FIRST occurrence of the entity
+            if re.search(pattern, content, flags=re.IGNORECASE):
+                content = re.sub(pattern, f"[{name}]({uri})", content, count=1, flags=re.IGNORECASE)
+                processed_entities.add(name.lower())
+                
+        return content
+
+    async def generate_from_idea(self, idea: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "", grounding_context: str = "", additional_instructions: str = None, competitor_gaps: str = None) -> Dict[str, Any]:
         """
         Generate a comprehensive, GEO-optimized article from a short topic or idea.
         Unlike rewrite(), this creates content from scratch rather than optimizing existing text.
         """
         app_logger.info(f"Agent: Generating full article from idea: {idea[:80]}...")
         
+        # Merge competitor gaps into instructions
+        if competitor_gaps:
+            gap_instruction = f"\nCOMPETITOR ANALYSIS GAPS (Ensure these sections/data points are included): {competitor_gaps}"
+            additional_instructions = (additional_instructions or "") + gap_instruction
+
         target = target_query or idea
         
         generation_prompt = f"""
@@ -378,6 +418,13 @@ class GEOOptimizer:
         # Extract citation flags
         final_clean_content, citation_warnings = self.extract_citation_flags(content)
         
+        # Phase B Improvement: Entity Linking
+        new_entities = self._extract_entities(final_clean_content)
+        linked_entities = await self._link_entities(new_entities)
+        
+        # NEW: Apply active hyperlinks
+        final_clean_content = self._apply_entity_links(final_clean_content, linked_entities)
+
         # Generate SEO Metadata
         seo_meta = await self._generate_seo_metadata(final_clean_content)
         

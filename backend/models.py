@@ -281,6 +281,7 @@ class OptimizeContentRequest(BaseModel):
     target_keyword: Optional[str] = None
     content_type: str = 'general'
     additional_instructions: Optional[str] = None
+    competitor_gaps: Optional[str] = None
 
 
 class OptimizeRAGPayloadRequest(BaseModel):
