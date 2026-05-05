@@ -244,7 +244,8 @@ class ContentFetcher:
             'follow us', 'share on', 'open in app', 'get the app', 'membership', 'write for us',
             'status', 'blog', 'privacy', 'terms', 'about medium', 'verified', 'follower',
             'listen', 'share', 'bookmark', 'claps', 'responses', '5 min read', '2 days ago', '1 day ago',
-            'get app', 'write', 'search', 'edit', 'draft', 'published in'
+            'get app', 'write', 'search', 'edit', 'draft', 'published in', 'get started', 'sign out',
+            'profile', 'settings', 'notifications', 'recommendations', 'who to follow', 'lists'
         }
 
         for line in lines:
@@ -254,31 +255,40 @@ class ContentFetcher:
                 
             line_lower = line_strip.lower()
             
-            # Filter noise like "[]()" or empty brackets
+            # 1. Filter pure Markdown noise and empty links
             if re.match(r'^\[\s*\]\(.*?\)$', line_strip) or re.match(r'^\[\s*\]$', line_strip):
                 continue
 
-            # Filter single word links or buttons that are common nav
-            if len(line_strip) < 30 and any(line_lower == kw for kw in garbage_keywords):
+            # 2. Filter single word links or buttons that are common nav
+            if len(line_strip) < 40 and any(line_lower == kw or line_lower.startswith(kw) for kw in garbage_keywords):
                 continue
                 
-            # Filter social media/metadata lines
-            if len(line_strip) < 20 and any(kw in line_lower for kw in ['follow', 'share', 'tweet', 'listen']):
+            # 3. Filter social media/metadata lines
+            if len(line_strip) < 30 and any(kw in line_lower for kw in ['follow', 'share', 'tweet', 'listen', 'claps', 'responses']):
                 continue
             
-            # Filter "Written by" bio sections if they are short
+            # 4. Filter "Written by" bio sections if they are short
             if line_lower.startswith('written by') and len(line_strip) < 100:
                 continue
 
-            # Filter Markdown links that are just navigation (e.g. [Sitemap](...))
+            # 5. AGGRESSIVE LINK STRIPPING: 
+            # If the line contains a Markdown link, check if the link text is just a nav keyword.
+            # If the entire line IS a link and it's short, it's likely a button or nav.
             if re.match(r'^\[.*?\]\(.*?\)$', line_strip):
-                link_text = re.search(r'^\[(.*?)\]', line_strip)
-                if link_text:
-                    inner_text = link_text.group(1).lower().strip()
-                    if not inner_text or inner_text in garbage_keywords or any(kw in inner_text for kw in ['sitemap', 'help', 'app', 'sign']):
+                link_text_match = re.search(r'^\[(.*?)\]', line_strip)
+                if link_text_match:
+                    inner_text = link_text_match.group(1).strip()
+                    inner_text_lower = inner_text.lower()
+                    # If the link text is a garbage keyword or very short (like icons/numbers), skip it
+                    if not inner_text or inner_text_lower in garbage_keywords or len(inner_text) < 2 or inner_text.isdigit():
                         continue
-                
-            # Filter dates/timestamps that are just single lines
+            
+            # 6. Filter lines that are just URLs or image placeholders with no context
+            if re.match(r'^https?://\S+$', line_strip) or line_strip.startswith('[Image:'):
+                if len(line_strip) < 50: # Only keep long descriptive image tags
+                    continue
+
+            # 7. Filter dates/timestamps that are just single lines
             if re.match(r'^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}$', line_strip):
                 continue
 
