@@ -113,8 +113,8 @@ class RuleBasedScorer:
         else:
             suggestions.append("Add bullet points or numbered lists (Medium Impact: +15% Lift)")
         
-        else:
-            suggestions.append("Add a comprehensive introduction paragraph (30+ words)")
+        # General Content Introduction Suggestion
+        suggestions.append("Add a comprehensive introduction paragraph (30+ words)")
         
         # Structural Scrapability (ChatGPT Specialized)
         has_tables = '|' in content and '---' in content
