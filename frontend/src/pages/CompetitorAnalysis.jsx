@@ -326,8 +326,7 @@ function CompetitorAnalysis() {
                     <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-end', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
                         <div style={{ flex: 1, minWidth: '200px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-                                {contentType === 'ecommerce' ? <ShoppingCart size={16} color="var(--accent-primary)" /> : 
-                                 contentType === 'educational' ? <BookOpen size={16} color="var(--accent-primary)" /> : 
+                                {contentType === 'educational' ? <BookOpen size={16} color="var(--accent-primary)" /> : 
                                  <Globe size={16} color="var(--accent-primary)" />}
                                 <span style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>INDUSTRY / NICHE</span>
                             </div>
@@ -350,7 +349,6 @@ function CompetitorAnalysis() {
                                     className="focus-ring"
                                 >
                                     <option value="general">General / Blog</option>
-                                    <option value="ecommerce">E-commerce</option>
                                     <option value="educational">Education</option>
                                 </select>
                                 <ChevronDown size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }} />

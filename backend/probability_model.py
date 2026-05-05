@@ -99,7 +99,6 @@ class CitationProbabilityModel:
             expert_mentions = 1.5 # Hybrid credit for expert-level quality
 
         if expert_mentions > 0:
-            # Education gets 2x the lift from authority vs Commerce
             auth_lift = 1.2 + (expert_mentions * 0.1) if detected_category == 'educational' else 1.1 + (expert_mentions * 0.05)
             auth_lift = min(1.65, auth_lift)
             multiplier_total *= auth_lift
@@ -126,7 +125,7 @@ class CitationProbabilityModel:
         schema_data = rule_scores.get('schema', {}).get('details', {})
         schema_types = schema_data.get('schema_types', [])
         if 'Product' in schema_types or 'FAQPage' in schema_types:
-            schema_lift = 1.4 if detected_category == 'ecommerce' else 1.2
+            schema_lift = 1.2
             multiplier_total *= schema_lift
             factors.append({
                 "factor": "Structured Extraction",
@@ -203,7 +202,7 @@ class CitationProbabilityModel:
         if len(schema_types) > 0: confidence += 0.1
         
         # Competitor average calibrated to the niche
-        competitor_base = {"educational": 45, "ecommerce": 20, "general": 30}.get(detected_category, 30)
+        competitor_base = {"educational": 45, "general": 30}.get(detected_category, 30)
         competitor_avg = max(competitor_base, final_prob * 0.7)
 
         return {

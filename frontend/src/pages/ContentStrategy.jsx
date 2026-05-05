@@ -17,14 +17,12 @@ export default function ContentStrategy() {
 
     const nicheConfigs = {
         general: { label: 'General / Blog', icon: <Globe size={16} /> },
-        education: { label: 'Education', icon: <BookOpen size={16} /> },
-        ecommerce: { label: 'E-commerce', icon: <ShoppingCart size={16} /> }
+        education: { label: 'Education', icon: <BookOpen size={16} /> }
     };
 
     const handleWriteContent = (promptText, nicheValue) => {
         let cType = 'general';
-        if (nicheValue === 'ecommerce') cType = 'ecommerce';
-        else if (nicheValue === 'education') cType = 'educational';
+        if (nicheValue === 'education') cType = 'educational';
         
         updateOptimization({
             content: promptText,
@@ -166,7 +164,6 @@ export default function ContentStrategy() {
                                         className="focus-ring"
                                     >
                                         <option value="general">General / Blog</option>
-                                        <option value="ecommerce">E-commerce</option>
                                         <option value="education">Education</option>
                                     </select>
                                     <ChevronDown size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }} />

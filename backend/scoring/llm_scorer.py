@@ -72,7 +72,7 @@ class LLMScorer:
         Args:
             content: Source text or Topic idea
             mode: 'rewrite' or 'generate'
-            content_type: 'general', 'ecommerce', etc.
+            content_type: 'general', 'educational', etc.
         """
         prompt = self._create_optimization_prompt(content, mode, content_type)
         
@@ -114,7 +114,6 @@ TOP COMPETITORS:
 
         prompt += """
 Identify exactly what structural elements the user is missing that the competitors have. Focus on empirical differences like:
-- Missing sections (e.g., pricing tables, technical specifications, comparisons)
 - Missing trust signals (e.g., expert quotes, data blocks, FAQs)
 - Missing sub-topics or questions answered that AI expects for 'Information Gain'.
 
@@ -473,34 +472,8 @@ Content Snippet:
 {content}
 """
 
-        if content_type == 'ecommerce':
-            metrics_prompt = """
-Evaluate the content on these specific 7 metrics (Scale 0-100) for E-COMMERCE:
-
-1. **Product Data Completeness**: Detailed specs, dimensions, materials, and technical details.
-2. **Review & Social Proof**: Presence of user reviews, ratings, or testimonials.
-3. **Price & Availability**: Clear pricing, stock status, and formatting.
-4. **CTA Clarity**: 'Add to Cart' or 'Buy Now' visibility and actionability.
-5. **Inventory & Shipping**: Shipping times, costs, and return policy info.
-6. **Visual Descriptions**: Use of descriptive language for images (Alt text context).
-7. **Unique Value Prop**: Why buy THIS product? Comparison to alternatives.
-
-Provide response in this EXACT JSON format:
-{
-    "product_data_completeness": <int>,
-    "review_presence": <int>,
-    "price_availability": <int>,
-    "cta_clarity": <int>,
-    "inventory_shipping": <int>,
-    "visual_descriptions": <int>,
-    "unique_value_prop": <int>,
-    "explanation": "<summary string>",
-    "suggestions": ["<impact_prefix>: <suggestion_string>", "..."]
-}
-"""
-        else:
-            # General / Educational / Blog (2025 Research Calibration)
-            metrics_prompt = """
+        # General / Educational / Blog (2025 Research Calibration)
+        metrics_prompt = """
 Evaluate the content based on 2025 Generative Engine Optimization (GEO) standards from Princeton, BrightEdge, and Ahrefs.
 You are an OBJECTIVE AUDITOR. Grade fairly based on industry standards.
 
@@ -602,15 +575,6 @@ Does it directly answer the user's intent? (Boolean).
             "suggestions": ["Retry analysis."]
         }
         
-        if content_type == 'ecommerce':
-            defaults.update({
-                "product_data_completeness": 50,
-                "product_schema": 50,
-                "review_presence": 50,
-                "cta_clarity": 50,
-                "inventory_shipping": 50
-            })
-            
         return defaults
 
     async def simulate_ai_response(self, query: str, content: str, domain: str = 'education') -> Dict[str, Any]:

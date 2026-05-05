@@ -113,50 +113,6 @@ class RuleBasedScorer:
         else:
             suggestions.append("Add bullet points or numbered lists (Medium Impact: +15% Lift)")
         
-        # E-commerce Specific Structure (30 points total via weights later, but handled here)
-        if content_type == 'ecommerce':
-            # Check price visibility (first 200 chars or early on)
-            first_200 = content[:200].lower()
-            currency_symbols = ['$', '€', '£', 'price:', 'cost']
-            has_early_price = any(c in first_200 for c in currency_symbols)
-            
-            if has_early_price:
-                score += 20
-                details['price_visible_early'] = True
-            else:
-                score -= 10 
-                suggestions.append("Display Product Price early in content (Critical for E-commerce Search)")
-
-            # Check for Specification Table / List
-            # We look for markdown tables or tight lists
-            has_table = '|' in content and '---' in content
-            
-            if has_table:
-                score += 30
-                details['has_spec_table'] = True
-            elif has_lists:
-                score += 15
-                details['has_spec_list'] = True
-                suggestions.append("Convert specification lists to HTML/Markdown Tables for better AI parsing")
-            else:
-                score -= 20
-                suggestions.append("Critical: Add a Specifications Table for technical attributes")
-                
-            # Check for Comparison elements
-            if "vs" in content.lower() or "comparison" in content.lower():
-                score += 15
-                details['has_comparison'] = True
-            
-            # Estimate attribute count (rough heuristic: table rows + list items with colons)
-            attr_pattern = re.findall(r'^[-*]\s+[^:]+:', content, re.MULTILINE)
-            attr_count = content.count('|') // 3 + len(attr_pattern) # very rough table rows + list attrs
-            details['attribute_count'] = attr_count
-            
-            if attr_count >= 10:
-                score += 15
-            elif attr_count < 5:
-                score -= 20
-                suggestions.append("Add more technical attributes (target 10-15 specs)")
         else:
             suggestions.append("Add a comprehensive introduction paragraph (30+ words)")
         
@@ -361,20 +317,11 @@ class RuleBasedScorer:
 
         details['link_authority_score'] = link_score
         
-        # 4. Content Type Specifics (Ecom Trust)
-        if content_type == 'ecommerce':
-            review_words = ['review', 'rating', 'stars', 'customer says']
-            if any(w in content.lower() for w in review_words):
-                score += 20
-                details['has_reviews'] = True
-            else:
-                suggestions.append("Add customer reviews to increase E-commerce trust signals.")
+        if metadata.get('author'):
+            score += 20
+            details['has_author'] = True
         else:
-            if metadata.get('author'):
-                score += 20
-                details['has_author'] = True
-            else:
-                 suggestions.append("Add author attribution to establish expertise")
+             suggestions.append("Add author attribution to establish expertise")
 
         # Call to Action (Medium)
         cta_words = ['contact', 'subscribe', 'buy', 'learn more', 'get started', 'sign up', 'download', 'order', 'click']
@@ -400,38 +347,15 @@ class RuleBasedScorer:
         # Check for schema markup
         if schema_types:
             details['schema_types'] = schema_types
-            
-            # E-Commerce Strict Schema Rules (35 points total logic)
-            if content_type == 'ecommerce':
-                # Product schema is mandatory
-                if 'Product' in schema_types:
-                    score += 40
-                    details['has_product_schema'] = True
-                else:
-                    suggestions.append("CRITICAL: Missing Product Schema. AI will not cite without it.")
-                    score -= 50  # Huge penalty
-                
-                # AggregateRating Bonus (3x citation multiplier in spec)
-                if 'AggregateRating' in schema_types:
-                    score += 30
-                    details['has_aggregate_rating'] = True
-                else:
-                    suggestions.append("Add AggregateRating schema to multiply citation likelihood")
-                
-                # FAQ Schema Bonus for E-commerce
-                if 'FAQPage' in schema_types:
-                    score += 20
-                    details['has_faq_schema'] = True
+            score += 40
+            geo_friendly = ['Article', 'FAQPage', 'HowTo', 'BlogPosting', 'NewsArticle']
+            if any(s in schema_types for s in geo_friendly):
+                score += 30
             else:
-                score += 40
-                geo_friendly = ['Article', 'FAQPage', 'HowTo', 'BlogPosting', 'NewsArticle']
-                if any(s in schema_types for s in geo_friendly):
-                    score += 30
-                else:
-                     target_schema = "FAQPage or HowTo"
-                     suggestions.append(f"Add {target_schema} schema (High Impact: +60% Probability Lift)")
+                 target_schema = "FAQPage or HowTo"
+                 suggestions.append(f"Add {target_schema} schema (High Impact: +60% Probability Lift)")
         else:
-             target_schema = "Product (Mandatory)" if content_type == 'ecommerce' else "Article, FAQPage, or HowTo"
+             target_schema = "Article, FAQPage, or HowTo"
              suggestions.append(f"Missing Schema.org markup (Critical Impact: Highly Recommended for AI Visibility)")
         
         # Phase 2: Deterministic Entity Linking (Knowledge Graph Anchoring)

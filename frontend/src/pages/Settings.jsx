@@ -465,8 +465,7 @@ function PreferencesCard() {
 
     const niches = [
         { id: 'general', label: 'General / Blog', icon: <Globe size={18} /> },
-        { id: 'education', label: 'Education', icon: <BookOpen size={18} /> },
-        { id: 'ecommerce', label: 'E-commerce', icon: <ShoppingCart size={18} /> }
+        { id: 'education', label: 'Education', icon: <BookOpen size={18} /> }
     ]
 
     return (
@@ -476,7 +475,7 @@ function PreferencesCard() {
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.35rem' }}>Set your primary industry to tailor the Discovery and Analysis engines.</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {niches.map((niche) => (
                     <button
                         key={niche.id}

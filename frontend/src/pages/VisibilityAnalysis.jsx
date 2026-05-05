@@ -156,8 +156,7 @@ function VisibilityAnalysis() {
                     }}>
                         {[
                             { id: 'general', label: 'General / Blog', icon: <Globe size={16} /> },
-                            { id: 'educational', label: 'Education', icon: <BookOpen size={16} /> },
-                            { id: 'ecommerce', label: 'E-commerce', icon: <ShoppingCart size={16} /> }
+                            { id: 'educational', label: 'Education', icon: <BookOpen size={16} /> }
                         ].map(domain => (
                             <button
                                 key={domain.id}

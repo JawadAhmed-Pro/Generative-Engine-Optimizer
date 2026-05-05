@@ -141,25 +141,6 @@ function AISimulator() {
                             >
                                 <BookOpen size={16} /> Education
                             </button>
-                            <button
-                                onClick={() => setDomain('ecommerce')}
-                                style={{
-                                    padding: '0.75rem 1.5rem',
-                                    borderRadius: '8px',
-                                    border: 'none',
-                                    background: domain === 'ecommerce' ? 'var(--accent-primary)' : 'transparent',
-                                    color: domain === 'ecommerce' ? 'white' : 'var(--text-secondary)',
-                                    fontWeight: '600',
-                                    fontSize: '0.9rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.6rem',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                                }}
-                            >
-                                <ShoppingCart size={16} /> E-commerce
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -185,18 +166,16 @@ function AISimulator() {
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center',
-                                    border: `1px solid ${domain === 'ecommerce' ? 'var(--success)' : 'var(--accent-primary)'}`
+                                    border: `1px solid var(--accent-primary)`
                                 }}>
                                     {domain === 'blog' ? (
                                         <FileText size={18} color="var(--accent-primary)" />
-                                    ) : domain === 'education' ? (
-                                        <Search size={18} color="var(--accent-primary)" />
                                     ) : (
-                                        <ShoppingCart size={18} color="var(--success)" />
+                                        <Search size={18} color="var(--accent-primary)" />
                                     )}
                                 </div>
                                 <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>
-                                    {domain === 'blog' ? 'Topic Overview' : domain === 'education' ? 'User Question' : 'Product Inquiry'}
+                                    {domain === 'blog' ? 'Topic Overview' : 'User Question'}
                                 </h3>
                             </div>
                             
@@ -205,9 +184,7 @@ function AISimulator() {
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder={domain === 'blog'
                                     ? "e.g., Why is meditation important for mental clarity?"
-                                    : domain === 'education'
-                                    ? "e.g., What are the best study techniques for exams?"
-                                    : "e.g., Which smartphone has the best battery life under $600?"}
+                                    : "e.g., What are the best study techniques for exams?"}
                                 style={{
                                     width: '100%',
                                     padding: '1rem',
@@ -233,19 +210,15 @@ function AISimulator() {
                                     height: '32px', 
                                     borderRadius: '8px', 
                                     background: 'var(--bg-tertiary)',
-                                    border: `1px solid ${domain === 'blog' ? 'var(--accent-primary)' : domain === 'education' ? 'var(--accent-secondary)' : '#0EA5E9'}`,
+                                    border: `1px solid ${domain === 'blog' ? 'var(--accent-primary)' : 'var(--accent-secondary)'}`,
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center' 
                                 }}>
-                                    {domain === 'ecommerce' ? (
-                                        <Tag size={18} color="#0EA5E9" />
-                                    ) : (
-                                        <FileText size={18} color={domain === 'blog' ? 'var(--accent-primary)' : 'var(--accent-secondary)'} />
-                                    )}
+                                    <FileText size={18} color={domain === 'blog' ? 'var(--accent-primary)' : 'var(--accent-secondary)'} />
                                 </div>
                                 <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>
-                                    {domain === 'blog' ? 'Blog Content' : domain === 'education' ? 'Target Content' : 'Product Description'}
+                                    {domain === 'blog' ? 'Blog Content' : 'Target Content'}
                                 </h3>
                             </div>
                             
@@ -254,9 +227,7 @@ function AISimulator() {
                                 onChange={(e) => setContent(e.target.value)}
                                 placeholder={domain === 'blog'
                                     ? "Paste your blog post, article draft, or creative piece here. We will analyze the storytelling impact and informational depth..."
-                                    : domain === 'education' 
-                                    ? "Paste your article or content here. The simulator will analyze how an LLM would extract facts from this specific text..."
-                                    : "Paste your product listing, specifications, or pricing details here. We will analyze the purchase intent and technical authority..."}
+                                    : "Paste your article or content here. The simulator will analyze how an LLM would extract facts from this specific text..."}
                                 style={{
                                     width: '100%',
                                     minHeight: '400px',
@@ -470,14 +441,12 @@ function AISimulator() {
                                     <RefreshCw size={48} color="var(--accent-primary)" className="spin" />
                                 </div>
                                 <h3 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '1rem', background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                                    {domain === 'blog' ? 'Evaluating Storytelling Impact' : domain === 'education' ? 'Parsing Content Structure' : 'Evaluating Product Authority'}
+                                    {domain === 'blog' ? 'Evaluating Storytelling Impact' : 'Parsing Content Structure'}
                                 </h3>
                                 <p style={{ color: 'var(--text-secondary)', maxWidth: '320px' }}>
                                     {domain === 'blog'
                                         ? 'Evaluating narrative flow, structural engagement, and audience relevance...'
-                                        : domain === 'education' 
-                                        ? 'The simulation is currently evaluating semantic relevance and authority signals...' 
-                                        : 'Evaluating product specifications, competitive edge, and citation readiness...'}
+                                        : 'The simulation is currently evaluating semantic relevance and authority signals...'}
                                 </p>
                             </motion.div>
                         )}
@@ -546,8 +515,8 @@ function AISimulator() {
                                         </div>
                                         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                                             {result.would_cite 
-                                                ? (domain === 'blog' ? 'Article demonstrates strong narrative depth and informational value.' : domain === 'education' ? 'Target content contains sufficient semantic richness.' : 'Product listing displays high technical authority and trust.') 
-                                                : (domain === 'blog' ? 'Narrative structure lacks technical depth or engagement hooks.' : domain === 'education' ? 'Critical information gaps detected in content structure.' : 'Product details lack critical comparison points or specs.')}
+                                                ? (domain === 'blog' ? 'Article demonstrates strong narrative depth and informational value.' : 'Target content contains sufficient semantic richness.') 
+                                                : (domain === 'blog' ? 'Narrative structure lacks technical depth or engagement hooks.' : 'Critical information gaps detected in content structure.')}
                                         </p>
                                     </div>
                                 </div>

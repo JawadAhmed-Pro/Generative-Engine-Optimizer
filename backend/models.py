@@ -189,7 +189,7 @@ class ExtractKeywordsRequest(BaseModel):
 class AnalyzeURLRequest(BaseModel):
     url: str = Field(..., pattern=r'^https?://')
     project_id: Optional[int] = None
-    content_type: str = Field(default="general", pattern=r'^(general|ecommerce|educational)$')
+    content_type: str = Field(default="general", pattern=r'^(general|educational)$')
     target_keyword: Optional[str] = None
     engine: Optional[str] = Field(default="perplexity", pattern=r'^(perplexity|chatgpt|google_sge)$')
 
@@ -198,7 +198,7 @@ class AnalyzeTextRequest(BaseModel):
     content: str
     project_id: Optional[int] = None
     title: Optional[str] = None
-    content_type: str = Field(default="general", pattern=r'^(general|ecommerce|educational)$')
+    content_type: str = Field(default="general", pattern=r'^(general|educational)$')
     target_keyword: Optional[str] = None
     engine: Optional[str] = Field(default="perplexity", pattern=r'^(perplexity|chatgpt|google_sge)$')
 
@@ -302,7 +302,7 @@ class GenerateSchemaRequest(BaseModel):
 class SimulateAIRequest(BaseModel):
     query: str
     content: str
-    domain: str = 'education' # 'education' or 'ecommerce'
+    domain: str = 'education' # 'education' or 'general'
 
 
 class AutoFixRequest(BaseModel):
@@ -377,7 +377,7 @@ class CompetitorCompareRequest(BaseModel):
     """Request to compare against competitors."""
     user_url: str = Field(..., pattern=r'^https?://')
     competitor_urls: List[str] = Field(..., min_length=1, max_length=5)
-    content_type: str = Field(default="general", pattern=r'^(general|ecommerce|educational)$')
+    content_type: str = Field(default="general", pattern=r'^(general|educational)$')
     niche: Optional[str] = Field(default="general")
     target_keyword: Optional[str] = None
 

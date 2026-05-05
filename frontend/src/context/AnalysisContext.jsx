@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback } from 'react'
 const AnalysisContext = createContext(null)
 
 // Normalize content_type values to match backend Pydantic schema
-// Backend accepts: 'general' | 'ecommerce' | 'educational'
+// Backend accepts: 'general' | 'educational'
 const VALID_CONTENT_TYPES = ['general', 'educational']
 const sanitizeContentType = (value) => {
     if (VALID_CONTENT_TYPES.includes(value)) return value;
