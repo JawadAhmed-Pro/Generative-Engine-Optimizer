@@ -33,9 +33,7 @@ class SchemaGenerator:
         """
         metadata = metadata or {}
         
-        if content_type == "product":
-            schema = self._generate_product_schema(content, metadata)
-        elif content_type == "faq":
+        if content_type == "faq":
             schema = self._generate_faq_schema(content, metadata)
         elif content_type == "howto":
             schema = self._generate_howto_schema(content, metadata)
@@ -115,51 +113,6 @@ class SchemaGenerator:
         # Add article sections from headings
         if len(headings) > 1:
             schema["articleSection"] = headings[:5]
-        
-        return schema
-    
-    def _generate_product_schema(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate Product schema for e-commerce."""
-        # Try to extract price from content
-        price_match = re.search(r'\$?([\d,]+(?:\.\d{2})?)', content)
-        price = price_match.group(1).replace(',', '') if price_match else "0.00"
-        
-        schema = {
-            "@context": self.base_context,
-            "@type": "Product",
-            "name": metadata.get("title", "Product"),
-            "description": content[:500],
-            "offers": {
-                "@type": "Offer",
-                "price": metadata.get("price", price),
-                "priceCurrency": metadata.get("currency", "USD"),
-                "availability": "https://schema.org/InStock",
-                "seller": {
-                    "@type": "Organization",
-                    "name": metadata.get("seller", "Store")
-                }
-            }
-        }
-        
-        # Add optional fields
-        if metadata.get("sku"):
-            schema["sku"] = metadata["sku"]
-        
-        if metadata.get("brand"):
-            schema["brand"] = {
-                "@type": "Brand",
-                "name": metadata["brand"]
-            }
-        
-        if metadata.get("image"):
-            schema["image"] = metadata["image"]
-        
-        if metadata.get("rating"):
-            schema["aggregateRating"] = {
-                "@type": "AggregateRating",
-                "ratingValue": metadata["rating"],
-                "reviewCount": metadata.get("review_count", 1)
-            }
         
         return schema
     

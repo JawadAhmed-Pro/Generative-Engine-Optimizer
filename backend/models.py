@@ -50,6 +50,7 @@ class ContentItem(Base):
     title = Column(String, nullable=True)
     content_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     project = relationship("Project", back_populates="content_items")
     analysis_results = relationship("AnalysisResult", back_populates="content_item", cascade="all, delete-orphan")

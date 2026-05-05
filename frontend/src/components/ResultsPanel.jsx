@@ -169,39 +169,60 @@ function ResultsPanel({ results, onReset, onApplyInjection, context = 'url' }) {
                     <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>{queryIntent}</span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '1rem' }}>
-                    {/* Structural Score Row */}
-                    <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                            Structural Score 
-                            <div className="tooltip-trigger" style={{ cursor: 'help' }}>
-                                <Info size={10} />
-                                <span className="tooltip-text">
-                                    Measures atomic structure: Scrapability ({chatgptMetrics.structural_scrapability || 0}%), Formatting, and Noise ({chatgptMetrics.narrative_noise || 0}%).
-                                </span>
-                            </div>
+                {/* Overall Visibility Score - THE BIG NUMBER */}
+                <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+                        Overall GEO Visibility
+                    </div>
+                    <div style={{ fontSize: '4.5rem', fontWeight: '900', color: 'var(--accent-primary)', lineHeight: 1, textShadow: '0 0 30px rgba(59, 130, 246, 0.2)' }}>
+                        {results.overall_visibility_score ?? Math.round(
+                            ((results.structural_clarity_score || 0) +
+                                (results.citation_worthiness_score || 0) +
+                                (results.semantic_coverage_score || 0) +
+                                (results.freshness_authority_score || 0)) / 4
+                        )}
+                        <span style={{ fontSize: '1.5rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem' }}>%</span>
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                    {/* Pillar 1: Structural */}
+                    <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)', transition: 'transform 0.3s ease' }} className="hover-lift">
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: '700' }}>
+                            {currentLabels.structural_clarity}
                         </div>
-                        <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                            {results.structural_clarity_score ?? results.overall_score ?? 0}
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                            Scrapability • Noise Penalty • FAQ
+                        <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                            {results.structural_clarity_score || 0}
                         </div>
                     </div>
 
-                    {/* Semantic Score Row */}
-                    <div style={{ textAlign: 'center', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                            Citation Potential <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', border: '1px solid var(--card-border)', borderRadius: '4px' }}>AI Confidence</span>
+                    {/* Pillar 2: Citation */}
+                    <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)', transition: 'transform 0.3s ease' }} className="hover-lift">
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: '700' }}>
+                            {currentLabels.citation_worthiness}
                         </div>
-                        <div style={{ fontSize: '3rem', fontWeight: '800', color: 'var(--accent-primary)' }}>
-                            {results.overall_visibility_score ?? results.semantic_coverage_score ?? 0}
-                            <span style={{ fontSize: '1rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem', fontWeight: '400' }}>
-                                %
-                            </span>
+                        <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--accent-primary)' }}>
+                            {results.citation_worthiness_score || 0}
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                            Claim Quality: {citationMetrics.atomic_claim_quality || 0}/100
+                    </div>
+
+                    {/* Pillar 3: Semantic */}
+                    <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)', transition: 'transform 0.3s ease' }} className="hover-lift">
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: '700' }}>
+                            {currentLabels.semantic_coverage}
+                        </div>
+                        <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                            {results.semantic_coverage_score || 0}
+                        </div>
+                    </div>
+
+                    {/* Pillar 4: Freshness */}
+                    <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)', transition: 'transform 0.3s ease' }} className="hover-lift">
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: '700' }}>
+                            {currentLabels.freshness_authority}
+                        </div>
+                        <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                            {results.freshness_authority_score || 0}
                         </div>
                     </div>
                 </div>
@@ -298,7 +319,6 @@ function ResultsPanel({ results, onReset, onApplyInjection, context = 'url' }) {
                                         fontSize: '0.9rem', 
                                         color: 'var(--text-secondary)', 
                                         display: 'flex', 
-                                        justifyContent: 'space-between', 
                                         alignItems: 'center', 
                                         gap: '1rem',
                                         background: 'rgba(0,0,0,0.2)',
@@ -310,25 +330,6 @@ function ResultsPanel({ results, onReset, onApplyInjection, context = 'url' }) {
                                             <span style={{ color: 'var(--error)' }}>⚠️</span>
                                             <span>{flag}</span>
                                         </div>
-                                        <button 
-                                            className="btn btn-outline" 
-                                            style={{ 
-                                                padding: '0.3rem 0.75rem', 
-                                                fontSize: '0.75rem', 
-                                                border: '1px solid rgba(239, 68, 68, 0.4)', 
-                                                color: '#ef4444',
-                                                background: 'transparent',
-                                                whiteSpace: 'nowrap',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.4rem'
-                                            }}
-                                            onClick={() => handleInjectGap(flag)}
-                                            disabled={injectingGap === flag}
-                                        >
-                                            {injectingGap === flag ? <RefreshCw size={12} className="spin" /> : <Wand2 size={12} />}
-                                            {injectingGap === flag ? 'Injecting...' : 'Auto-Inject'}
-                                        </button>
                                     </div>
                                 ));
                             })()}

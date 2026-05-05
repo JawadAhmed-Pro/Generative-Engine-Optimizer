@@ -49,6 +49,9 @@ function VisibilityAnalysis() {
     const [newProjectName, setNewProjectName] = useState('')
     const [creatingProject, setCreatingProject] = useState(false)
     const [selectedHistoryItem, setSelectedHistoryItem] = useState(null)
+    const [historyOffset, setHistoryOffset] = useState(0)
+    const [hasMoreHistory, setHasMoreHistory] = useState(false)
+    const [loadingMoreHistory, setLoadingMoreHistory] = useState(false)
 
     // Sync selectedProject back to context
     useEffect(() => {
@@ -62,11 +65,30 @@ function VisibilityAnalysis() {
 
     const fetchHistory = async () => {
         try {
-            const response = await axios.get('/api/history?type=url&limit=5')
+            const response = await axios.get('/api/history?type=url&limit=10&offset=0')
             setHistory(response.data.items || [])
+            setHasMoreHistory(response.data.has_more || false)
+            setHistoryOffset(0)
         } catch (error) {
             console.error('Failed to fetch history:', error)
             setHistory([])
+        }
+    }
+
+    const loadMoreHistory = async () => {
+        if (loadingMoreHistory || !hasMoreHistory) return
+        setLoadingMoreHistory(true)
+        try {
+            const nextOffset = historyOffset + 10
+            const response = await axios.get(`/api/history?type=url&limit=10&offset=${nextOffset}`)
+            const newItems = response.data.items || []
+            setHistory(prev => [...prev, ...newItems])
+            setHasMoreHistory(response.data.has_more || false)
+            setHistoryOffset(nextOffset)
+        } catch (error) {
+            console.error('Failed to load more history:', error)
+        } finally {
+            setLoadingMoreHistory(false)
         }
     }
 
@@ -197,13 +219,11 @@ function VisibilityAnalysis() {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
                                     {contentType === 'general' ? (
                                         <LinkIcon size={18} color="var(--accent-primary)" />
-                                    ) : contentType === 'educational' ? (
-                                        <BookOpen size={18} color="var(--accent-secondary)" />
                                     ) : (
-                                        <ShoppingCart size={18} color="var(--success)" />
+                                        <BookOpen size={18} color="var(--accent-secondary)" />
                                     )}
                                     <span style={{ fontWeight: '700', fontSize: '0.95rem', letterSpacing: '0.02em' }}>
-                                        {contentType === 'general' ? 'Target URL' : contentType === 'educational' ? 'Educational Resource URL' : 'Product Page URL'}
+                                        {contentType === 'general' ? 'Target URL' : 'Educational Resource URL'}
                                     </span>
                                 </div>
                                 
@@ -214,9 +234,7 @@ function VisibilityAnalysis() {
                                         onChange={(e) => updateVisibility({ url: e.target.value })}
                                         placeholder={contentType === 'general' 
                                             ? "https://www.example.com/blog/article-slug" 
-                                            : contentType === 'educational'
-                                            ? "https://university.edu/course/machine-learning-101"
-                                            : "https://store.com/products/wireless-headphones-v2"}
+                                            : "https://university.edu/course/machine-learning-101"}
                                         style={{
                                             width: '100%',
                                             background: 'var(--bg-tertiary)',
@@ -519,16 +537,37 @@ function VisibilityAnalysis() {
                                                     <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: '500' }}>
                                                         {new Date(item.created_at).toLocaleDateString()}
                                                     </span>
-                                                    <div style={{
-                                                        fontSize: '0.7rem',
-                                                        fontWeight: '700',
-                                                        padding: '0.15rem 0.5rem',
-                                                        borderRadius: '4px',
-                                                        background: (item.score >= 80 || !item.score) ? '#0a1d15' : '#1d150a',
-                                                        color: (item.score >= 80 || !item.score) ? 'var(--success)' : 'var(--warning)',
-                                                        border: `1px solid ${(item.score >= 80 || !item.score) ? 'var(--success)' : 'var(--warning)'}33`
-                                                    }}>
-                                                        {typeof item.score === 'number' ? Math.round(item.score) + '%' : 'Pending'}
+                                                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                                        <div style={{
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: '700',
+                                                            padding: '0.15rem 0.5rem',
+                                                            borderRadius: '4px',
+                                                            background: (item.score >= 80 || !item.score) ? '#0a1d15' : '#1d150a',
+                                                            color: (item.score >= 80 || !item.score) ? 'var(--success)' : 'var(--warning)',
+                                                            border: `1px solid ${(item.score >= 80 || !item.score) ? 'var(--success)' : 'var(--warning)'}33`
+                                                        }}>
+                                                            {typeof item.score === 'number' ? Math.round(item.score) + '%' : 'Pending'}
+                                                        </div>
+                                                        {/* Small Pillar Indicators */}
+                                                        {item.analysis && (
+                                                            <div style={{ display: 'flex', gap: '2px' }}>
+                                                                {[
+                                                                    item.analysis.structural_clarity_score,
+                                                                    item.analysis.citation_worthiness_score,
+                                                                    item.analysis.semantic_coverage_score,
+                                                                    item.analysis.freshness_authority_score
+                                                                ].map((s, i) => (
+                                                                    <div key={i} title={`Pillar ${i+1}: ${s}`} style={{
+                                                                        width: '4px',
+                                                                        height: '12px',
+                                                                        borderRadius: '1px',
+                                                                        background: s >= 80 ? 'var(--success)' : s >= 50 ? 'var(--warning)' : 'var(--error)',
+                                                                        opacity: 0.6
+                                                                    }} />
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -537,6 +576,24 @@ function VisibilityAnalysis() {
                                 ))}
                             </div>
                         )}
+                        
+                        {hasMoreHistory && (
+                            <button
+                                onClick={loadMoreHistory}
+                                disabled={loadingMoreHistory}
+                                className="btn btn-outline"
+                                style={{
+                                    width: '100%',
+                                    marginTop: '1rem',
+                                    fontSize: '0.8rem',
+                                    padding: '0.5rem',
+                                    borderColor: 'var(--card-border)',
+                                    color: 'var(--text-secondary)'
+                                }}
+                            >
+                                {loadingMoreHistory ? 'Loading...' : 'Load More History'}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -544,7 +601,11 @@ function VisibilityAnalysis() {
             {/* Results Area - Full Width Below Inputs/History */}
             <div style={{ marginTop: '1.5rem' }}>
                 {analysisResults ? (
-                    <ResultsPanel results={analysisResults} onReset={() => updateVisibility({ analysisResults: null })} />
+                    <ResultsPanel 
+                        results={analysisResults} 
+                        onReset={() => updateVisibility({ analysisResults: null })} 
+                        onApplyInjection={(newContent) => setUrl(newContent)}
+                    />
                 ) : (
                     <div className="glass-card glow-static" style={{ 
                         minHeight: '400px', 

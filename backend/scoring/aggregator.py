@@ -104,15 +104,6 @@ class ScoreAggregator:
         else: # Default
             weights = {'p1': 0.25, 'p2': 0.25, 'p3': 0.25, 'p4': 0.25}
 
-        # --- E-commerce Specialization (Overrides) ---
-        if 'product_data_completeness' in llm_scores:
-            ecom_data = llm_scores.get('product_data_completeness', 50)
-            semantic_coverage_score = min(max((semantic_coverage_score * 0.7) + (ecom_data * 0.3), 0), 100)
-        
-        if 'review_presence' in llm_scores:
-            ecom_reviews = llm_scores.get('review_presence', 50)
-            citation_worthiness_score = min(max((citation_worthiness_score * 0.7) + (ecom_reviews * 0.3), 0), 100)
-            
         # --- Formatting for API Response ---
         ai_details = {
             'ai_friendly_formatting': llm_metrics['ai_formatting'],

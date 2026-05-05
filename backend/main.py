@@ -470,8 +470,8 @@ def get_history(
     # Get total count before pagination
     total_count = query.count()
 
-    # Get paginated items
-    items = query.order_by(ContentItem.created_at.desc()).offset(offset).limit(limit).all()
+    # Get paginated items (Ordered by last update to show latest work first)
+    items = query.order_by(ContentItem.updated_at.desc()).offset(offset).limit(limit).all()
 
     result = []
     for item in items:
@@ -498,7 +498,7 @@ def get_history(
             "url": item.url,
             "type": "url" if item.url else "text",
             "score": round(score, 1) if score is not None else 0.0,
-            "created_at": item.created_at,
+            "created_at": item.updated_at,
             "project_id": item.project_id
         })
 
@@ -852,6 +852,7 @@ async def analyze_url(
             # Update existing item (Historical Tracking)
             content_item.content = extracted['content']
             content_item.title = extracted['title']
+            content_item.updated_at = datetime.utcnow()
             
             # Preserve old metadata but update content_type
             meta = content_item.content_metadata or {}
@@ -1153,6 +1154,13 @@ async def optimize_full_content(
                         created_at=datetime.utcnow()
                     )
                     db.add(analysis)
+                    
+                    # Also update the ContentItem's updated_at and content
+                    item_to_update = await db.get(ContentItem, content_item_id)
+                    if item_to_update:
+                        item_to_update.content = optimized_text
+                        item_to_update.updated_at = datetime.utcnow()
+                        
                     await db.commit()
 
                 # 3. FINAL RESPONSE MAPPING (For Frontend Compatibility)
