@@ -325,8 +325,12 @@ class GEOOptimizer:
            - 6-8 Detailed H2 Sections with 3-4 paragraphs each.
            - At least 2 Markdown Tables for comparisons.
            - 5-7 FAQ items with schema-ready answers.
-        5. DENSITY: Include specific entities, percentages (if grounded), and factual claims.
-        6. TAGGING: Use [CITATION NEEDED: source type] for statistical or specific factual claims.
+        5. DENSITY & AUTHORITY: 
+           - You MUST include at least 2 specific statistics or data points (percentages, years, dollar amounts, or performance metrics) in EVERY H2 section. 
+           - Look for these in the BENCHMARKS and STATS sections of the GROUNDING CONTEXT.
+           - Use specific names of frameworks, tools, or research papers found in the grounding data.
+        6. TAGGING: Use [CITATION NEEDED: source type] ONLY if the GROUNDING CONTEXT lacks specific data for a necessary claim. 
+        7. NO PLACEHOLDERS: Do not use [Insert Data Here]. If data is missing, use the CITATION tag.
         
         Return the content in valid JSON format:
         {{

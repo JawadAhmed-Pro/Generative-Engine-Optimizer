@@ -27,19 +27,45 @@ class SearchService:
         return []
 
     async def search_and_ground(self, query: str) -> str:
-        """Perform a search and return a condensed text block for grounding."""
-        app_logger.info(f"Fetching live grounding data for: '{query}'")
+        """
+        Perform a multi-query search to fetch high-density grounding data.
+        Fetches basic info, benchmarks, and latest industry statistics.
+        """
+        app_logger.info(f"Fetching multi-query grounding data for: '{query}'")
+        
+        # Define targeted sub-queries for higher data density
+        sub_queries = [
+            query,
+            f"{query} latest industry statistics 2024 2025",
+            f"{query} technical benchmarks and performance data",
+            f"{query} expert recommendations and best practices"
+        ]
+        
+        tasks = []
+        for q in sub_queries:
+            tasks.append(self._fetch_single_query(q))
+            
+        results = await asyncio.gather(*tasks)
+        
+        # Combine and deduplicate roughly by taking chunks from each
+        combined_context = ""
+        for i, res in enumerate(results):
+            if res:
+                label = ["GENERAL", "STATS", "BENCHMARKS", "EXPERT"][i]
+                combined_context += f"\n--- {label} DATA ---\n{res[:1500]}\n"
+        
+        return combined_context[:6000] # Increased limit for multi-query density
+
+    async def _fetch_single_query(self, query: str) -> str:
+        """Internal helper to fetch a single query from Jina."""
         try:
-            # We fetch text format for direct LLM grounding
             headers = {'Accept': 'text/plain'}
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"{self.jina_url}{query}", headers=headers, timeout=15) as response:
+                async with session.get(f"{self.jina_url}{query}", headers=headers, timeout=12) as response:
                     if response.status == 200:
-                        content = await response.text()
-                        # Limit grounding context length to prevent massive token usage
-                        return content[:3000] 
+                        return await response.text()
         except Exception as e:
-            app_logger.error(f"Jina grounding search failed: {e}")
+            app_logger.error(f"Jina sub-query failed ('{query}'): {e}")
         return ""
 
 # Singleton instance

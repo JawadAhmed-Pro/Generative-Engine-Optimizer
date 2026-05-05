@@ -327,6 +327,11 @@ INSTRUCTIONS:
 - Address common user questions and objections
 - Provide actionable next steps
 
+### 7. FACTUAL DENSITY (Score: Citation Worthiness)
+- **MANDATORY**: Include at least 1-2 specific statistics (%, $, or years) per 200 words.
+- Use 'Hard Grounding' markers: "According to [Entity]...", "Data from [Year] shows..."
+- Mention specific product versions or software release years.
+
 ### 7. READABILITY UX (Score: Technical Readability)
 - Keep sentences under 25 words on average
 - Use short paragraphs (2-4 sentences max)
