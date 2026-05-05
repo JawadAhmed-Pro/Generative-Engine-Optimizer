@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Lightbulb, Circle, Wand2, RefreshCw, Check, Copy, AlertTriangle } from 'lucide-react'
+import { Lightbulb, Circle, Wand2, RefreshCw, Check, Copy, AlertTriangle, Zap } from 'lucide-react'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'

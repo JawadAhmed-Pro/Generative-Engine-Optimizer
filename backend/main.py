@@ -1703,7 +1703,7 @@ class AutoFixRequest(BaseModel):
 @app.post("/api/auto-fix")
 async def auto_fix_content(
     payload: AutoFixRequest = Body(...),
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_tenant_session),
     current_user: dict = Depends(require_auth)
 ):
     """Applies a 'One-Click Fix' to content using LLM."""
@@ -1712,7 +1712,7 @@ async def auto_fix_content(
         if payload.content_item_id:
             content_item = db.query(ContentItem).filter(ContentItem.id == payload.content_item_id).first()
             if not content_item:
-                raise HTTPException(status_code=404, detail="Content not found")
+                raise HTTPException(status_code=404, detail="Content not found or access denied")
             content_to_fix = content_item.content
         elif payload.content:
             content_to_fix = payload.content
@@ -1723,12 +1723,16 @@ async def auto_fix_content(
         result = await geo_optimizer.auto_fix(
             content_to_fix, 
             payload.suggestion,
-            strategy=getattr(payload, 'strategy', 'general'),
-            tone=getattr(payload, 'tone', 'professional')
+            strategy=getattr(payload, 'strategy', 'general') or 'general',
+            tone=getattr(payload, 'tone', 'professional') or 'professional'
         )
         
+        if not result or "error" in result:
+            error_msg = result.get("error", "LLM failed to generate a fix") if result else "LLM returned no result"
+            raise HTTPException(status_code=500, detail=error_msg)
+
         # Save version only if we have a content_item_id
-        if payload.content_item_id:
+        if payload.content_item_id and "optimized_content" in result:
             new_version = ContentVersion(
                 content_item_id=payload.content_item_id,
                 content=result["optimized_content"],
@@ -1738,9 +1742,13 @@ async def auto_fix_content(
             db.commit()
         
         return result
+    except HTTPException:
+        raise
     except Exception as e:
-        db.rollback() # Ensure transaction is cleared on error
+        db.rollback()
         app_logger.error(f"Auto Fix Failed: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
