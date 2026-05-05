@@ -198,9 +198,12 @@ class ContentFetcher:
                     alt = img.get('alt', '').strip()
                     if alt and len(alt) > 3:
                         img.replace_with(f" [Image: {alt}] ")
+                    else:
+                        img.decompose() # Remove decorative/empty images
+
                 for intent in clean_soup.find_all(['button', 'a']):
                     btn_text = intent.get_text(strip=True)
-                    if btn_text and any(w in btn_text.lower() for w in ['buy', 'cart', 'shop', 'order', 'purchase', 'get', 'checkout']):
+                    if btn_text and any(w in btn_text.lower() for w in ['buy', 'cart', 'shop', 'order', 'purchase', 'get', 'checkout', 'subscribe']):
                         intent.replace_with(f" [CTA Button: {btn_text}] ")
                         
                 text = clean_soup.get_text(separator='\n', strip=True)
@@ -222,6 +225,8 @@ class ContentFetcher:
                     alt = img.get('alt', '').strip()
                     if alt and len(alt) > 3:
                         img.replace_with(f" [Image: {alt}] ")
+                    else:
+                        img.decompose()
                 
                 text = main_content.get_text(separator='\n', strip=True)
 
@@ -237,7 +242,9 @@ class ContentFetcher:
             'sign up', 'sign in', 'log in', 'subscribe', 'privacy policy', 'terms of service',
             'cookie policy', 'sitemap', 'help center', 'careers', 'about us', 'contact us',
             'follow us', 'share on', 'open in app', 'get the app', 'membership', 'write for us',
-            'status', 'blog', 'privacy', 'terms', 'about medium', 'verified', 'follower'
+            'status', 'blog', 'privacy', 'terms', 'about medium', 'verified', 'follower',
+            'listen', 'share', 'bookmark', 'claps', 'responses', '5 min read', '2 days ago', '1 day ago',
+            'get app', 'write', 'search', 'edit', 'draft', 'published in'
         }
 
         for line in lines:
@@ -245,32 +252,33 @@ class ContentFetcher:
             if not line_strip:
                 continue
                 
-            # Filter short navigational lines
             line_lower = line_strip.lower()
             
-            # 1. Exact match or very short lines with garbage keywords
-            if line_lower in garbage_keywords or (len(line_strip) < 30 and any(kw in line_lower for kw in garbage_keywords)):
-                continue
-                
-            # 2. Filter lines that look like social media sharing (e.g., "Share", "Tweet", "Pin")
-            if len(line_strip) < 15 and line_lower in ['share', 'tweet', 'pin', 'email', 'save']:
-                continue
-            
-            # 3. Filter lines that are likely just "Listen", "Share", "5 min read" (Medium specific)
-            if line_lower in ['listen', 'share', 'follow']:
+            # Filter noise like "[]()" or empty brackets
+            if re.match(r'^\[\s*\]\(.*?\)$', line_strip) or re.match(r'^\[\s*\]$', line_strip):
                 continue
 
-            # 4. Filter Markdown links that are just navigation (e.g. [Sitemap](...))
-            if re.match(r'^\[.*?\]\(.*?\)$', line_strip):
-                # If the link text is a garbage keyword, skip it
-                link_text = re.search(r'^\[(.*?)\]', line_strip)
-                if link_text and link_text.group(1).lower() in garbage_keywords:
-                    continue
-                # If it's a sitemap or help link, skip it
-                if any(kw in line_lower for kw in ['sitemap', 'help', 'app']):
-                    continue
+            # Filter single word links or buttons that are common nav
+            if len(line_strip) < 30 and any(line_lower == kw for kw in garbage_keywords):
+                continue
                 
-            # 5. Filter dates/timestamps that are just single lines (often near top)
+            # Filter social media/metadata lines
+            if len(line_strip) < 20 and any(kw in line_lower for kw in ['follow', 'share', 'tweet', 'listen']):
+                continue
+            
+            # Filter "Written by" bio sections if they are short
+            if line_lower.startswith('written by') and len(line_strip) < 100:
+                continue
+
+            # Filter Markdown links that are just navigation (e.g. [Sitemap](...))
+            if re.match(r'^\[.*?\]\(.*?\)$', line_strip):
+                link_text = re.search(r'^\[(.*?)\]', line_strip)
+                if link_text:
+                    inner_text = link_text.group(1).lower().strip()
+                    if not inner_text or inner_text in garbage_keywords or any(kw in inner_text for kw in ['sitemap', 'help', 'app', 'sign']):
+                        continue
+                
+            # Filter dates/timestamps that are just single lines
             if re.match(r'^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}$', line_strip):
                 continue
 
