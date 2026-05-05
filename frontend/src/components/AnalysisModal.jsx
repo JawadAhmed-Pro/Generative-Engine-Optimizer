@@ -60,10 +60,10 @@ Date: ${new Date(data.created_at).toLocaleDateString()}
 SCORES
 ------
 Overall: ${data.analysis?.overall_score ?? 0}/100
-AI Visibility: ${data.analysis?.ai_visibility_score ?? 0}/100
-Citation Worthiness: ${data.analysis?.citation_worthiness_score ?? 0}/100
-Semantic Coverage: ${data.analysis?.semantic_coverage_score ?? 0}/100
-Technical Readability: ${data.analysis?.technical_readability_score ?? 0}/100
+AI Visibility: ${Math.round(data.analysis?.structural_clarity_score ?? 0)}/100
+Citation Worthiness: ${Math.round(data.analysis?.citation_worthiness_score ?? 0)}/100
+Semantic Coverage: ${Math.round(data.analysis?.semantic_coverage_score ?? 0)}/100
+Technical Readability: ${Math.round(data.analysis?.freshness_authority_score ?? 0)}/100
 
 AI FEEDBACK
 -----------
@@ -180,39 +180,79 @@ ${recommendationsText}
                     <>
                         {/* Score Cards */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-                            <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--card-border)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
+                            <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--card-border)', borderRadius: '12px', padding: '1rem', textAlign: 'center', position: 'relative' }}>
                                 <div style={{ fontSize: '2rem', fontWeight: '700', color: getScoreColor(data.analysis?.overall_score) }}>
                                     {data.analysis?.overall_score ?? 0}
                                 </div>
                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>OVERALL</div>
+                                {data.analysis?.score_delta !== undefined && (
+                                    <div style={{ 
+                                        position: 'absolute', 
+                                        top: '-10px', 
+                                        right: '-10px',
+                                        background: data.analysis.score_delta >= 0 ? 'var(--success)' : 'var(--error)',
+                                        color: 'white',
+                                        fontSize: '0.65rem',
+                                        padding: '2px 6px',
+                                        borderRadius: '10px',
+                                        fontWeight: 'bold',
+                                        border: '2px solid var(--bg-primary)'
+                                    }}>
+                                        {data.analysis.score_delta >= 0 ? '+' : ''}{data.analysis.score_delta}
+                                    </div>
+                                )}
                             </div>
                             <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis?.ai_visibility_score ?? 0}</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{Math.round(data.analysis?.structural_clarity_score ?? 0)}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>AI Visibility</div>
                             </div>
                             <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis?.citation_worthiness_score ?? 0}</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{Math.round(data.analysis?.citation_worthiness_score ?? 0)}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Citation</div>
                             </div>
                             <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis?.semantic_coverage_score ?? 0}</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{Math.round(data.analysis?.semantic_coverage_score ?? 0)}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Semantic</div>
                             </div>
                             <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{data.analysis?.technical_readability_score ?? 0}</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: '600' }}>{Math.round(data.analysis?.freshness_authority_score ?? 0)}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Readability</div>
                             </div>
                         </div>
 
-                        {/* Metadata */}
-                        <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Calendar size={14} /> {new Date(data.created_at).toLocaleDateString()}
-                            </span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                {data.url ? <LinkIcon size={14} /> : <FileText size={14} />}
-                                {data.url ? 'URL Analysis' : 'Text Analysis'}
-                            </span>
+                        {/* Metadata & Progress */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                            <div style={{ display: 'flex', gap: '1.5rem' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Calendar size={14} /> {new Date(data.created_at).toLocaleDateString()}
+                                </span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    {data.url ? <LinkIcon size={14} /> : <FileText size={14} />}
+                                    {data.url ? 'URL Analysis' : 'Text Analysis'}
+                                </span>
+                            </div>
+                            
+                            {data.analysis?.historical_trend?.length > 1 && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.4rem 0.8rem', background: 'var(--bg-tertiary)', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                                    <TrendingUp size={14} color="var(--accent-primary)" />
+                                    <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>History: {data.analysis.previous_analyses_count} audits</span>
+                                    <div style={{ height: '20px', width: '60px', display: 'flex', alignItems: 'flex-end', gap: '2px' }}>
+                                        {data.analysis.historical_trend.slice(-5).map((h, i) => (
+                                            <div 
+                                                key={i} 
+                                                style={{ 
+                                                    flex: 1, 
+                                                    height: `${h.score}%`, 
+                                                    background: 'var(--accent-primary)', 
+                                                    opacity: 0.3 + (i * 0.15),
+                                                    borderRadius: '1px' 
+                                                }} 
+                                                title={`${new Date(h.date).toLocaleDateString()}: ${Math.round(h.score)}%`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* LLM Feedback */}
