@@ -181,6 +181,7 @@ class GEOOptimizer:
         # 8. Phase B Improvement: Entity Linking & Schema Generation
         linked_entities = await self._link_entities(new_entities)
         
+        seo_meta = await self._generate_seo_metadata(final_clean_content)
         schema_data = schema_generator.detect_schema_type(final_clean_content)
         schema_result = schema_generator.generate_schema(
             final_clean_content,
