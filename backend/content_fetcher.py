@@ -83,10 +83,24 @@ class ContentFetcher:
         soup = BeautifulSoup(page_content, 'lxml')
         
         # Extract content
+        content_text = self._extract_text(soup, page_content)
+        
+        # If content is extremely short, it might be a JS-rendered page or a bot-protected "loading" screen.
+        # Fallback to Jina for better extraction if not a small static file.
+        if len(content_text) < 500 and not any(url.lower().endswith(ext) for ext in ['.pdf', '.xml', '.json', '.txt']):
+            app_logger.warning(f"Extracted content is too short ({len(content_text)}). Falling back to Jina for better depth.")
+            try:
+                page_content, driver_title = self._fetch_via_jina(url)
+                soup = BeautifulSoup(page_content, 'lxml')
+                content_text = self._extract_text(soup, page_content)
+            except Exception as jina_err:
+                app_logger.error(f"Jina fallback failed for short content: {jina_err}")
+                # Keep original content if Jina fails
+        
         extracted = {
             'url': url,
             'title': self._extract_title(soup, driver_title),
-            'content': self._extract_text(soup, page_content),
+            'content': content_text,
             'metadata': self._extract_metadata(soup),
             'headings': self._extract_headings(soup),
             'schema': self._extract_schema(soup),
@@ -94,11 +108,11 @@ class ContentFetcher:
         }
         
         return extracted
-        
+
     async def async_fetch_url(self, url: str) -> Dict[str, Any]:
         """
         Asynchronously fetch content from a URL using httpx. 
-        Falls back to thread-pool Jina request if blocked.
+        Falls back to thread-pool Jina request if blocked or content is suspiciously short.
         """
         parsed = urlparse(url)
         if not parsed.scheme in ['http', 'https']:
@@ -151,10 +165,22 @@ class ContentFetcher:
         soup = BeautifulSoup(page_content, 'lxml')
         
         # Extract content
+        content_text = self._extract_text(soup, page_content)
+
+        # If content is extremely short, it might be a JS-rendered page or a bot-protected "loading" screen.
+        if len(content_text) < 500 and not any(url.lower().endswith(ext) for ext in ['.pdf', '.xml', '.json', '.txt']):
+            app_logger.warning(f"[Async] Extracted content is too short ({len(content_text)}). Falling back to Jina for better depth.")
+            try:
+                page_content, driver_title = await asyncio.to_thread(self._fetch_via_jina, url)
+                soup = BeautifulSoup(page_content, 'lxml')
+                content_text = self._extract_text(soup, page_content)
+            except Exception as jina_err:
+                app_logger.error(f"[Async] Jina fallback failed: {jina_err}")
+
         extracted = {
             'url': url,
             'title': self._extract_title(soup, driver_title),
-            'content': self._extract_text(soup, page_content),
+            'content': content_text,
             'metadata': self._extract_metadata(soup),
             'headings': self._extract_headings(soup),
             'schema': self._extract_schema(soup),
