@@ -1,39 +1,38 @@
-pip requirements
-1| fastapi
-2| uvicorn[standard]
-3| python-multipart
-4| pydantic
-5| pydantic-settings
-6| langchain
-7| google-genai
-8| langchain-google-genai
-9| langchain-groq
-10| langchain-community
-11| chromadb
-12| beautifulsoup4
-13| requests
-14| readability-lxml
-15| textstat
-16| sqlalchemy
-17| psycopg2-binary
-18| asyncpg
-19| greenlet
-20| python-dotenv
-21| alembic
-22| lxml
-23| html5lib
-24| 
-25| # RAG Enhancement - Moved to Google API to save RAM
-26| 
-27| # Authentication
-28| python-jose[cryptography]
-29| passlib[bcrypt]
-30| 
-31| # Security (Rate Limiting, Sanitization)
-32| slowapi
-33| bleach
-34| 
-35| # Execution Engine Dependencies
-36| httpx
-37| spacy
-38| https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+pydantic-settings
+langchain
+google-genai
+langchain-google-genai
+langchain-groq
+langchain-community
+chromadb
+beautifulsoup4
+requests
+readability-lxml
+textstat
+sqlalchemy
+psycopg2-binary
+asyncpg
+greenlet
+python-dotenv
+alembic
+lxml
+html5lib
+
+# RAG Enhancement - Moved to Google API to save RAM
+
+# Authentication
+python-jose[cryptography]
+passlib[bcrypt]
+
+# Security (Rate Limiting, Sanitization)
+slowapi
+bleach
+
+# Execution Engine Dependencies
+httpx
+spacy
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
