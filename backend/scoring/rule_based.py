@@ -253,18 +253,16 @@ class RuleBasedScorer:
             from geo_optimizer import geo_optimizer
             nlp = geo_optimizer.nlp
             
-            if not nlp:
+            if nlp:
+                doc = nlp(content)
+                # Target specific entity types that represent "facts" or "density"
+                target_ents = ['PERSON', 'ORG', 'GPE', 'MONEY', 'PERCENT', 'DATE', 'QUANTITY', 'FAC']
+                fact_entities = [ent for ent in doc.ents if ent.label_ in target_ents]
+                stat_count = len(fact_entities)
+            else:
                 # Fallback to simple regex if spacy is disabled or fails
-                details['nlp_entities_found'] = len(re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', content))
-                return score, suggestions, details
-
-            doc = nlp(content)
+                stat_count = len(re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', content))
             
-            # Target specific entity types that represent "facts" or "density"
-            target_ents = ['PERSON', 'ORG', 'GPE', 'MONEY', 'PERCENT', 'DATE', 'QUANTITY', 'FAC']
-            fact_entities = [ent for ent in doc.ents if ent.label_ in target_ents]
-            
-            stat_count = len(fact_entities)
             details['nlp_entities_found'] = stat_count
             
         except Exception as e:
