@@ -34,7 +34,6 @@ bleach
 
 # Execution Engine Dependencies
 httpx
-spacy
 google-generativeai
 aiosqlite
 
