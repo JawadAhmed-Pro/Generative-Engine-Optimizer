@@ -197,10 +197,10 @@ class ContentFetcher:
         return "Untitled"
     
     def _extract_text(self, soup: BeautifulSoup, raw_html: str = "") -> str:
-        """Extract main text content from the page with aggressive garbage filtering."""
+        """Extract main text content from the page with robust fallback and filtering."""
         
-        # 1. Try Readability for pristine extraction (strips navs, sidebars, footers)
-        text = ""
+        # 1. Try Readability for pristine extraction
+        readability_text = ""
         if raw_html:
             try:
                 from readability import Document
@@ -214,53 +214,62 @@ class ContentFetcher:
                     if alt and len(alt) > 3:
                         img.replace_with(f" [Image: {alt}] ")
                     else:
-                        img.decompose() # Remove decorative/empty images
+                        img.decompose()
 
                 for intent in clean_soup.find_all(['button', 'a']):
                     btn_text = intent.get_text(strip=True)
                     if btn_text and any(w in btn_text.lower() for w in ['buy', 'cart', 'shop', 'order', 'purchase', 'get', 'checkout', 'subscribe']):
                         intent.replace_with(f" [CTA Button: {btn_text}] ")
                         
-                text = clean_soup.get_text(separator='\n', strip=True)
+                readability_text = clean_soup.get_text(separator='\n', strip=True)
             except Exception as e:
-                app_logger.warning(f"Readability extraction failed: {e}. Falling back to basic.")
+                app_logger.warning(f"Readability extraction failed: {e}")
 
-        # 2. Fallback to basic BeautifulSoup extraction if readability failed or produced too little
-        if not text or len(text) < 200:
-            # Remove script and style elements
-            for script in soup(['script', 'style', 'nav', 'footer', 'header', 'aside', 'form', 'noscript', 'iframe', 'svg']):
-                script.decompose()
+        # 2. Always try fallback BeautifulSoup extraction for comparison
+        fallback_text = ""
+        # Create a copy to not affect the original soup if used elsewhere
+        fallback_soup = BeautifulSoup(str(soup), 'lxml')
+        
+        # Remove only the most obvious non-content blocks
+        for script in fallback_soup(['script', 'style', 'nav', 'footer', 'header', 'noscript', 'iframe', 'svg']):
+            script.decompose()
+        
+        # Priority: article > main > body
+        main_content = fallback_soup.find('article') or fallback_soup.find('main') or fallback_soup.find('body')
+        
+        if main_content:
+            for img in main_content.find_all('img'):
+                alt = img.get('alt', '').strip()
+                if alt and len(alt) > 3:
+                    img.replace_with(f" [Image: {alt}] ")
+                else:
+                    img.decompose()
             
-            # Priority: article > main > body
-            main_content = soup.find('article') or soup.find('main') or soup.find('body')
-            
-            if main_content:
-                # Inject textual representations for images
-                for img in main_content.find_all('img'):
-                    alt = img.get('alt', '').strip()
-                    if alt and len(alt) > 3:
-                        img.replace_with(f" [Image: {alt}] ")
-                    else:
-                        img.decompose()
-                
-                text = main_content.get_text(separator='\n', strip=True)
+            fallback_text = main_content.get_text(separator='\n', strip=True)
+
+        # 3. Selection Logic: Choose the most comprehensive extraction
+        # If readability is very short or fallback is significantly longer, favor fallback
+        if not readability_text:
+            text = fallback_text
+        elif len(fallback_text) > (len(readability_text) * 1.5) and len(readability_text) < 1500:
+            app_logger.info(f"Readability seems too brief ({len(readability_text)}). Using fallback ({len(fallback_text)}).")
+            text = fallback_text
+        else:
+            text = readability_text
 
         if not text:
             return ""
 
-        # 3. Post-Extraction Cleaning (Aggressive Garbage Removal)
+        # 4. Post-Extraction Cleaning (Less Aggressive)
         lines = text.split('\n')
         cleaned_lines = []
         
-        # Common navigation / garbage keywords
-        garbage_keywords = {
+        # Keywords that almost always indicate non-content navigation/UI
+        strict_garbage = {
             'sign up', 'sign in', 'log in', 'subscribe', 'privacy policy', 'terms of service',
-            'cookie policy', 'sitemap', 'help center', 'careers', 'about us', 'contact us',
-            'follow us', 'share on', 'open in app', 'get the app', 'membership', 'write for us',
-            'status', 'blog', 'privacy', 'terms', 'about medium', 'verified', 'follower',
-            'listen', 'share', 'bookmark', 'claps', 'responses', '5 min read', '2 days ago', '1 day ago',
-            'get app', 'write', 'search', 'edit', 'draft', 'published in', 'get started', 'sign out',
-            'profile', 'settings', 'notifications', 'recommendations', 'who to follow', 'lists'
+            'cookie policy', 'sitemap', 'help center', 'careers', 'contact us',
+            'follow us', 'share on', 'open in app', 'get the app', 'membership',
+            'privacy', 'terms', 'get started', 'sign out', 'notifications'
         }
 
         for line in lines:
@@ -270,41 +279,29 @@ class ContentFetcher:
                 
             line_lower = line_strip.lower()
             
-            # 1. Filter pure Markdown noise and empty links
+            # Filter pure Markdown noise and empty links
             if re.match(r'^\[\s*\]\(.*?\)$', line_strip) or re.match(r'^\[\s*\]$', line_strip):
                 continue
 
-            # 2. Filter single word links or buttons that are common nav
-            if len(line_strip) < 40 and any(line_lower == kw or line_lower.startswith(kw) for kw in garbage_keywords):
+            # Filter obvious navigation lines (short lines starting with garbage keywords)
+            if len(line_strip) < 30 and any(line_lower == kw or line_lower.startswith(kw) for kw in strict_garbage):
                 continue
                 
-            # 3. Filter social media/metadata lines
-            if len(line_strip) < 30 and any(kw in line_lower for kw in ['follow', 'share', 'tweet', 'listen', 'claps', 'responses']):
-                continue
-            
-            # 4. Filter "Written by" bio sections if they are short
-            if line_lower.startswith('written by') and len(line_strip) < 100:
+            # Filter social media "follow" lines if they are very short
+            if len(line_strip) < 25 and any(kw in line_lower for kw in ['follow', 'share', 'tweet']):
                 continue
 
-            # 5. AGGRESSIVE LINK STRIPPING: 
-            # If the line contains a Markdown link, check if the link text is just a nav keyword.
-            # If the entire line IS a link and it's short, it's likely a button or nav.
+            # AGGRESSIVE LINK STRIPPING (only for very short links that look like menu items)
             if re.match(r'^\[.*?\]\(.*?\)$', line_strip):
                 link_text_match = re.search(r'^\[(.*?)\]', line_strip)
                 if link_text_match:
                     inner_text = link_text_match.group(1).strip()
                     inner_text_lower = inner_text.lower()
-                    # If the link text is a garbage keyword or very short (like icons/numbers), skip it
-                    if not inner_text or inner_text_lower in garbage_keywords or len(inner_text) < 2 or inner_text.isdigit():
+                    if not inner_text or inner_text_lower in strict_garbage or len(inner_text) < 2:
                         continue
             
-            # 6. Filter lines that are just URLs or image placeholders with no context
-            if re.match(r'^https?://\S+$', line_strip) or line_strip.startswith('[Image:'):
-                if len(line_strip) < 50: # Only keep long descriptive image tags
-                    continue
-
-            # 7. Filter dates/timestamps that are just single lines
-            if re.match(r'^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}$', line_strip):
+            # Filter URLs with no context
+            if re.match(r'^https?://\S+$', line_strip) and len(line_strip) < 60:
                 continue
 
             cleaned_lines.append(line_strip)
@@ -313,9 +310,10 @@ class ContentFetcher:
         final_text = '\n\n'.join(cleaned_lines)
         final_text = re.sub(r'\n\s*\n+', '\n\n', final_text)
         
-        # Sanitize final output to ensure XML compatibility
+        # Sanitize final output
         final_text = self._sanitize_xml_text(final_text)
         
+        app_logger.info(f"Final extracted content length: {len(final_text.strip())} characters.")
         return final_text.strip()
     
     def _extract_metadata(self, soup: BeautifulSoup) -> Dict[str, str]:
