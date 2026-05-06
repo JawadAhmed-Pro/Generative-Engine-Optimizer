@@ -26,7 +26,11 @@ class GEOOptimizer:
         if self._nlp is not None:
             return self._nlp
             
-        disable_spacy = os.getenv("DISABLE_SPACY", "false").lower() == "true"
+        # Memory Optimization: Skip spacy if disabled via env var or on Render
+        is_render = os.getenv("RENDER", "false").lower() == "true"
+        disable_spacy_env = os.getenv("DISABLE_SPACY", "false").lower() == "true"
+        disable_spacy = disable_spacy_env or is_render
+        
         if disable_spacy:
             return None
             
