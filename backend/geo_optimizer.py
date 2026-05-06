@@ -18,19 +18,26 @@ class GEOOptimizer:
         self.groq_api_key = settings.GROQ_API_KEY
         self.gemini_api_key = settings.GEMINI_API_KEY
         self.gemini_client = genai.Client(api_key=self.gemini_api_key) if self.gemini_api_key else None
-        self.nlp = None
+        self._nlp = None
         
-        # Memory Optimization: Skip spacy if disabled via env var
+    @property
+    def nlp(self):
+        """Lazy load spacy only when needed."""
+        if self._nlp is not None:
+            return self._nlp
+            
         disable_spacy = os.getenv("DISABLE_SPACY", "false").lower() == "true"
-        
-        if not disable_spacy:
-            try:
-                import spacy
-                self.nlp = spacy.load("en_core_web_sm")
-            except Exception as e:
-                app_logger.warning(f"spaCy load failed: {e}. Falling back to regex.")
-        else:
-            app_logger.info("Lite Mode Active: spaCy entity extraction disabled to save RAM.")
+        if disable_spacy:
+            return None
+            
+        try:
+            import spacy
+            app_logger.info("Loading spaCy (en_core_web_sm) for entity extraction...")
+            self._nlp = spacy.load("en_core_web_sm")
+            return self._nlp
+        except Exception as e:
+            app_logger.warning(f"spaCy load failed: {e}. Falling back to regex.")
+            return None
 
     def _extract_entities(self, content: str) -> List[str]:
         """FIX 4: Extract named entities from content."""

@@ -250,15 +250,14 @@ class RuleBasedScorer:
 
         # 2. Fact / Data Density (NEW: 2025 Lift with NLP)
         try:
-            import spacy
-            # Load English tokenizer, tagger, parser, NER and word vectors
-            try:
-                nlp = spacy.load("en_core_web_sm")
-            except OSError:
-                import spacy.cli
-                spacy.cli.download("en_core_web_sm")
-                nlp = spacy.load("en_core_web_sm")
-                
+            from geo_optimizer import geo_optimizer
+            nlp = geo_optimizer.nlp
+            
+            if not nlp:
+                # Fallback to simple regex if spacy is disabled or fails
+                details['nlp_entities_found'] = len(re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', content))
+                return score, suggestions, details
+
             doc = nlp(content)
             
             # Target specific entity types that represent "facts" or "density"
