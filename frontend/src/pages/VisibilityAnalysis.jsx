@@ -534,9 +534,25 @@ function VisibilityAnalysis() {
                                                     {item.url?.replace('https://', '').replace('http://', '') || item.title}
                                                 </div>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: '500' }}>
-                                                        {new Date(item.created_at).toLocaleDateString()}
-                                                    </span>
+                                                    <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: '500' }}>
+                                                            {new Date(item.created_at).toLocaleDateString()}
+                                                        </span>
+                                                        {item.analysis?.engine && (
+                                                            <span style={{ 
+                                                                fontSize: '0.6rem', 
+                                                                color: 'var(--accent-primary)', 
+                                                                fontWeight: '800', 
+                                                                textTransform: 'uppercase', 
+                                                                background: 'rgba(99, 102, 241, 0.1)', 
+                                                                padding: '1px 4px', 
+                                                                borderRadius: '3px',
+                                                                letterSpacing: '0.02em'
+                                                            }}>
+                                                                {item.analysis.engine.replace('_', ' ')}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                                                         <div style={{
                                                             fontSize: '0.7rem',

@@ -22,7 +22,7 @@ class LLMScorer:
         
         self.groq_api_key = settings.GROQ_API_KEY
     
-    async def analyze(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+    async def analyze(self, content: str, metadata: Dict[str, Any], engine: str = "perplexity") -> Dict[str, Any]:
         """
         Perform LLM-powered content analysis with high resilience.
         """
@@ -37,25 +37,25 @@ class LLMScorer:
         # 2. Parallel Resilience Pattern (Try Groq, fallback to Gemini)
         try:
             # We wrap the whole logic in a retry helper
-            return await self._execute_with_retry(content_sample, intent_slice, query, metadata)
+            return await self._execute_with_retry(content_sample, intent_slice, query, metadata, engine=engine)
         except Exception as e:
             app_logger.error(f"All LLM Analysis attempts failed: {e}")
             return self._get_default_scores(content_type)
 
-    async def _execute_with_retry(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any], retries: int = 1) -> Dict[str, Any]:
+    async def _execute_with_retry(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any], engine: str = "perplexity", retries: int = 1) -> Dict[str, Any]:
         for attempt in range(retries + 1):
             try:
                 # 1. Primary: Groq (Low Latency)
                 if self.groq_api_key:
                     try:
-                        return await self._analyze_with_groq(content, intent_slice, query, metadata)
+                        return await self._analyze_with_groq(content, intent_slice, query, metadata, engine=engine)
                     except Exception as e:
                         app_logger.warning(f"Groq failed on attempt {attempt+1}, failing over to Gemini... Error: {e}")
                 
                 # 2. Secondary: Gemini (High Intelligence / Fallback)
                 if hasattr(self, 'gemini_client') and self.gemini_client:
                     try:
-                        return await self._analyze_with_gemini(content, intent_slice, query, metadata)
+                        return await self._analyze_with_gemini(content, intent_slice, query, metadata, engine=engine)
                     except Exception as e:
                         app_logger.error(f"Gemini also failed on attempt {attempt+1}: {e}")
                 
@@ -399,9 +399,9 @@ Generate a comprehensive article (1500-2500 words) following ALL the requirement
 Return ONLY the Markdown content. Do not include any preamble, explanation, or meta-commentary. Start directly with the article title as # H1.
 """
 
-    async def _analyze_with_groq(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_with_groq(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any], engine: str = "perplexity") -> Dict[str, Any]:
         """Analyze content using Groq API."""
-        prompt = self._create_geo_prompt(content, intent_slice, query, metadata)
+        prompt = self._create_geo_prompt(content, intent_slice, query, metadata, engine=engine)
         
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
@@ -437,9 +437,9 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
                 app_logger.debug(f"Groq Response (first 200 chars): {response_text[:200]}")
                 return self._parse_llm_response(response_text, metadata.get('content_type', 'general'))
 
-    async def _analyze_with_gemini(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_with_gemini(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any], engine: str = "perplexity") -> Dict[str, Any]:
         """Analyze content using Gemini API (Async)."""
-        prompt = self._create_geo_prompt(content, intent_slice, query, metadata)
+        prompt = self._create_geo_prompt(content, intent_slice, query, metadata, engine=engine)
         app_logger.debug(f"Calling Gemini API...")
         try:
             from google.genai import types
@@ -459,13 +459,20 @@ Return ONLY the Markdown content. Do not include any preamble, explanation, or m
             app_logger.error(f"Gemini API FAILED: {str(e)}")
             raise
 
-    def _create_geo_prompt(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any]) -> str:
+    def _create_geo_prompt(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any], engine: str = "perplexity") -> str:
         """Create a prompt for GEO analysis based on content type."""
         title = metadata.get('title', 'Untitled')
         content_type = metadata.get('content_type', 'general')
         
+        # Determine engine display name
+        engine_display = {
+            'perplexity': 'Perplexity AI (Search Engine Focus)',
+            'chatgpt': 'ChatGPT Search (Conversational Focus)',
+            'google_sge': 'Google AI Overviews (SGE/Pre-Filter Focus)'
+        }.get(engine, 'AI Search Engine')
+
         base_prompt = f"""
-You are a Generative Engine Optimization (GEO) expert. Analyze this {content_type} content to see how well it ranks in AI Search Engines (ChatGPT, Perplexity, Gemini).
+You are a Generative Engine Optimization (GEO) expert. Analyze this {content_type} content to see how well it ranks in {engine_display}.
 
 Title: {title}
 Content Snippet:
@@ -519,7 +526,7 @@ You are an OBJECTIVE AUDITOR. Grade fairly based on industry standards.
     "suggestions": ["<impact_prefix>: <suggestion_string>", "..."]
 }
 
-### CHATGPT SPECIALIZED SIGNALS (NEW):
+### {engine.upper()} SPECIALIZED SIGNALS (NEW):
 - **query_intent**: Classify the query. (Factual = seeking direct data; Advisory = seeking how-to; Comparative = seeking vs; Commercial = seeking product).
 - **atomic_claim_quality**: High score if claims are specific (dates, %s, exact names). Low score if claims are vague ("high speed", "many people").
 - **narrative_noise_score**: 0-100. High score = too much filler ("In conclusion", "Furthermore", "It is important to note").

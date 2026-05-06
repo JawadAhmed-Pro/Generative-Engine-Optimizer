@@ -505,7 +505,7 @@ def get_history(
                 "citation_worthiness_score": analysis.citation_worthiness_score if analysis else 0,
                 "semantic_coverage_score": analysis.semantic_coverage_score if analysis else 0,
                 "freshness_authority_score": analysis.freshness_authority_score if analysis else 0,
-                "engine": getattr(analysis, 'target_engine', 'perplexity') if analysis else 'perplexity'
+                "engine": getattr(analysis, 'target_engine', 'perplexity') or 'perplexity' if analysis else 'perplexity'
             }
         })
 
@@ -1130,9 +1130,9 @@ async def optimize_full_content(
                 app_logger.info(f"[{job_id}] Running analysis on optimized content")
                 
                 # Perform full audit on optimized content
-                extracted = {'content': optimized_text, 'content_type': 'article'}
+                extracted = {'content': optimized_text, 'content_type': kwargs.get('content_type', 'article')}
                 rule_scores = services.rule_scorer.analyze(optimized_text, extracted)
-                llm_scores_res = await services.llm_scorer.analyze(optimized_text, extracted)
+                llm_scores_res = await services.llm_scorer.analyze(optimized_text, extracted, engine=kwargs.get('engine', 'perplexity'))
                 final_scores = services.aggregator.aggregate(rule_scores, llm_scores_res)
 
                 # Save results to DB
@@ -1162,6 +1162,7 @@ async def optimize_full_content(
                         rule_based_scores=final_scores['rule_based_scores'],
                         llm_scores=final_scores['llm_scores'],
                         suggestions=final_scores['suggestions'],
+                        target_engine=kwargs.get('engine', 'perplexity'),
                         created_at=datetime.utcnow()
                     )
                     db.add(analysis)
@@ -1381,7 +1382,7 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     rule_scores = services.rule_scorer.analyze(content, extracted, extracted.get('content_type', 'general'))
     
     # LLM scoring (Async)
-    llm_scores = await services.llm_scorer.analyze(content, extracted)
+    llm_scores = await services.llm_scorer.analyze(content, extracted, engine=engine)
     
     # Aggregate scores
     final_scores = services.aggregator.aggregate(rule_scores, llm_scores)
@@ -1964,7 +1965,7 @@ async def validate_citation(
         # Full pseudo-analysis for validation
         extracted = {'content': payload.content, 'content_type': payload.content_type}
         rule_scores = services.rule_scorer.analyze(payload.content, extracted, payload.content_type)
-        llm_scores_res = await services.llm_scorer.analyze(payload.content, extracted)
+        llm_scores_res = await services.llm_scorer.analyze(payload.content, extracted, engine=payload.engine or "perplexity")
         final_scores = services.aggregator.aggregate(rule_scores, llm_scores_res)
         
         overall_score = (
@@ -1980,7 +1981,7 @@ async def validate_citation(
             rule_scores=final_scores['rule_based_scores'],
             llm_scores=final_scores['llm_scores'],
             content_type=payload.content_type,
-            engine="perplexity"
+            engine=payload.engine or "perplexity"
         )
         
         # Determine Success 

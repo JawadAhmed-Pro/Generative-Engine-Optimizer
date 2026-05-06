@@ -275,6 +275,7 @@ function ContentOptimization() {
     const [keywordsLoading, setKeywordsLoading] = useState(false)
     const [selectedKeyword, setSelectedKeyword] = useState('')
     const [customKeyword, setCustomKeyword] = useState('')
+    const [targetEngine, setTargetEngine] = useState('perplexity')
 
     // Smart Injection State - RESTORED PHASE 2
     const [semanticGaps, setSemanticGaps] = useState([])
@@ -326,46 +327,9 @@ function ContentOptimization() {
         }
     }
 
-    // Adversarial Injection State
-    const [ragPayload, setRagPayload] = useState(null)
-    const [ragLoading, setRagLoading] = useState(false)
-    const [entitySchema, setEntitySchema] = useState(null)
-    const [entitySchemaLoading, setEntitySchemaLoading] = useState(false)
-    const [ragCopied, setRagCopied] = useState(false)
-    const [entitySchemaCopied, setEntitySchemaCopied] = useState(false)
 
-    const handleGenerateRagPayload = async () => {
-        if (!content.trim()) return
-        setRagLoading(true)
-        setError(null)
-        try {
-            const response = await axios.post('/api/optimize/rag-payload', {
-                content: content,
-                target_keyword: selectedKeyword || customKeyword || 'target keyword'
-            })
-            setRagPayload(response.data.rag_payload)
-        } catch (err) {
-            setError(err.response?.data?.detail || err.message)
-        } finally {
-            setRagLoading(false)
-        }
-    }
 
-    const handleGenerateEntitySchema = async () => {
-        if (!content.trim()) return
-        setEntitySchemaLoading(true)
-        setError(null)
-        try {
-            const response = await axios.post('/api/optimize/entity-schema', {
-                content: content
-            })
-            setEntitySchema(response.data.json_ld)
-        } catch (err) {
-            setError(err.response?.data?.detail || err.message)
-        } finally {
-            setEntitySchemaLoading(false)
-        }
-    }
+
 
     // Auto-extract keywords when content changes (debounced)
     useEffect(() => {
@@ -599,6 +563,7 @@ function ContentOptimization() {
                 audience: optimizationAudience,
                 strength: optimizationStrength,
                 target_keyword: selectedKeyword || customKeyword || undefined,
+                engine: targetEngine,
                 additional_instructions: additionalInstructions
             };
 
@@ -1143,6 +1108,48 @@ function ContentOptimization() {
                             </div>
                         )}
 
+                        {/* Target Engine Selector */}
+                        {activeTab !== 'schema' && (
+                            <div style={{
+                                marginBottom: '1.5rem',
+                                padding: '1.25rem',
+                                background: 'var(--bg-secondary)',
+                                borderRadius: '12px',
+                                border: '1px solid var(--card-border)'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                                    <Sparkles size={18} color="var(--accent-primary)" />
+                                    <span style={{ fontWeight: '700', fontSize: '0.95rem', letterSpacing: '0.02em' }}>Target Engine</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    {[
+                                        { id: 'perplexity', label: 'Perplexity' },
+                                        { id: 'chatgpt', label: 'ChatGPT' },
+                                        { id: 'google_sge', label: 'Google SGE' }
+                                    ].map(engine => (
+                                        <button
+                                            key={engine.id}
+                                            onClick={() => setTargetEngine(engine.id)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '0.6rem',
+                                                borderRadius: '8px',
+                                                border: targetEngine === engine.id ? '1px solid var(--accent-primary)' : '1px solid var(--card-border)',
+                                                background: targetEngine === engine.id ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-tertiary)',
+                                                color: targetEngine === engine.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                                fontSize: '0.85rem',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            {engine.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Smart Injection Panel - RESTORED PHASE 2 */}
                         {activeTab !== 'schema' && (
                             <div style={{
@@ -1377,32 +1384,7 @@ function ContentOptimization() {
                             </button>
                         )}
                         
-                        {/* Adversarial Injections */}
-                        {activeTab !== 'schema' && (
-                            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--card-border)' }}>
-                                <div style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-tertiary)', marginBottom: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                                    Adversarial Injection Tools
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <button
-                                        onClick={handleGenerateRagPayload}
-                                        disabled={ragLoading || !content.trim()}
-                                        className="btn btn-outline"
-                                        style={{ padding: '0.85rem', fontSize: '0.9rem', justifyContent: 'center' }}
-                                    >
-                                        {ragLoading ? 'Generating...' : <><Zap size={16} /> Generate RAG Payload</>}
-                                    </button>
-                                    <button
-                                        onClick={handleGenerateEntitySchema}
-                                        disabled={entitySchemaLoading || !content.trim()}
-                                        className="btn btn-outline"
-                                        style={{ padding: '0.85rem', fontSize: '0.9rem', justifyContent: 'center' }}
-                                    >
-                                        {entitySchemaLoading ? 'Generating...' : <><Code2 size={16} /> Entity-Linked Schema</>}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+
 
                         {error && (
                             <div style={{ marginTop: '1rem', color: 'var(--error)', fontSize: '0.9rem' }}>
@@ -1465,58 +1447,7 @@ function ContentOptimization() {
                         </div>
                     )}
 
-                    {/* Adversarial Results Display */}
-                    {ragPayload && (
-                        <div className="depth-card animate-fade-in" style={{ marginTop: '3rem', padding: '2.5rem', borderLeft: '4px solid var(--accent-primary)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                                <div>
-                                    <h3 style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>AI Summary Box (RAG Payload)</h3>
-                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Hyper-dense payload engineered to survive semantic chunking.</span>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(ragPayload)
-                                        setRagCopied(true)
-                                        setTimeout(() => setRagCopied(false), 2000)
-                                    }}
-                                    className="btn btn-primary"
-                                    style={{ fontSize: '0.85rem', padding: '0.75rem 1.25rem', gap: '0.5rem' }}
-                                >
-                                    {ragCopied ? <><Check size={18} /> Copied!</> : <><Copy size={18} /> Copy Payload</>}
-                                </button>
-                            </div>
-                            <div className="markdown-content" style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '12px', padding: '1.5rem', fontSize: '0.95rem', lineHeight: '1.7', color: '#f1f5f9' }}>
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {ragPayload}
-                                </ReactMarkdown>
-                            </div>
-                        </div>
-                    )}
 
-                    {entitySchema && (
-                        <div className="depth-card animate-fade-in" style={{ marginTop: '2rem', padding: '2.5rem', borderLeft: '4px solid var(--accent-secondary)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                                <div>
-                                    <h3 style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>Deterministic Entity Schema</h3>
-                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>JSON-LD structured data with direct Knowledge Graph anchors.</span>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(entitySchema)
-                                        setEntitySchemaCopied(true)
-                                        setTimeout(() => setEntitySchemaCopied(false), 2000)
-                                    }}
-                                    className="btn btn-primary"
-                                    style={{ fontSize: '0.85rem', padding: '0.75rem 1.25rem', gap: '0.5rem' }}
-                                >
-                                    {entitySchemaCopied ? <><Check size={18} /> Copied!</> : <><Copy size={18} /> Copy JSON-LD</>}
-                                </button>
-                            </div>
-                            <pre style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '12px', padding: '1.5rem', overflow: 'auto', maxHeight: '400px', fontSize: '0.85rem', color: '#a5f3fc', fontFamily: 'JetBrains Mono, monospace', border: '1px solid rgba(255,255,255,0.05)', lineHeight: '1.5' }}>
-                                {entitySchema}
-                            </pre>
-                        </div>
-                    )}
 
                     {/* Results Area */}
                     {activeTab !== 'schema' && (analysisResults || optimizedContent) && (
@@ -1926,7 +1857,22 @@ function ContentOptimization() {
                                                     </span>
                                                 </div>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
-                                                    <span style={{ color: 'var(--text-tertiary)' }}>{new Date(item.created_at).toLocaleDateString()}</span>
+                                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                        <span style={{ color: 'var(--text-tertiary)' }}>{new Date(item.created_at).toLocaleDateString()}</span>
+                                                        {item.analysis?.engine && (
+                                                            <span style={{ 
+                                                                fontSize: '0.55rem', 
+                                                                color: 'var(--accent-primary)', 
+                                                                fontWeight: '800', 
+                                                                textTransform: 'uppercase',
+                                                                background: 'rgba(99, 102, 241, 0.1)',
+                                                                padding: '1px 3px',
+                                                                borderRadius: '2px'
+                                                            }}>
+                                                                {item.analysis.engine.replace('_', ' ')}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     {item.score != null && (
                                                         <div style={{
                                                             padding: '0.2rem 0.5rem',

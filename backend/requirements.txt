@@ -33,7 +33,8 @@ slowapi
 bleach
 
 # Execution Engine Dependencies
-httpx
+httpx[http2]
+brotli
 google-generativeai
 aiosqlite
 

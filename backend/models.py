@@ -285,6 +285,7 @@ class OptimizeContentRequest(BaseModel):
     content_type: str = 'general'
     additional_instructions: Optional[str] = None
     competitor_gaps: Optional[str] = None
+    engine: Optional[str] = Field(default="perplexity", pattern=r'^(perplexity|chatgpt|google_sge)$')
 
 
 class OptimizeRAGPayloadRequest(BaseModel):
@@ -331,6 +332,7 @@ class InjectRequest(BaseModel):
 class ValidateCitationRequest(BaseModel):
     content: str
     content_type: str = "general"
+    engine: Optional[str] = Field(default="perplexity", pattern=r'^(perplexity|chatgpt|google_sge)$')
 
 
 class DiagnosticMetrics(BaseModel):
