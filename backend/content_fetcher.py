@@ -15,6 +15,17 @@ class ContentFetcher:
     def __init__(self, timeout: int = 30):
         self.timeout = timeout
 
+    def _sanitize_xml_text(self, text: str) -> str:
+        """Remove XML-incompatible characters (NULL bytes and control characters)."""
+        if not text:
+            return text
+        # Remove NULL bytes and most control characters, keep only valid XML chars
+        # Valid: tab, newline, carriage return, and any character >= 0x20
+        return ''.join(
+            char for char in text 
+            if char == '\t' or char == '\n' or char == '\r' or ord(char) >= 0x20
+        )
+
     def fetch_url(self, url: str) -> Dict[str, Any]:
         """
         Fetch content from a URL using requests first, and falling back to Selenium if blocked.
@@ -66,6 +77,9 @@ class ContentFetcher:
         if not page_content:
             raise Exception(f"Failed to extract any content from {url}")
 
+        # Sanitize HTML before parsing to prevent lxml errors
+        page_content = self._sanitize_xml_text(page_content)
+        
         # Parse HTML with BeautifulSoup (reusing existing logic)
         soup = BeautifulSoup(page_content, 'lxml')
         
@@ -132,6 +146,9 @@ class ContentFetcher:
         if not page_content:
             raise Exception(f"Failed to extract any content from {url}")
 
+        # Sanitize HTML before parsing to prevent lxml errors
+        page_content = self._sanitize_xml_text(page_content)
+        
         # Parse HTML with BeautifulSoup 
         soup = BeautifulSoup(page_content, 'lxml')
         
@@ -297,6 +314,9 @@ class ContentFetcher:
         # Reconstruct and fix double newlines
         final_text = '\n\n'.join(cleaned_lines)
         final_text = re.sub(r'\n\s*\n+', '\n\n', final_text)
+        
+        # Sanitize final output to ensure XML compatibility
+        final_text = self._sanitize_xml_text(final_text)
         
         return final_text.strip()
     
