@@ -1404,13 +1404,24 @@ async def perform_analysis(content: str, extracted: dict, db: Session, content_i
     )
     
     # ---------------------------------------------------------
-    # FIX 2: Live Validation Reduction (1 Query Only)
+    # FIX: Dynamic Keyword Extraction for Live Validation
     # ---------------------------------------------------------
-    from live_verifier import live_verifier
+    target_kw = extracted.get('target_keyword', '').strip()
     
-    target_kw = extracted.get('target_keyword', 'the topic')
-    if not target_kw:
-         target_kw = "the topic"
+    # If keyword is generic or missing, extract the real one for better verification
+    if not target_kw or target_kw.lower() in ['the topic', 'general']:
+        try:
+            # Try to get the primary keyword from LLM scores or extract it
+            extracted_kw = llm_scores.get('primary_keyword')
+            if not extracted_kw:
+                # Fallback to Title if extraction is too slow
+                target_kw = extracted.get('title', 'the topic').split('|')[0].strip()
+            else:
+                target_kw = extracted_kw
+        except:
+            target_kw = "the topic"
+    
+    from live_verifier import live_verifier
     
     # Run Live Verification for 1 target keyword only
     predicted_anchor = prob_calc.get('probability', 60.0)

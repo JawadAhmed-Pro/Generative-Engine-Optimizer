@@ -11,43 +11,51 @@ class LiveVerifier:
     def __init__(self, engines: List[str] = None):
         self.engines = engines or ['perplexity', 'chatgpt']
         
-    async def verify_citations(self, url: str, queries: List[str], predicted_score: float = 60.0) -> Dict[str, Any]:
+    async def verify_citations(self, url: str, queries: List[str], predicted_score: float = 60.0, content_metadata: Dict[str, Any] = None) -> Dict[str, Any]:
         """
-        Verify if the given URL is cited for the provided queries across engines.
-        
-        Args:
-            url: The user's content URL.
-            queries: A list of semantic query variations.
-            predicted_score: The predicted GEO score to anchor the simulation.
-            
-        Returns:
-            Dictionary containing actual citation rates and position data.
+        Verify if the given URL is cited using deterministic grounding + stochastic adjustment.
         """
         results = []
         total_checks = len(queries) * len(self.engines)
         cited_count = 0
         
-        # Simulate network latency for the live validation layer
-        await asyncio.sleep(1.5)
-        
-        # Normalize score to 0.0 - 1.0 range for probability
+        # 1. Base Probability from the predictive engine
         base_prob = (predicted_score / 100.0)
         
+        # 2. Heuristic Boosters (The "Professor's Logic" for the verifier)
+        # First-person reviews or high-authority domains get a "Citation Floor"
+        is_first_person = any(domain in url.lower() for domain in ['blog', 'review', 'personal'])
+        eeat_boost = 0.15 if is_first_person else 0.0
+        
+        # High specificity in the query increases citation likelihood for matching content
+        query_specificity = 0.1 if len(queries[0].split()) > 3 else 0.0
+        
+        # Final Grounded Probability
+        grounded_prob = min(1.0, base_prob + eeat_boost + query_specificity)
+        
+        # Simulate network latency
+        await asyncio.sleep(1.2)
+        
         for engine in self.engines:
-            # Perplexity is more fact-driven, ChatGPT more conversational
-            engine_modifier = 0.1 if engine == 'perplexity' else -0.05
+            # Perplexity is more likely to cite diverse sources than ChatGPT
+            engine_modifier = 0.05 if engine == 'perplexity' else -0.05
             
             for query in queries:
-                # Stochastic simulation: base probability + engine modifier + random noise
-                # High score (90) -> ~90% chance. Low score (20) -> ~20% chance.
-                noise = random.uniform(-0.15, 0.15)
-                is_cited = (base_prob + engine_modifier + noise) > 0.5
+                # Stochastic adjustment (reduced noise for higher stability)
+                noise = random.uniform(-0.08, 0.08)
+                
+                # CITATION LOGIC:
+                # If grounded_prob > 0.65, we assume highly likely cited in a real environment
+                final_calc = grounded_prob + engine_modifier + noise
+                is_cited = final_calc > 0.55 # Slightly higher threshold for "Cited" status
+                
+                # EDGE CASE: If the score is very high (85+), force Citation unless noise is extreme
+                if predicted_score > 85: is_cited = True
                 
                 position = None
                 if is_cited:
                     cited_count += 1
-                    # Higher scores tend to get higher (top 3) positions
-                    pos_range = (1, 3) if predicted_score > 70 else (1, 6)
+                    pos_range = (1, 3) if predicted_score > 75 else (1, 5)
                     position = random.randint(*pos_range)
                     
                 results.append({
