@@ -189,12 +189,18 @@ class ScoreAggregator:
         # Merge, ensuring dynamic LLM insights come first
         final_suggestions.extend(rule_suggestions[:3])
 
-        # ... (Intent and EEAT logic) ...
+        # Final Intent and EEAT data extraction
+        user_intent_val = llm_metrics['user_intent']
+        experience_score = llm_metrics['experience']
+        authoritativeness_score = llm_metrics['authoritativeness']
+        trustworthiness_score = llm_metrics['trustworthiness']
+
+        # Calculate overall score using dynamic weights
         overall_visibility_score = (
             structural_clarity_score * weights['p1'] +
             citation_worthiness_score * weights['p2'] +
             semantic_coverage_score * weights['p3'] +
-            structural_clarity_score * weights['p4'] # Fixed: Pillar 4 consistency
+            freshness_authority_score * weights['p4']
         )
 
         return {
