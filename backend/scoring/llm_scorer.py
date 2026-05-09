@@ -540,7 +540,18 @@ Evaluate ONLY this 100-word intro slice against the query "{query}":
 "{intent_slice}"
 Does it directly answer the user's intent? (Boolean).
 """
-        return base_prompt + metrics_prompt + intent_instruction + "\n\nEvaluate objectively. Your 'suggestions' list MUST have 3-5 items. Each item MUST include an impact prefix like 'High Impact:', 'Medium Impact:', or 'Critical Impact:' based on the 2025 GEO research weights."
+
+        # [NEW] Professor's Proof Logic (Scientific Audit)
+        scientific_audit_prompt = """
+### SCIENTIFIC AUDIT (PROFESSOR'S PROOF):
+You must provide a mathematical justification for your scores. 
+In your 'explanation' field, include a 'Logic Audit' section:
+1. "Factual Density Ratio": Count specific entities (Names/Dates) in this content vs what is expected for a Top 1 Ranking.
+2. "Information Gain Delta": Identify one specific fact or perspective missing here that is present in high-ranking competitor benchmarks.
+"""
+
+        return base_prompt + metrics_prompt + intent_instruction + scientific_audit_prompt + "\n\nEvaluate objectively. Your 'suggestions' list MUST have 3-5 items. Each item MUST be highly specific to THIS content. DO NOT use generic advice like 'Add a table'. Instead, say 'Add a table comparing X and Y to match high-ranking benchmarks'. Each item MUST include an impact prefix."
+
 
     def _extract_json(self, text: str) -> str:
         """Robustly extract JSON block from conversational LLM output."""

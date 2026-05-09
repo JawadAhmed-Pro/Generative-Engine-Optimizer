@@ -231,6 +231,46 @@ function ResultsPanel({ results, onReset, onApplyInjection, context = 'url' }) {
                         </div>
                     </div>
                 </div>
+                
+                {/* [NEW] Scientific Logic Audit - Professor's Proof */}
+                {results.logic_audit && (
+                    <div style={{ 
+                        marginTop: '1.5rem', 
+                        padding: '1.25rem', 
+                        background: 'var(--bg-tertiary)', 
+                        borderRadius: '12px', 
+                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                        textAlign: 'left',
+                        position: 'relative'
+                    }}>
+                        <div style={{ 
+                            position: 'absolute', 
+                            top: '-10px', 
+                            left: '20px', 
+                            background: 'var(--accent-primary)', 
+                            color: 'white', 
+                            padding: '2px 10px', 
+                            borderRadius: '4px', 
+                            fontSize: '0.65rem', 
+                            fontWeight: '900',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
+                        }}>
+                            Scientific Audit
+                        </div>
+                        <div style={{ 
+                            fontSize: '0.9rem', 
+                            color: 'var(--text-secondary)', 
+                            lineHeight: '1.6',
+                            whiteSpace: 'pre-line',
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            padding: '0.5rem'
+                        }}>
+                            {results.logic_audit}
+                        </div>
+                    </div>
+                )}
 
                 {probabilityMetrics?.validation_layer && (
                     <div style={{ marginTop: '1.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--card-border)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', textAlign: 'center' }}>
