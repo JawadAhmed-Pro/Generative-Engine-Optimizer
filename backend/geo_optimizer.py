@@ -108,7 +108,7 @@ class GEOOptimizer:
             section_label = h2_text if has_header else "Introduction (no heading)"
 
             rewrite_prompt = f"""
-            Act as a GEO Content Editor. You are rewriting ONE section of a larger article.
+            Act as a GEO Content Editor. You are performing a LOSSLESS REWRITE of ONE section of an article.
             
             PAGE CONTEXT: {json.dumps(page_context)}
             SECTION HEADING: {section_label}
@@ -116,26 +116,21 @@ class GEOOptimizer:
             TONE: {tone}
             USER INSTRUCTIONS: {additional_instructions or "None"}
             
-            RULES:
-            1. Optimize for AI search visibility and citation probability.
-            2. ENTITY GUARDRAIL: Only use entities from this list: {page_context['allowed_entity_pool']}. Do not introduce new ones.
-            3. Do NOT include the section heading in your output — only rewrite the body content.
-            4. Do NOT repeat or duplicate the section heading.
-            5. ANTI-HALLUCINATION RULE: 
-               If a claim already contains a statistic from the original content, preserve it exactly.
-               If a claim has no statistic, do NOT invent one.
-               Instead, append a tag: [CITATION NEEDED: <what type of source would support this claim>]
-               Never generate percentages, figures, or numerical data that were not in the original input.
-            6. Stay scoped to this section. Do not reference other sections.
+            CRITICAL INSTRUCTIONS:
+            1. DO NOT SUMMARIZE. The output must be equal to or LONGER than the original section.
+            2. RETAIN ALL DATA: Every statistic, technical spec, and personal anecdote MUST be preserved.
+            3. INFORMATION GAIN: Expand on the points to add more depth, semantic richness, and context.
+            4. DO NOT include the section heading in your output.
+            5. ANTI-HALLUCINATION: Use only provided facts or add [CITATION NEEDED] tags.
             
-            Section Content:
+            ORIGINAL SECTION CONTENT:
             ---
             {section_content}
             ---
             
             Return JSON:
             {{
-                "optimized_section": "The rewritten body text ONLY (no heading)...",
+                "optimized_section": "The detailed, expanded body text...",
                 "missing_citations": ["..."],
                 "changes": ["..."]
             }}
@@ -169,31 +164,22 @@ class GEOOptimizer:
             all_missing_citations.extend(result.get("missing_citations", []))
             all_changes.extend(result.get("changes", []))
 
-        # 4. Phase A Improvement: Multi-Agent Structural Audit
+        # 4. Join and Clean (Removed Global Audit to prevent compression)
         full_content = "\n\n".join(processed_sections)
         full_content = self._remove_duplicate_headings(full_content)
-        
-        app_logger.info("Agent: Running Phase A Structural Audit...")
-        audit_result = await self._structural_audit(full_content, strategy, tone)
-        
-        smoothed_content = audit_result.get("audited_content", full_content)
-        all_changes.extend(audit_result.get("audit_fixes", []))
-        
-        # Final cleanup pass for any duplicates re-introduced by audit
-        smoothed_content = self._remove_duplicate_headings(smoothed_content)
 
-        # 5. Final Scoring (FIX 3)
-        structural = self.get_structural_score(smoothed_content)
-        semantic = await self.get_semantic_score(smoothed_content)
+        # 5. Final Scoring
+        structural = self.get_structural_score(full_content)
+        semantic = await self.get_semantic_score(full_content)
 
-        # 6. Post-Rewrite Entity Check (FIX 4 Step 5)
-        new_entities = self._extract_entities(smoothed_content)
+        # 6. Post-Rewrite Entity Check
+        new_entities = self._extract_entities(full_content)
         hallucinated = [ent for ent in new_entities if ent not in page_context["allowed_entity_pool"]]
         if hallucinated:
             all_changes.append(f"WARNING: Hallucinated entities detected: {hallucinated}")
 
         # 7. Extract Citation Flags
-        final_clean_content, citation_warnings = self.extract_citation_flags(smoothed_content)
+        final_clean_content, citation_warnings = self.extract_citation_flags(full_content)
 
         # 8. Phase B Improvement: Entity Linking & Schema Generation
         linked_entities = await self._link_entities(new_entities)
