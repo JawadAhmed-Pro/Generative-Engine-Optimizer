@@ -74,8 +74,8 @@ class GEOOptimizer:
             "allowed_entity_pool": entities
         }
 
-        # 2. Split content by H2 sections
-        sections = re.split(r'(<h2.*?>.*?</h2>|## .*?\n)', content, flags=re.IGNORECASE | re.DOTALL)
+        # 2. Split content by H2 sections (Robust for Windows/Unix newlines)
+        sections = re.split(r'(<h2.*?>.*?</h2>|## .*?[\r\n]+)', content, flags=re.IGNORECASE | re.DOTALL)
         
         processed_sections = []
         all_missing_citations = []
@@ -85,7 +85,7 @@ class GEOOptimizer:
         grouped_sections = []
         current_group = ""
         for sec in sections:
-            if re.match(r'(<h2|## )', sec):
+            if re.match(r'(<h2|## )', sec, re.IGNORECASE):
                 if current_group:
                     grouped_sections.append(current_group)
                 current_group = sec
@@ -99,52 +99,53 @@ class GEOOptimizer:
             if not section.strip(): continue
             
             # Extract header if present
-            header_match = re.match(r'(<h2.*?>.*?</h2>|## .*?\n)', section, flags=re.IGNORECASE | re.DOTALL)
+            header_match = re.match(r'^(<h2.*?>.*?</h2>|## .*?[\r\n]+)', section, flags=re.IGNORECASE | re.DOTALL)
             has_header = header_match is not None
             h2_text = header_match.group(0).strip() if has_header else ""
             section_content = section[len(header_match.group(0)):] if has_header else section
 
-            # For intro sections (no heading), use "Introduction" as context label
-            section_label = h2_text if has_header else "Introduction (no heading)"
+            section_label = h2_text if has_header else "Introduction/General"
 
             rewrite_prompt = f"""
-            Act as a Senior GEO Content Architect. Your mission is a RADICAL SEMANTIC ENRICHMENT of the section: '{section_label}'.
+            Act as a Senior GEO SEO Strategist. 
+            YOUR TASK: SIGNIFICANTLY OPTIMIZE AND EXPAND the section: '{section_label}'.
             
             PAGE CONTEXT: {json.dumps(page_context)}
             STRATEGY: {strategy}
             TONE: {tone}
             USER INSTRUCTIONS: {additional_instructions or "None"}
             
-            CRITICAL MISSION:
-            1. OPTIMIZATION INTENSITY: You must improve the 'Information Gain' of this section. This means you SHOULD rewrite 40-60% of the sentences to be more descriptive, technical, and semantically rich.
-            2. NO LAZINESS: Do not simply return the original text. If the text is already good, find ways to add expert context, cross-references, or structured data (tables/bullets).
-            3. E-E-A-T PRESERVATION: Keep the personal anecdotes (cycling, phone history) but wrap them in more authoritative language.
-            4. MARKDOWN POWER: Use GFM tables for specs. Use bolding for key entities.
+            CRITICAL MISSION (Zero-Tolerance for Laziness):
+            1. DO NOT RETURN THE ORIGINAL TEXT. You must rewrite at least 50% of the sentences.
+            2. INFORMATION GAIN: Inject technical specifications, expert analysis, and semantic context.
+            3. RETAIN E-E-A-T: Keep all personal anecdotes (cycling, 12 mini history) but weave them into a more professional, authoritative narrative.
+            4. MARKDOWN: Use tables for specs. Use bolding for entities.
+            5. WORD COUNT: The optimized version MUST be significantly longer and more detailed than the original.
             
-            ORIGINAL SECTION CONTENT:
+            ORIGINAL CONTENT:
             ---
             {section_content}
             ---
             
-            Return JSON:
+            Return JSON format:
             {{
-                "optimized_content": "The significantly improved, expanded Markdown text...",
-                "missing_citations": ["..."],
-                "changes": ["..."]
+                "optimized_content": "The significantly improved, detailed Markdown text...",
+                "changes": ["List of specific improvements made"]
             }}
             """
-            # Using higher temperature (0.7) for more creative/significant rewriting
-            result = await self._call_llm(rewrite_prompt, temperature=0.7)
-            if not isinstance(result, dict):
-                result = {"optimized_content": str(result) if result else section_content}
-                
-            optimized = result.get("optimized_content", section_content)
+            # Using higher temperature (0.8) for more significant rewriting
+            result = await self._call_llm(rewrite_prompt, temperature=0.8)
             
-            # Fix 3: Detail-Density Guardrail
-            orig_len = len(section_content.split())
-            new_len = len(optimized.split())
-            if new_len < (orig_len * 0.8) and orig_len > 20:
-                all_changes.append(f"GUARDRAIL: Section '{section_label}' was compressed by >20%. Retention may be low.")
+            if isinstance(result, dict):
+                optimized = result.get("optimized_content", section_content)
+                all_changes.extend(result.get("changes", []))
+            else:
+                optimized = str(result) if result else section_content
+                all_changes.append("Applied non-JSON optimization pass")
+                
+            # Fallback check: If AI returned identical text, we flag it
+            if optimized.strip() == section_content.strip() and len(section_content) > 50:
+                all_changes.append(f"NOTICE: AI determined section '{section_label}' was already optimal. No changes applied.")
             
             if has_header:
                 # Strip accidentally repeated headings
@@ -156,7 +157,7 @@ class GEOOptimizer:
             else:
                 processed_sections.append(optimized.strip())
             
-            all_missing_citations.extend(result.get("missing_citations", []))
+            all_missing_citations.extend(result.get("missing_citations", []) if isinstance(result, dict) else [])
             all_changes.extend(result.get("changes", []))
 
         # 4. Join and Finalize
