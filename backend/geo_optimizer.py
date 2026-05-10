@@ -545,68 +545,83 @@ class GEOOptimizer:
     async def suggest_hard_grounding(self, content: str, niche: str) -> Dict[str, Any]:
         """
         Suggests specific expert quotes, statistics, or citations to inject into the content.
-        Identifies 'Grounding Gaps'.
+        Identifies 'Grounding Gaps' and prepares them for the Research Agent.
         """
-        app_logger.info(f"Agent: Identifying grounding gaps for {niche}")
+        app_logger.info(f"Agent: Identifying specific grounding gaps for {niche}")
         
         prompt = f"""
-        Act as a Fact-Checking and Grounding AI.
-        niche: {niche}
+        Act as a GEO Fact-Checking Agent. 
+        Your goal is to identify exactly where this content is "vague" or lacks numerical authority.
         
         Content:
         ---
-        {content[:2000]}
+        {content[:3000]}
         ---
         
         TASK:
-        1. Identify where this content lacks specific data or expert authority.
-        2. Suggest 3 'Hard Grounding' injections (e.g., 'Add a stat about X', 'Cite a study from Y').
+        1. Find 3 specific claims that would be 10x more powerful with a real statistic or citation.
+        2. Format each suggestion so the Research Agent knows exactly what to look for.
         
-        Return the result in valid JSON format exactly as follows:
+        Example Suggestions:
+        - "Add the 2024 average revenue per user (ARPU) for mobile apps to support the monetization claim."
+        - "Cite a specific 2025 study on AI search user behavior to back up the visibility argument."
+        
+        Return JSON format:
         {{
-            "suggestions": ["Add a statistic about X from a reputable source", "Cite an expert in niche Y", "Include a case study summary"]
+            "suggestions": ["Specific research request 1", "Specific research request 2", "..."]
         }}
         """
         return await self._call_llm(prompt)
 
     async def auto_fix(self, content: str, suggestion: str, strategy: str = 'general', tone: str = 'professional') -> Dict[str, Any]:
         """
-        Automatically fixes content based on a suggestion, respecting strategy and tone.
-        Strictly surgical: Returns ONLY the improved snippet or new section.
+        Surgically fixes content by performing LIVE RESEARCH if data is missing.
+        Ensures 'Authentic Fixes' instead of generic recommendations.
         """
-        app_logger.info(f"Agent: Surgical auto-fix for suggestion: {suggestion}")
+        app_logger.info(f"Agent: Surgical auto-fix (with Grounding) for: {suggestion}")
         
+        # 1. Detect if we need external grounding (stats, facts, citations)
+        needs_research = any(word in suggestion.lower() for word in ['stat', 'data', 'citation', 'cite', 'number', 'figure', 'fact', 'benchmark', 'study'])
+        grounding_context = ""
+        
+        if needs_research:
+            from search_service import search_service
+            app_logger.info(f"Agent: Live Research triggered for grounding: {suggestion}")
+            # Search for the specific fact requested in the suggestion
+            grounding_context = await search_service.search_and_ground(suggestion)
+            
         prompt = f"""
-        Act as a GEO (Generative Engine Optimization) Content Optimizer.
+        Act as a GEO (Generative Engine Optimization) Content Optimizer & Research Assistant.
         
-        GOAL: Generate a SURGICAL FIX for the following suggestion.
+        GOAL: Provide a PROPER AUTHENTIC FIX for the following suggestion.
         STRATEGY: {strategy}
         TONE: {tone}
         
-        CRITICAL SURGICAL RULES:
-        1. Do NOT rewrite the entire article.
-        2. Generate ONLY the specific sentence, paragraph, or section (like a table or FAQ) that addresses the suggestion.
-        3. If the suggestion is to 'Add' something, generate only the new content to be added.
-        4. If the suggestion is to 'Modify' something, provide the improved version of that specific part.
-        5. The output should be a concise snippet, not a bulk of text.
+        RESEARCH DATA (Use this for authentic stats/citations):
+        ---
+        {grounding_context if grounding_context else "No external data found. Use general best practices."}
+        ---
         
-        ANTI-HALLUCINATION:
-        - If the suggestion requires data (stats, numbers), only use data from the content below.
-        - If no data is available in the content, use the [CITATION NEEDED] tag.
+        CRITICAL RULES:
+        1. Generate ONLY the specific sentence, paragraph, or section that addresses the suggestion.
+        2. AUTHENTICITY: Use the RESEARCH DATA above to provide real numbers, dates, and sources.
+        3. Do NOT use placeholders like [CITATION NEEDED] if the RESEARCH DATA provides the answer.
+        4. If no specific data is in the research context, use your internal knowledge to provide 'Industry Standard' estimates but label them clearly as estimates.
+        5. The output should be ready for immediate copy-paste into the article.
         
         SUGGESTION TO APPLY:
         "{suggestion}"
         
-        CONTENT CONTEXT:
+        CONTENT CONTEXT (Where this fix will be inserted):
         ---
-        {content[:3000]}
+        {content[:2000]}
         ---
         
-        Return the response in valid JSON format exactly as follows:
+        Return JSON format:
         {{
-            "optimized_content": "The surgical snippet here...",
-            "changes_made": ["Briefly describe the specific change"],
-            "geo_lift_estimate": "Estimated +X% visibility"
+            "optimized_content": "The actual text fix here...",
+            "explanation": "Briefly explain the source or logic of this fix",
+            "geo_lift_estimate": "Estimated visibility gain %"
         }}
         """
         return await self._call_llm(prompt)
