@@ -928,7 +928,6 @@ function ContentOptimization() {
                                     </p>
                                 </div>
                             </div>
-                        </div>
                     )}
                     {/* History Panel */}
                     <div className="depth-card" style={{ padding: '0', overflow: 'hidden' }}>
@@ -1132,6 +1131,7 @@ function ContentOptimization() {
                         </div>
                     </div>
                 </div>
+            </div>
         </div>
     )
 }
