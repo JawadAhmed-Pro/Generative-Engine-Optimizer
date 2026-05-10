@@ -834,7 +834,7 @@ function ContentOptimization() {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 <div style={{ width: '12px', height: '12px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', borderRadius: '2px' }}></div>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#10b981' }}>ADDED / OPTIMIZED</span>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#10b981' }}>ADDED & OPTIMIZED</span>
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 <div style={{ width: '12px', height: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '2px' }}></div>
@@ -861,9 +861,10 @@ function ContentOptimization() {
                                         )}
                                     </div>
                                 )}
+                            </div>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
 
                 {/* Right Column - Sidebar */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -1131,8 +1132,7 @@ function ContentOptimization() {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div >
+        </div>
     )
 }
 
