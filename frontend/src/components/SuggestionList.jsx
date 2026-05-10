@@ -44,6 +44,18 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
         setActiveDropdown(null)
     }
 
+    const copyAsPlainText = (text) => {
+        // Simple regex to strip basic markdown for plain text copy
+        const plainText = text
+            .replace(/[#*`_~]/g, '') // Remove markdown symbols
+            .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Convert links to just text
+            .replace(/(\r\n|\n|\r)/gm, "\n"); // Normalize newlines
+        
+        navigator.clipboard.writeText(plainText)
+        alert("Plain Text copied to clipboard!")
+        setActiveDropdown(null)
+    }
+
     const downloadAsImage = async (suggestionText) => {
         const el = contentRefs.current[suggestionText]
         if (el) {
@@ -52,7 +64,8 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                     backgroundColor: '#0a0a0a',
                     scale: 2,
                     logging: false,
-                    useCORS: true
+                    useCORS: true,
+                    ignoreElements: (element) => element.tagName === 'BUTTON'
                 })
                 const image = canvas.toDataURL("image/png")
                 const link = document.createElement('a')
@@ -185,10 +198,8 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                                 <div style={{ position: 'relative' }}>
                                                     <button 
                                                         onClick={() => setActiveDropdown(activeDropdown === suggestion.id ? null : suggestion.id)}
+                                                        className="btn btn-outline"
                                                         style={{ 
-                                                            background: 'rgba(255,255,255,0.05)', 
-                                                            border: '1px solid var(--card-border)', 
-                                                            color: 'var(--text-secondary)', 
                                                             cursor: 'pointer',
                                                             display: 'flex',
                                                             alignItems: 'center',
@@ -198,7 +209,7 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                                             borderRadius: '6px'
                                                         }}
                                                     >
-                                                        <Download size={14} /> Export Table <ChevronDown size={14} />
+                                                        <Download size={14} /> Export Options <ChevronDown size={14} />
                                                     </button>
                                                     
                                                     {activeDropdown === suggestion.id && (
@@ -217,24 +228,24 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                                             <button 
                                                                 onClick={() => copyToClipboard(fixes[suggestion.text].optimized_content, "Markdown")}
                                                                 style={{ width: '100%', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', borderBottom: '1px solid var(--card-border)' }}
-                                                                onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                                                                onMouseOut={(e) => e.target.style.background = 'none'}
                                                             >
                                                                 <FileText size={14} /> Copy as Markdown (.md)
                                                             </button>
                                                             <button 
                                                                 onClick={() => copyAsHtml(suggestion.text)}
                                                                 style={{ width: '100%', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', borderBottom: '1px solid var(--card-border)' }}
-                                                                onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                                                                onMouseOut={(e) => e.target.style.background = 'none'}
                                                             >
-                                                                <Code size={14} /> Copy as HTML Table
+                                                                <Code size={14} /> Copy as HTML
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => copyAsPlainText(fixes[suggestion.text].optimized_content)}
+                                                                style={{ width: '100%', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', borderBottom: '1px solid var(--card-border)' }}
+                                                            >
+                                                                <FileText size={14} /> Copy as Plain Text
                                                             </button>
                                                             <button 
                                                                 onClick={() => downloadAsImage(suggestion.text)}
                                                                 style={{ width: '100%', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left' }}
-                                                                onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                                                                onMouseOut={(e) => e.target.style.background = 'none'}
                                                             >
                                                                 <ImageIcon size={14} /> Download as Image
                                                             </button>
