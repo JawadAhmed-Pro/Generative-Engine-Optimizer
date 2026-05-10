@@ -9,6 +9,7 @@ import remarkGfm from 'remark-gfm'
 import html2canvas from 'html2canvas'
 import { useAnalysisState } from '../context/AnalysisContext'
 import { useToast } from '../components/ToastProvider'
+import VisualDiff from '../components/VisualDiff'
 
 const TableWithCopy = ({ children }) => {
     const tableRef = useRef(null)
@@ -134,6 +135,7 @@ function ContentOptimization() {
     const [optimizationAudience, setOptimizationAudience] = useState('intermediate')
     const [optimizationStrength, setOptimizationStrength] = useState(50)
     const [showSplitView, setShowSplitView] = useState(false)
+    const [compareView, setCompareView] = useState('side') // 'side' or 'diff'
     const [additionalInstructions, setAdditionalInstructions] = useState('')
     const [progress, setProgress] = useState(0)
     const [selection, setSelection] = useState({ text: '', top: 0, left: 0, visible: false })
@@ -1647,42 +1649,78 @@ function ContentOptimization() {
                                         </div>
                                     </div>
 
-                                    {/* Side by Side */}
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                        <div className="depth-card" style={{ padding: '2rem', background: 'var(--bg-tertiary)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                                                <div style={{ width: '6px', height: '18px', background: '#ef4444', borderRadius: '4px' }}></div>
-                                                <h4 style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>DRAFT VERSION</h4>
+                                    {viewMode === 'compare' && (
+                                        <div style={{ marginTop: '2rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
+                                                <button 
+                                                    onClick={() => setCompareView('side')}
+                                                    className={`btn ${compareView === 'side' ? 'btn-primary' : 'btn-outline'}`}
+                                                    style={{ padding: '0.5rem 1.5rem', fontSize: '0.8rem', borderRadius: '100px' }}
+                                                >
+                                                    Side by Side
+                                                </button>
+                                                <button 
+                                                    onClick={() => setCompareView('diff')}
+                                                    className={`btn ${compareView === 'diff' ? 'btn-primary' : 'btn-outline'}`}
+                                                    style={{ padding: '0.5rem 1.5rem', fontSize: '0.8rem', borderRadius: '100px' }}
+                                                >
+                                                    Highlight Changes
+                                                </button>
                                             </div>
-                                            <div style={{
-                                                whiteSpace: 'pre-wrap',
-                                                fontSize: '0.95rem',
-                                                lineHeight: '1.7',
-                                                maxHeight: '500px',
-                                                overflowY: 'auto',
-                                                color: '#94a3b8'
-                                            }}>
-                                                {content}
-                                            </div>
+
+                                            {compareView === 'side' ? (
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                                    <div className="depth-card" style={{ padding: '2rem', background: 'var(--bg-tertiary)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                                            <div style={{ width: '6px', height: '18px', background: '#ef4444', borderRadius: '4px' }}></div>
+                                                            <h4 style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>DRAFT VERSION</h4>
+                                                        </div>
+                                                        <div style={{
+                                                            whiteSpace: 'pre-wrap',
+                                                            fontSize: '0.95rem',
+                                                            lineHeight: '1.7',
+                                                            maxHeight: '500px',
+                                                            overflowY: 'auto',
+                                                            color: '#94a3b8'
+                                                        }}>
+                                                            {content}
+                                                        </div>
+                                                    </div>
+                                                    <div className="depth-card" style={{ padding: '2rem', background: 'var(--bg-tertiary)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                                            <div style={{ width: '6px', height: '18px', background: '#10b981', borderRadius: '4px' }}></div>
+                                                            <h4 style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>OPTIMIZED MASTER</h4>
+                                                        </div>
+                                                        <div className="markdown-content" style={{
+                                                            fontSize: '0.95rem',
+                                                            lineHeight: '1.7',
+                                                            maxHeight: '500px',
+                                                            overflowY: 'auto',
+                                                            color: '#f1f5f9'
+                                                        }}>
+                                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                {optimizedContent}
+                                                            </ReactMarkdown>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="depth-card" style={{ padding: '2rem' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <div style={{ width: '12px', height: '12px', background: 'rgba(16, 185, 129, 0.3)', border: '1px solid #10b981', borderRadius: '2px' }}></div>
+                                                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#10b981' }}>ADDED</span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <div style={{ width: '12px', height: '12px', background: 'rgba(239, 68, 68, 0.3)', border: '1px solid #ef4444', borderRadius: '2px' }}></div>
+                                                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444' }}>REMOVED</span>
+                                                        </div>
+                                                    </div>
+                                                    <VisualDiff oldText={content} newText={optimizedContent} />
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="depth-card" style={{ padding: '2rem', background: 'var(--bg-tertiary)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                                                <div style={{ width: '6px', height: '18px', background: '#10b981', borderRadius: '4px' }}></div>
-                                                <h4 style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>OPTIMIZED MASTER</h4>
-                                            </div>
-                                            <div className="markdown-content" style={{
-                                                fontSize: '0.95rem',
-                                                lineHeight: '1.7',
-                                                maxHeight: '500px',
-                                                overflowY: 'auto',
-                                                color: '#f1f5f9'
-                                            }}>
-                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                    {optimizedContent}
-                                                </ReactMarkdown>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
                         </div>

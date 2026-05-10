@@ -108,19 +108,18 @@ class GEOOptimizer:
             section_label = h2_text if has_header else "Introduction (no heading)"
 
             rewrite_prompt = f"""
-            Act as a GEO Content Editor. Your mission is to PERFORM A HIGH-DENSITY REWRITE of the section: '{section_label}'.
+            Act as a Senior GEO Content Architect. Your mission is a RADICAL SEMANTIC ENRICHMENT of the section: '{section_label}'.
             
             PAGE CONTEXT: {json.dumps(page_context)}
             STRATEGY: {strategy}
             TONE: {tone}
             USER INSTRUCTIONS: {additional_instructions or "None"}
             
-            OPTIMIZATION OBJECTIVES:
-            1. EXPANSIVE DETAIL: Do not summarize. Instead, expand on the technical specifications and personal anecdotes to increase 'Information Gain'.
-            2. SEMANTIC ANCHORING: Ensure the content under '{section_label}' remains highly relevant to that specific heading.
-            3. E-E-A-T INTEGRITY: Retain every first-person detail (e.g., the cycling accident, specific phone models). These are unique signals that AI search engines value.
-            4. STRUCTURAL RICHNESS: Use Markdown (tables, bullets, bolding) to make data points "pop" for AI scrapers.
-            5. FACTUAL GROUNDING: Keep all original statistics. If adding context, maintain a high level of factual accuracy.
+            CRITICAL MISSION:
+            1. OPTIMIZATION INTENSITY: You must improve the 'Information Gain' of this section. This means you SHOULD rewrite 40-60% of the sentences to be more descriptive, technical, and semantically rich.
+            2. NO LAZINESS: Do not simply return the original text. If the text is already good, find ways to add expert context, cross-references, or structured data (tables/bullets).
+            3. E-E-A-T PRESERVATION: Keep the personal anecdotes (cycling, phone history) but wrap them in more authoritative language.
+            4. MARKDOWN POWER: Use GFM tables for specs. Use bolding for key entities.
             
             ORIGINAL SECTION CONTENT:
             ---
@@ -129,12 +128,13 @@ class GEOOptimizer:
             
             Return JSON:
             {{
-                "optimized_content": "The detailed, expanded Markdown body text...",
+                "optimized_content": "The significantly improved, expanded Markdown text...",
                 "missing_citations": ["..."],
                 "changes": ["..."]
             }}
             """
-            result = await self._call_llm(rewrite_prompt)
+            # Using higher temperature (0.7) for more creative/significant rewriting
+            result = await self._call_llm(rewrite_prompt, temperature=0.7)
             if not isinstance(result, dict):
                 result = {"optimized_content": str(result) if result else section_content}
                 
@@ -855,17 +855,17 @@ class GEOOptimizer:
             app_logger.error(f"JSON Extraction Failed in Optimizer: {e}")
             return {}
 
-    async def _call_llm(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, prefer_gemini: bool = False) -> Any:
+    async def _call_llm(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, prefer_gemini: bool = False, temperature: float = 0.2) -> Any:
         """Helper to call LLM (Groq or Gemini) with fallback logic."""
         
         # Use Gemini for long generation OR if explicitly requested
         if prefer_gemini or max_tokens > 4096:
-            return await self._call_gemini(prompt, json_mode, max_tokens)
+            return await self._call_gemini(prompt, json_mode, max_tokens, temperature)
         
         # Default to Groq for speed on shorter tasks
-        return await self._call_groq(prompt, json_mode, max_tokens)
+        return await self._call_groq(prompt, json_mode, max_tokens, temperature)
 
-    async def _call_gemini(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096) -> Any:
+    async def _call_gemini(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, temperature: float = 0.2) -> Any:
         """Call Google Gemini API using new SDK."""
         try:
             if not self.gemini_client:
@@ -873,12 +873,12 @@ class GEOOptimizer:
             
             # Configure generation
             config = types.GenerateContentConfig(
-                temperature=0.2,
+                temperature=temperature,
                 max_output_tokens=max_tokens,
                 response_mime_type="application/json" if json_mode else "text/plain"
             )
             
-            app_logger.info(f"Calling Gemini ({settings.GEMINI_MODEL}) for generation...")
+            app_logger.info(f"Calling Gemini ({settings.GEMINI_MODEL}) for generation (Temp: {temperature})...")
             
             # Using the aio (async) client
             response = await self.gemini_client.aio.models.generate_content(
@@ -903,10 +903,10 @@ class GEOOptimizer:
             app_logger.error(f"Gemini Call Failed: {e}. Falling back to Groq.")
             # Fallback to Groq if possible
             if self.groq_api_key:
-                return await self._call_groq(prompt, json_mode, max_tokens)
+                return await self._call_groq(prompt, json_mode, max_tokens, temperature)
             raise e
 
-    async def _call_groq(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096) -> Any:
+    async def _call_groq(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, temperature: float = 0.2) -> Any:
         """Call Groq Llama API."""
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
@@ -917,12 +917,10 @@ class GEOOptimizer:
         payload = {
             "model": settings.GROQ_MODEL,
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.2,
-            "max_tokens": max_tokens
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "response_format": {"type": "json_object"} if json_mode else {"type": "text"}
         }
-        
-        if json_mode:
-            payload["response_format"] = {"type": "json_object"}
         
         try:
             timeout = aiohttp.ClientTimeout(total=180) # Increased to 180s for deep optimization
