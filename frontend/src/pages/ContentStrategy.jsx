@@ -113,76 +113,79 @@ export default function ContentStrategy() {
                         <h2 style={{ fontSize: '1rem', fontWeight: '800', margin: 0, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Discovery Engine</h2>
                     </div>
 
-                    <form onSubmit={handleDiscover} style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5rem', flexWrap: 'wrap' }}>
-                        <div style={{ flex: '2 1 400px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
-                                <Target size={14} color="var(--accent-primary)" />
-                                <span style={{ fontWeight: '700', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>TARGET KEYWORD / TOPIC</span>
-                            </div>
-                            <input
-                                type="text"
-                                value={keyword}
-                                onChange={(e) => setKeyword(e.target.value)}
-                                placeholder="e.g. ai automation tools"
-                                required
-                                style={{
-                                    width: '100%',
-                                    background: 'rgba(0,0,0,0.3)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    borderRadius: '10px',
-                                    padding: '0.85rem 1.25rem',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    outline: 'none'
-                                }}
-                                className="focus-ring"
-                            />
-                        </div>
-
-                        <div style={{ flex: '1 1 200px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
-                                {nicheConfigs[niche]?.icon || <Table size={14} />}
-                                <span style={{ fontWeight: '700', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Industry / Niche</span>
-                            </div>
-                            <div style={{ position: 'relative' }}>
-                                <select
-                                    value={niche}
-                                    onChange={(e) => setNiche(e.target.value)}
+                    <form onSubmit={handleDiscover} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                            <div style={{ flex: '2 1 400px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                                    <Target size={14} color="var(--accent-primary)" />
+                                    <span style={{ fontWeight: '700', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>TARGET KEYWORD / TOPIC</span>
+                                </div>
+                                <input
+                                    type="text"
+                                    value={keyword}
+                                    onChange={(e) => setKeyword(e.target.value)}
+                                    placeholder="e.g. ai automation tools"
+                                    required
                                     style={{
                                         width: '100%',
                                         background: 'rgba(0,0,0,0.3)',
                                         border: '1px solid rgba(255,255,255,0.1)',
                                         borderRadius: '10px',
-                                        padding: '0.85rem 2.5rem 0.85rem 1.25rem',
+                                        padding: '0.85rem 1.25rem',
                                         color: 'white',
                                         fontSize: '1rem',
-                                        outline: 'none',
-                                        appearance: 'none',
-                                        cursor: 'pointer'
+                                        outline: 'none'
                                     }}
                                     className="focus-ring"
-                                >
-                                    <option value="general">General / Blog</option>
-                                    <option value="education">Education</option>
-                                </select>
-                                <ChevronDown size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }} />
+                                />
+                            </div>
+
+                            <div style={{ flex: '1 1 200px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                                    {nicheConfigs[niche]?.icon || <Table size={14} />}
+                                    <span style={{ fontWeight: '700', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Industry / Niche</span>
+                                </div>
+                                <div style={{ position: 'relative' }}>
+                                    <select
+                                        value={niche}
+                                        onChange={(e) => setNiche(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            background: 'rgba(0,0,0,0.3)',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '10px',
+                                            padding: '0.85rem 2.5rem 0.85rem 1.25rem',
+                                            color: 'white',
+                                            fontSize: '1rem',
+                                            outline: 'none',
+                                            appearance: 'none',
+                                            cursor: 'pointer'
+                                        }}
+                                        className="focus-ring"
+                                    >
+                                        <option value="general">General / Blog</option>
+                                        <option value="education">Education</option>
+                                    </select>
+                                    <ChevronDown size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }} />
+                                </div>
                             </div>
                         </div>
 
-                        <div style={{ flex: '0 0 auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
                             <button
                                 type="submit"
                                 disabled={isLoading || !keyword.trim()}
                                 className="btn btn-primary"
                                 style={{ 
-                                    padding: '0.85rem 2rem', 
+                                    padding: '0.85rem 3rem', 
                                     background: 'var(--accent-gradient)', 
                                     border: 'none', 
                                     fontSize: '1rem', 
                                     fontWeight: '700', 
                                     gap: '0.75rem', 
                                     boxShadow: '0 8px 20px -5px rgba(59, 130, 246, 0.4)',
-                                    height: '50px'
+                                    height: '50px',
+                                    minWidth: '280px'
                                 }}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
