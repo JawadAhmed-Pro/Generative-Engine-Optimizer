@@ -108,19 +108,19 @@ class GEOOptimizer:
             section_label = h2_text if has_header else "Introduction (no heading)"
 
             rewrite_prompt = f"""
-            Act as a GEO Content Editor. You are performing a LOSSLESS REWRITE of the section: '{section_label}'.
+            Act as a GEO Content Editor. Your mission is to PERFORM A HIGH-DENSITY REWRITE of the section: '{section_label}'.
             
             PAGE CONTEXT: {json.dumps(page_context)}
             STRATEGY: {strategy}
             TONE: {tone}
             USER INSTRUCTIONS: {additional_instructions or "None"}
             
-            CRITICAL GEO RULES (Fix 1, 2, 4):
-            1. HEADING ANCHORS: Maintain the semantic context of the heading '{section_label}'. It is a distinct anchor for AI scrapers.
-            2. E-E-A-T PRESERVATION: NEVER remove personal anecdotes, first-person experiences, or specific narrative details (e.g., "cycling accident", "iPhone 12 mini"). These are high-value signals for Generative Engines.
-            3. LOSSLESS EXPANSION: The output MUST be equal to or LONGER than the original. Add 20-50% more technical depth and semantic context.
-            4. STRICT MARKDOWN: Use GFM (GitHub Flavored Markdown). Use bullet points, bolding, and tables for technical specs.
-            5. ANTI-HALLUCINATION: Retain original stats. If adding new claims without data, use [CITATION NEEDED].
+            OPTIMIZATION OBJECTIVES:
+            1. EXPANSIVE DETAIL: Do not summarize. Instead, expand on the technical specifications and personal anecdotes to increase 'Information Gain'.
+            2. SEMANTIC ANCHORING: Ensure the content under '{section_label}' remains highly relevant to that specific heading.
+            3. E-E-A-T INTEGRITY: Retain every first-person detail (e.g., the cycling accident, specific phone models). These are unique signals that AI search engines value.
+            4. STRUCTURAL RICHNESS: Use Markdown (tables, bullets, bolding) to make data points "pop" for AI scrapers.
+            5. FACTUAL GROUNDING: Keep all original statistics. If adding context, maintain a high level of factual accuracy.
             
             ORIGINAL SECTION CONTENT:
             ---
@@ -129,16 +129,16 @@ class GEOOptimizer:
             
             Return JSON:
             {{
-                "optimized_section": "The detailed, expanded Markdown body text...",
+                "optimized_content": "The detailed, expanded Markdown body text...",
                 "missing_citations": ["..."],
                 "changes": ["..."]
             }}
             """
             result = await self._call_llm(rewrite_prompt)
             if not isinstance(result, dict):
-                result = {"optimized_section": str(result) if result else section_content}
+                result = {"optimized_content": str(result) if result else section_content}
                 
-            optimized = result.get("optimized_section", section_content)
+            optimized = result.get("optimized_content", section_content)
             
             # Fix 3: Detail-Density Guardrail
             orig_len = len(section_content.split())
