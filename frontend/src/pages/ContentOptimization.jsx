@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { PenTool, Lightbulb, Zap, Sparkles, Download, Copy, Check, Folder, Plus, X, Code2, Info as InfoIcon, History, Link as LinkIcon, TrendingUp, Target, RefreshCw } from 'lucide-react'
+import { PenTool, Lightbulb, Zap, Sparkles, Download, Copy, Check, Folder, Plus, X, Code2, Info as InfoIcon, History, Link as LinkIcon, TrendingUp, Target, RefreshCw, BookOpen, Database, Layers } from 'lucide-react'
 import axios from 'axios'
 import ResultsPanel from '../components/ResultsPanel'
 import ContentExportButton from '../components/ContentExportButton'
@@ -827,18 +827,40 @@ function ContentOptimization() {
                                             {optimizedContent}
                                         </ReactMarkdown>
                                     </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                            <div style={{ width: '12px', height: '12px', background: 'rgba(239, 68, 68, 0.3)', border: '1px solid #ef4444', borderRadius: '2px' }}></div>
-                                                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444' }}>REMOVED</span>
-                                                        </div>
-                                                    </div>
-                                                    <VisualDiff oldText={content} newText={optimizedContent} />
-                                                </div>
-                                            )}
+                                )}
+
+                                {viewMode === 'compare' && (
+                                    <div className="animate-fade-in">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <div style={{ width: '12px', height: '12px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', borderRadius: '2px' }}></div>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#10b981' }}>ADDED / OPTIMIZED</span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <div style={{ width: '12px', height: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '2px' }}></div>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444' }}>REMOVED</span>
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+                                        <VisualDiff oldText={content} newText={optimizedContent} />
+                                    </div>
+                                )}
+
+                                {viewMode === 'analysis' && (
+                                    <div className="animate-fade-in">
+                                        {diagnostics ? (
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                                                <ScoreCard label="Intent Match" value={diagnostics.intent_match_score} icon={<Target />} color="#3b82f6" />
+                                                <ScoreCard label="Readability" value={diagnostics.readability_score} icon={<BookOpen />} color="#10b981" />
+                                                <ScoreCard label="Entity Coverage" value={diagnostics.entity_coverage_pct} icon={<Database />} color="#8b5cf6" />
+                                                <ScoreCard label="Content Depth" value={diagnostics.content_depth_score} icon={<Layers />} color="#f59e0b" />
+                                            </div>
+                                        ) : (
+                                            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-tertiary)' }}>
+                                                {loadingDiagnostics ? 'Analyzing content quality...' : 'Type more content to see real-time diagnostics.'}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                         </div>
                     )}
                 </div>
