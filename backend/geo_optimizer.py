@@ -108,20 +108,19 @@ class GEOOptimizer:
             section_label = h2_text if has_header else "Introduction (no heading)"
 
             rewrite_prompt = f"""
-            Act as a GEO Content Editor. You are performing a LOSSLESS REWRITE of ONE section of an article.
+            Act as a GEO Content Editor. You are performing a LOSSLESS REWRITE of the section: '{section_label}'.
             
             PAGE CONTEXT: {json.dumps(page_context)}
-            SECTION HEADING: {section_label}
             STRATEGY: {strategy}
             TONE: {tone}
             USER INSTRUCTIONS: {additional_instructions or "None"}
             
-            CRITICAL INSTRUCTIONS:
-            1. DO NOT SUMMARIZE. The output must be equal to or LONGER than the original section.
-            2. RETAIN ALL DATA: Every statistic, technical spec, and personal anecdote MUST be preserved.
-            3. INFORMATION GAIN: Expand on the points to add more depth, semantic richness, and context.
-            4. DO NOT include the section heading in your output.
-            5. ANTI-HALLUCINATION: Use only provided facts or add [CITATION NEEDED] tags.
+            CRITICAL GEO RULES (Fix 1, 2, 4):
+            1. HEADING ANCHORS: Maintain the semantic context of the heading '{section_label}'. It is a distinct anchor for AI scrapers.
+            2. E-E-A-T PRESERVATION: NEVER remove personal anecdotes, first-person experiences, or specific narrative details (e.g., "cycling accident", "iPhone 12 mini"). These are high-value signals for Generative Engines.
+            3. LOSSLESS EXPANSION: The output MUST be equal to or LONGER than the original. Add 20-50% more technical depth and semantic context.
+            4. STRICT MARKDOWN: Use GFM (GitHub Flavored Markdown). Use bullet points, bolding, and tables for technical specs.
+            5. ANTI-HALLUCINATION: Retain original stats. If adding new claims without data, use [CITATION NEEDED].
             
             ORIGINAL SECTION CONTENT:
             ---
@@ -130,7 +129,7 @@ class GEOOptimizer:
             
             Return JSON:
             {{
-                "optimized_section": "The detailed, expanded body text...",
+                "optimized_section": "The detailed, expanded Markdown body text...",
                 "missing_citations": ["..."],
                 "changes": ["..."]
             }}
@@ -141,33 +140,29 @@ class GEOOptimizer:
                 
             optimized = result.get("optimized_section", section_content)
             
+            # Fix 3: Detail-Density Guardrail
+            orig_len = len(section_content.split())
+            new_len = len(optimized.split())
+            if new_len < (orig_len * 0.8) and orig_len > 20:
+                all_changes.append(f"GUARDRAIL: Section '{section_label}' was compressed by >20%. Retention may be low.")
+            
             if has_header:
-                # REFINED STRIPPING: LLMs often repeat the heading even when told not to.
-                # We need to be very aggressive in stripping it from the 'optimized' body.
-                heading_text_clean = re.sub(r'[#\s\d\.]+', '', h2_text).lower().strip()
-                
+                # Strip accidentally repeated headings
                 lines = optimized.split('\n')
-                if lines:
-                    first_line_clean = re.sub(r'[#\s\d\.]+', '', lines[0]).lower().strip()
-                    # If first line matches the heading, drop it
-                    if first_line_clean == heading_text_clean or (len(first_line_clean) > 5 and first_line_clean in heading_text_clean):
-                        optimized = '\n'.join(lines[1:]).strip()
-                    # Also handle case where LLM wraps it in ##
-                    elif lines[0].strip().startswith('##'):
-                         optimized = '\n'.join(lines[1:]).strip()
-
+                if lines and (lines[0].strip().startswith('#') or lines[0].strip().lower() in h2_text.lower()):
+                    optimized = '\n'.join(lines[1:]).strip()
+                
                 processed_sections.append(h2_text.strip() + "\n\n" + optimized.strip())
             else:
-                # Intro section — no heading to prepend
                 processed_sections.append(optimized.strip())
             
             all_missing_citations.extend(result.get("missing_citations", []))
             all_changes.extend(result.get("changes", []))
 
-        # 4. Join and Clean (Removed Global Audit to prevent compression)
+        # 4. Join and Finalize
         full_content = "\n\n".join(processed_sections)
         full_content = self._remove_duplicate_headings(full_content)
-
+        
         # 5. Final Scoring
         structural = self.get_structural_score(full_content)
         semantic = await self.get_semantic_score(full_content)
@@ -176,15 +171,13 @@ class GEOOptimizer:
         new_entities = self._extract_entities(full_content)
         hallucinated = [ent for ent in new_entities if ent not in page_context["allowed_entity_pool"]]
         if hallucinated:
-            all_changes.append(f"WARNING: Hallucinated entities detected: {hallucinated}")
+            all_changes.append(f"WARNING: Potential new entities detected: {hallucinated}")
 
         # 7. Extract Citation Flags
         final_clean_content, citation_warnings = self.extract_citation_flags(full_content)
 
-        # 8. Phase B Improvement: Entity Linking & Schema Generation
+        # 8. Entity Linking & Schema Generation
         linked_entities = await self._link_entities(new_entities)
-        
-        # NEW: Apply active hyperlinks for citation readiness
         final_clean_content = self._apply_entity_links(final_clean_content, linked_entities)
 
         seo_meta = await self._generate_seo_metadata(final_clean_content)
@@ -192,10 +185,7 @@ class GEOOptimizer:
         schema_result = schema_generator.generate_schema(
             final_clean_content,
             content_type=schema_data,
-            metadata={
-                "title": seo_meta.get("title"),
-                "entities": linked_entities
-            }
+            metadata={"title": seo_meta.get("title"), "entities": linked_entities}
         )
 
         return {
