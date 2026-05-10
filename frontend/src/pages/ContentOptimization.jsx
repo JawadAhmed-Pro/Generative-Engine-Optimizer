@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { PenTool, Lightbulb, Zap, Sparkles, Download, Copy, Check, Folder, Plus, X, Code2, Info as InfoIcon, History, Link as LinkIcon, TrendingUp, Target, RefreshCw, BookOpen, Database, Layers } from 'lucide-react'
+import { PenTool, Lightbulb, Zap, Sparkles, Download, Copy, Check, Folder, Plus, X, Code2, Info as InfoIcon, History, Link as LinkIcon, TrendingUp, Target, RefreshCw } from 'lucide-react'
 import axios from 'axios'
 import ResultsPanel from '../components/ResultsPanel'
 import ContentExportButton from '../components/ContentExportButton'
@@ -601,270 +601,1138 @@ function ContentOptimization() {
         }
     }
 
-    const ScoreCard = ({ label, value, icon, color }) => (
-        <div className="depth-card" style={{ padding: '1.5rem', textAlign: 'center', border: `1px solid ${color}22` }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: 'var(--text-tertiary)' }}>
-                {React.cloneElement(icon, { size: 14, color })}
-                <span style={{ fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
-            </div>
-            <div style={{ fontSize: '2.2rem', fontWeight: '900', color: color }}>{value}</div>
-        </div>
-    );
-
-    const tabBtnStyle = (active) => ({
-        background: 'none',
-        border: 'none',
-        padding: '0.5rem 0',
-        fontSize: '0.85rem',
-        fontWeight: '800',
-        color: active ? 'white' : 'var(--text-tertiary)',
-        borderBottom: active ? '2px solid var(--accent-primary)' : '2px solid transparent',
-        cursor: 'pointer',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        transition: 'all 0.2s'
-    });
-
     return (
-        <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-            {/* Header Area */}
-            <div style={{ marginBottom: '3rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                    <Sparkles size={20} color="var(--accent-primary)" />
-                    <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-                        Enrichment Engine v3.0
-                    </span>
+        <div className="animate-fade-in">
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', marginTop: '0', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <Sparkles size={24} color="var(--accent-primary)" />
+                        <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+                            GEO Perception Layer
+                        </span>
+                    </div>
+                    <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '0.5rem', letterSpacing: '-0.04em' }}>
+                        Content Optimization
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+                        Rewrite and generate high-ranking, AI-native content
+                    </p>
                 </div>
-                <h1 style={{ fontSize: '2.5rem', fontWeight: '800', letterSpacing: '-0.04em', margin: 0 }}>
-                    Content Optimization Workbench
-                </h1>
-                <p style={{ color: 'var(--text-tertiary)', fontSize: '1.1rem', marginTop: '0.5rem' }}>
-                    Apply lossless expansion and semantic anchors to transform drafts into AI-citable masterpieces.
-                </p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-                
-                {/* TOP SECTION: THE WORKBENCH */}
-                <div className="depth-card" style={{ padding: '2.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--card-border)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <PenTool size={20} color="var(--accent-primary)" />
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
-                                {activeTab === 'generate' ? 'Topic Generation' : activeTab === 'schema' ? 'Schema Drafting' : 'Content Drafting'}
-                            </h2>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                <button
+                    onClick={() => updateOptimization({ activeTab: 'rewrite' })}
+                    className={`btn ${activeTab === 'rewrite' ? 'btn-primary' : 'btn-outline'}`}
+                    style={{
+                        gap: '0.6rem',
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '100px',
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        boxShadow: activeTab === 'rewrite' ? '0 8px 20px rgba(59, 130, 246, 0.3)' : 'none'
+                    }}
+                >
+                    <PenTool size={18} /> Rewrite Content
+                </button>
+                <button
+                    onClick={() => updateOptimization({ activeTab: 'generate' })}
+                    className={`btn ${activeTab === 'generate' ? 'btn-primary' : 'btn-outline'}`}
+                    style={{
+                        gap: '0.6rem',
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '100px',
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        boxShadow: activeTab === 'generate' ? '0 8px 20px rgba(59, 130, 246, 0.3)' : 'none'
+                    }}
+                >
+                    <Lightbulb size={18} /> Generate from Idea
+                </button>
+                <button
+                    onClick={() => updateOptimization({ activeTab: 'schema' })}
+                    className={`btn ${activeTab === 'schema' ? 'btn-primary' : 'btn-outline'}`}
+                    style={{
+                        gap: '0.6rem',
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '100px',
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        boxShadow: activeTab === 'schema' ? '0 8px 20px rgba(59, 130, 246, 0.3)' : 'none'
+                    }}
+                >
+                    <Code2 size={18} /> Generate Schema
+                </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '1.5rem' }}>
+                {/* Left Column - Input */}
+                <div>
+                    {/* Diagnostic Bar */}
+                    {diagnostics && activeTab !== 'schema' && (
+                        <div className="glass-card animate-fade-in" style={{
+                            marginBottom: '1rem',
+                            padding: '1rem 1.5rem',
+                            background: 'rgba(15, 23, 42, 0.6)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                            display: 'flex',
+                            gap: '1.5rem',
+                            alignItems: 'center',
+                            overflowX: 'auto'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Intent Match</div>
+                                <div style={{ fontSize: '1rem', fontWeight: '800', color: diagnostics.intent_match_score > 70 ? 'var(--success)' : 'var(--warning)' }}>{diagnostics.intent_match_score}%</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Readability</div>
+                                <div style={{ fontSize: '1rem', fontWeight: '800', color: diagnostics.readability_score > 70 ? 'var(--success)' : 'var(--warning)' }}>{diagnostics.readability_score}%</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Entity Coverage</div>
+                                <div style={{ fontSize: '1rem', fontWeight: '800', color: diagnostics.entity_coverage_pct > 70 ? 'var(--success)' : 'var(--warning)' }}>{diagnostics.entity_coverage_pct}%</div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>GEO Potential</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--accent-primary)', textShadow: '0 0 10px rgba(59, 130, 246, 0.5)' }}>{diagnostics.geo_potential_score}%</div>
+                            </div>
+                            {diagnostics.redundancy_detection?.length > 0 && (
+                                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.3rem 0.75rem', borderRadius: '100px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                                    <InfoIcon size={14} color="#ef4444" />
+                                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444' }}>{diagnostics.redundancy_detection.length} Redundancies Found</span>
+                                </div>
+                            )}
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-tertiary)', padding: '4px', borderRadius: '8px' }}>
-                            {['rewrite', 'generate', 'schema'].map((t) => (
+                    )}
+
+                    <div className="depth-card" style={{ padding: '1.5rem' }}>
+                        <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <span style={{ fontSize: '1.1rem', fontWeight: '700', letterSpacing: '-0.02em' }}>
+                                    {activeTab === 'generate' ? 'Topic Idea' : 'Source Content'}
+                                </span>
                                 <button
-                                    key={t}
-                                    onClick={() => updateOptimization({ activeTab: t })}
+                                    onClick={() => setShowUrlImport(!showUrlImport)}
+                                    className="btn btn-outline"
                                     style={{
-                                        padding: '0.4rem 1rem',
+                                        padding: '0.35rem 0.75rem',
+                                        fontSize: '0.75rem',
+                                        gap: '0.4rem',
+                                        height: 'auto',
                                         borderRadius: '6px',
-                                        fontSize: '0.7rem',
-                                        fontWeight: '800',
-                                        background: activeTab === t ? 'var(--accent-primary)' : 'transparent',
-                                        color: activeTab === t ? 'white' : 'var(--text-tertiary)',
-                                        border: 'none',
-                                        textTransform: 'uppercase',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
+                                        borderColor: 'var(--card-border)',
+                                        display: activeTab === 'schema' ? 'none' : 'flex'
                                     }}
+                                    title="Import from URL"
                                 >
-                                    {t}
+                                    <LinkIcon size={14} /> Import URL
                                 </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2.5rem' }}>
-                        {/* EDITOR AREA */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div style={{ position: 'relative' }}>
-                                <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                    {activeTab === 'generate' ? 'DESCRIBE YOUR IDEA / KEYWORDS' : 'ORIGINAL CONTENT DRAFT'}
-                                </label>
-                                <textarea
-                                    value={content}
-                                    onChange={(e) => updateOptimization({ content: e.target.value })}
-                                    placeholder={activeTab === 'generate' ? "e.g. 'Write a guide about iPhone 15 features'..." : "Paste your draft here..."}
-                                    style={{
-                                        ...inputStyle,
-                                        height: '450px',
-                                        fontSize: '1rem',
-                                        lineHeight: '1.7',
-                                        padding: '1.75rem',
-                                        background: 'var(--bg-tertiary)',
-                                        border: '1px solid var(--card-border)',
-                                        fontFamily: 'Inter, sans-serif'
-                                    }}
-                                />
-                                {loading && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        inset: 0,
-                                        background: 'rgba(15, 23, 42, 0.85)',
-                                        backdropFilter: 'blur(8px)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        borderRadius: '12px',
-                                        zIndex: 10
-                                    }}>
-                                        <RefreshCw className="animate-spin" size={40} color="var(--accent-primary)" />
-                                        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-                                            <div style={{ fontWeight: '900', color: 'white', fontSize: '1.2rem', letterSpacing: '0.05em' }}>AI ENRICHMENT ACTIVE</div>
-                                            <div style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', marginTop: '0.5rem' }}>Injecting E-E-A-T anchors...</div>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
-
-                            <button 
-                                onClick={activeTab === 'schema' ? handleGenerateSchema : handleOptimize}
-                                disabled={loading || schemaLoading || !content.trim()}
-                                className="btn btn-primary"
-                                style={{ height: '64px', fontSize: '1.1rem', fontWeight: '900', boxShadow: '0 12px 40px rgba(59, 130, 246, 0.25)' }}
+                            <select
+                                value={contentType}
+                                onChange={(e) => updateOptimization({ contentType: e.target.value })}
+                                style={{
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid var(--card-border)',
+                                    color: 'var(--text-primary)',
+                                    padding: '0.4rem 2.5rem 0.4rem 1rem',
+                                    borderRadius: '8px',
+                                    outline: 'none',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    appearance: 'none',
+                                    WebkitAppearance: 'none',
+                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundPosition: 'right 0.75rem center',
+                                    backgroundSize: '1rem'
+                                }}
                             >
-                                <Zap size={22} fill="currentColor" style={{ marginRight: '8px' }} />
-                                {activeTab === 'rewrite' ? 'REWRITE & ENRICH' : activeTab === 'generate' ? 'GENERATE MASTERPIECE' : 'GENERATE SCHEMA'}
-                            </button>
+                                <option value="general">General / Blog</option>
+                                <option value="educational">Educational</option>
+                            </select>
                         </div>
 
-                        {/* SETTINGS SIDEBAR */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.75rem', borderRadius: '16px', border: '1px solid var(--card-border)' }}>
-                                <h4 style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-tertiary)', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Optimization Controls</h4>
-                                
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-tertiary)', marginBottom: '0.6rem', fontWeight: '800' }}>CORE STRATEGY</label>
-                                        <select value={optimizationStrategy} onChange={(e) => setOptimizationStrategy(e.target.value)} style={{ ...inputStyle, height: '44px', fontSize: '0.85rem' }}>
-                                            <option value="general">Standard GEO</option>
-                                            <option value="authority_boost">Authority Boost</option>
-                                            <option value="semantic_expansion">Semantic Expansion</option>
-                                            <option value="technical">Technical Depth</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-tertiary)', marginBottom: '0.6rem', fontWeight: '800' }}>TARGET AUDIENCE</label>
-                                        <select value={optimizationAudience} onChange={(e) => setOptimizationAudience(e.target.value)} style={{ ...inputStyle, height: '44px', fontSize: '0.85rem' }}>
-                                            <option value="beginner">Beginner</option>
-                                            <option value="intermediate">Intermediate</option>
-                                            <option value="expert">Executive/Expert</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-tertiary)', marginBottom: '0.6rem', fontWeight: '800' }}>CUSTOM INSTRUCTIONS</label>
-                                        <textarea 
-                                            value={additionalInstructions}
-                                            onChange={(e) => setAdditionalInstructions(e.target.value)}
-                                            placeholder="e.g. 'Never remove personal anecdotes', 'Keep H2 structure'..."
-                                            style={{ ...inputStyle, height: '100px', fontSize: '0.8rem', padding: '0.75rem', resize: 'none' }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div style={{ background: 'rgba(16, 185, 129, 0.03)', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                                    <Sparkles size={14} color="#10b981" />
-                                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#10b981' }}>GEO STATUS</span>
-                                </div>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', lineHeight: '1.6', margin: 0 }}>
-                                    Our engine enforces <strong>Lossless Expansion</strong>, ensuring personal anecdotes and technical data are preserved and enriched.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* BOTTOM SECTION: RESULTS HUB */}
-                {(optimizedContent || analysisResults || schemaResult) && (
-                    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                        
-                        {/* SCORE STRIP */}
-                        {analysisResults && (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
-                                <ScoreCard label="Visibility Lift" value={`${analysisResults.scores?.geo_lift || 85}%`} icon={<TrendingUp />} color="var(--accent-primary)" />
-                                <ScoreCard label="Word Count" value={(optimizedContent || '').split(/\s+/).filter(Boolean).length} icon={<PenTool />} color="white" />
-                                <ScoreCard label="Semantic Depth" value="High" icon={<Sparkles />} color="#10b981" />
-                                <ScoreCard label="E-E-A-T Signal" value="Strong" icon={<Target />} color="#f59e0b" />
-                            </div>
-                        )}
-
-                        {/* MAIN RESULT HUB */}
-                        <div className="depth-card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--card-border)', padding: 0, overflow: 'hidden' }}>
-                            <div style={{ padding: '1.5rem 2.5rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', gap: '1.5rem' }}>
-                                    <button onClick={() => setViewMode('result')} style={tabBtnStyle(viewMode === 'result')}>Masterpiece</button>
-                                    <button onClick={() => setViewMode('compare')} style={tabBtnStyle(viewMode === 'compare')}>Diff Analysis</button>
-                                    <button onClick={() => setViewMode('analysis')} style={tabBtnStyle(viewMode === 'analysis')}>SEO Diagnostics</button>
-                                </div>
-                                <div style={{ display: 'flex', gap: '1rem' }}>
-                                    <ContentExportButton content={optimizedContent} />
-                                    <button 
-                                        className="btn btn-outline" 
-                                        style={{ height: '36px', fontSize: '0.75rem' }}
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(optimizedContent);
-                                            toast.success("Copied to clipboard!");
+                        {showUrlImport && (
+                            <div className="glass-card animate-fade-in" style={{
+                                padding: '1rem',
+                                marginBottom: '1.5rem',
+                                background: '#111827',
+                                border: '1px solid rgba(59, 130, 246, 0.3)',
+                                borderRadius: '12px'
+                            }}>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <input
+                                        type="url"
+                                        placeholder="https://example.com/product"
+                                        value={importUrl}
+                                        onChange={(e) => setImportUrl(e.target.value)}
+                                        style={{
+                                            flex: 1,
+                                            background: 'var(--bg-tertiary)',
+                                            border: '1px solid var(--card-border)',
+                                            color: 'white',
+                                            padding: '0.75rem 1rem',
+                                            borderRadius: '8px',
+                                            fontSize: '0.9rem',
+                                            outline: 'none'
                                         }}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleImportUrl()}
+                                    />
+                                    <button
+                                        onClick={handleImportUrl}
+                                        disabled={importLoading || !importUrl.trim()}
+                                        className="btn btn-primary"
+                                        style={{ padding: '0.75rem 1.5rem', fontSize: '0.9rem' }}
                                     >
-                                        Copy Markdown
+                                        {importLoading ? 'Fetching...' : 'Import'}
                                     </button>
                                 </div>
                             </div>
+                        )}
 
-                            <div style={{ padding: '3rem' }}>
-                                {viewMode === 'result' && (
-                                    <div className="markdown-content animate-fade-in" style={{ fontSize: '1.1rem', lineHeight: '1.8' }}>
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ table: TableWithCopy }}>
-                                            {optimizedContent}
-                                        </ReactMarkdown>
+                        <div style={{ position: 'relative', marginBottom: '1.5rem', display: activeTab === 'schema' ? 'none' : 'block' }}>
+                            <textarea
+                                ref={editorRef}
+                                value={content}
+                                onChange={(e) => updateOptimization({ content: e.target.value })}
+                                onMouseUp={handleTextSelection}
+                                placeholder={activeTab === 'generate'
+                                    ? "Enter your topic, key points, or content idea here. We will generate a comprehensive, high-ranking article..."
+                                    : "Paste your existing draft here. We will restructure it, enhance E-E-A-T signals, and optimize for query intent..."
+                                }
+                                style={{
+                                    width: '100%',
+                                    minHeight: '440px',
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid var(--card-border)',
+                                    borderRadius: '12px',
+                                    padding: '1.25rem',
+                                    color: 'var(--text-primary)',
+                                    fontFamily: 'Inter, sans-serif',
+                                    fontSize: '0.95rem',
+                                    lineHeight: '1.6',
+                                    resize: 'vertical',
+                                    outline: 'none',
+                                    boxShadow: (content && activeTab === 'generate' && !analysisResults) ? '0 0 0 2px var(--accent-primary)' : 'none',
+                                    transition: 'all 0.3s ease',
+                                    display: activeTab === 'schema' ? 'none' : 'block'
+                                }}
+                            />
+
+                            {/* Floating Toolbar */}
+                            {selection.visible && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: `${selection.top}px`,
+                                    left: `${selection.left}px`,
+                                    transform: 'translateX(-50%)',
+                                    zIndex: 1000,
+                                    background: '#0a0a0f',
+                                    border: '1px solid var(--accent-primary)',
+                                    borderRadius: '8px',
+                                    padding: '4px',
+                                    display: 'flex',
+                                    gap: '4px',
+                                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                                    animation: 'pop-in 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                                }}>
+                                    <button onClick={() => handleSnippetAction('expand')} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem', gap: '4px' }}>
+                                        <Plus size={12} /> Expand
+                                    </button>
+                                    <button onClick={() => handleSnippetAction('simplify')} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem', gap: '4px' }}>
+                                        <X size={12} /> Simplify
+                                    </button>
+                                    <button onClick={() => handleSnippetAction('authoritative')} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem', gap: '4px' }}>
+                                        <Target size={12} /> Authority
+                                    </button>
+                                    <button onClick={() => handleSnippetAction('answer_format')} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem', gap: '4px' }}>
+                                        <Sparkles size={12} /> AI Answer
+                                    </button>
+                                </div>
+                            )}
+                            {content && activeTab === 'generate' && !analysisResults && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    background: 'var(--accent-primary)',
+                                    color: 'white',
+                                    padding: '1rem 1.5rem',
+                                    borderRadius: '100px',
+                                    fontSize: '0.9rem',
+                                    fontWeight: '700',
+                                    pointerEvents: 'none',
+                                    boxShadow: '0 10px 30px rgba(59, 130, 246, 0.4)',
+                                    zIndex: 10,
+                                    width: 'max-content',
+                                    animation: 'pulse 2s infinite'
+                                }} className="hide-mobile">
+                                    ✨ Prompt Loaded! Ready to Generate?
+                                </div>
+                            )}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '1.25rem',
+                                right: '1.25rem',
+                                fontSize: '0.75rem',
+                                color: 'var(--text-tertiary)',
+                                fontWeight: '600',
+                                background: 'var(--bg-tertiary)',
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '6px',
+                                pointerEvents: 'none',
+                                border: '1px solid var(--card-border)'
+                            }}>
+                                {content.length.toLocaleString()} characters
+                            </div>
+                        </div>
+
+                        {activeTab !== 'schema' && (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                fontSize: '0.875rem',
+                                color: 'var(--text-secondary)',
+                                marginBottom: '1rem'
+                            }}>
+                                <InfoIcon size={14} /> Paste the full text you want to improve. Markdown is supported.
+                            </div>
+                        )}
+
+                        {/* Project Selector - Hide for schema */}
+                        {activeTab !== 'schema' && (
+                            <div style={{ marginBottom: '1.25rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                    <Folder size={16} color="var(--accent-primary)" />
+                                    <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Assign to Project (Optional)</span>
+                                </div>
+
+                                {showCreateProject ? (
+                                    <div style={{ display: 'flex', gap: '0.75rem' }} className="animate-fade-in">
+                                        <input
+                                            type="text"
+                                            value={newProjectName}
+                                            onChange={(e) => setNewProjectName(e.target.value)}
+                                            placeholder="Enter project name..."
+                                            autoFocus
+                                            style={{
+                                                flex: 1,
+                                                background: 'var(--bg-tertiary)',
+                                                border: '1px solid var(--card-border)',
+                                                color: 'var(--text-primary)',
+                                                padding: '0.6rem 1rem',
+                                                borderRadius: '8px',
+                                                outline: 'none',
+                                                fontSize: '0.9rem'
+                                            }}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleCreateProject()}
+                                        />
+                                        <button
+                                            onClick={handleCreateProject}
+                                            disabled={creatingProject || !newProjectName.trim()}
+                                            className="btn btn-primary"
+                                            style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
+                                        >
+                                            {creatingProject ? '...' : 'Create'}
+                                        </button>
+                                        <button
+                                            onClick={() => { setShowCreateProject(false); setNewProjectName(''); }}
+                                            className="btn btn-outline"
+                                            style={{ padding: '0.6rem', fontSize: '0.85rem', borderRadius: '8px' }}
+                                        >
+                                            <X size={18} />
+                                        </button>
                                     </div>
-                                )}
-
-                                {viewMode === 'compare' && (
-                                    <div className="animate-fade-in">
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <div style={{ width: '12px', height: '12px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', borderRadius: '2px' }}></div>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#10b981' }}>ADDED & OPTIMIZED</span>
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <div style={{ width: '12px', height: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '2px' }}></div>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444' }}>REMOVED</span>
-                                            </div>
-                                        </div>
-                                        <VisualDiff oldText={content} newText={optimizedContent} />
-                                    </div>
-                                )}
-
-                                {viewMode === 'analysis' && (
-                                    <div className="animate-fade-in">
-                                        {diagnostics ? (
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-                                                <ScoreCard label="Intent Match" value={diagnostics.intent_match_score} icon={<Target />} color="#3b82f6" />
-                                                <ScoreCard label="Readability" value={diagnostics.readability_score} icon={<BookOpen />} color="#10b981" />
-                                                <ScoreCard label="Entity Coverage" value={diagnostics.entity_coverage_pct} icon={<Database />} color="#8b5cf6" />
-                                                <ScoreCard label="Content Depth" value={diagnostics.content_depth_score} icon={<Layers />} color="#f59e0b" />
-                                            </div>
-                                        ) : (
-                                            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-tertiary)' }}>
-                                                {loadingDiagnostics ? 'Analyzing content quality...' : 'Type more content to see real-time diagnostics.'}
-                                            </div>
-                                        )}
+                                ) : (
+                                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                        <select
+                                            value={selectedProject}
+                                            onChange={(e) => setSelectedProject(e.target.value)}
+                                            style={{
+                                                flex: 1,
+                                                background: 'var(--bg-tertiary)',
+                                                border: '1px solid var(--card-border)',
+                                                color: 'var(--text-primary)',
+                                                padding: '0.6rem 2.5rem 0.6rem 1rem',
+                                                borderRadius: '8px',
+                                                outline: 'none',
+                                                fontSize: '0.9rem',
+                                                cursor: 'pointer',
+                                                appearance: 'none',
+                                                WebkitAppearance: 'none',
+                                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                                                backgroundRepeat: 'no-repeat',
+                                                backgroundPosition: 'right 0.75rem center',
+                                                backgroundSize: '1rem'
+                                            }}
+                                        >
+                                            <option value="">No project (standalone)</option>
+                                            {projects.map(p => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            onClick={() => setShowCreateProject(true)}
+                                            className="btn btn-outline"
+                                            style={{
+                                                padding: '0.6rem 1rem',
+                                                fontSize: '0.85rem',
+                                                borderRadius: '8px',
+                                                borderColor: 'rgba(255,255,255,0.15)'
+                                            }}
+                                            title="Create new project"
+                                        >
+                                            <Plus size={18} />
+                                        </button>
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        )}
+
+                        {/* Keyword Suggestions Panel - Show only for rewrite/generate modes */}
+                        {activeTab !== 'schema' && content.length > 100 && (
+                            <div style={{
+                                marginBottom: '1.5rem',
+                                padding: '1.25rem',
+                                background: '#111827',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(59, 130, 246, 0.3)'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                                    <Sparkles size={18} color="var(--accent-primary)" />
+                                    <span style={{ fontSize: '1rem', fontWeight: '700', letterSpacing: '-0.01em' }}>Target Keywords</span>
+                                    {keywordsLoading && (
+                                        <div className="shimmer" style={{ width: '80px', height: '14px', borderRadius: '4px', marginLeft: 'auto' }}></div>
+                                    )}
+                                </div>
+
+                                {keywords && (
+                                    <>
+                                        {/* Primary Keyword */}
+                                        <div style={{ marginBottom: '1.25rem' }}>
+                                            <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '0.5rem' }}>
+                                                PRIMARY TARGET
+                                            </span>
+                                            <button
+                                                onClick={() => setSelectedKeyword(keywords.primary_keyword)}
+                                                style={{
+                                                    padding: '0.6rem 1.25rem',
+                                                    background: selectedKeyword === keywords.primary_keyword ? 'linear-gradient(135deg, var(--accent-primary) 0%, #2563eb 100%)' : 'var(--bg-tertiary)',
+                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                    borderRadius: '100px',
+                                                    color: 'white',
+                                                    fontSize: '0.9rem',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '600',
+                                                    boxShadow: selectedKeyword === keywords.primary_keyword ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                {keywords.primary_keyword}
+                                            </button>
+                                        </div>
+
+                                        {/* Secondary Keywords */}
+                                        {keywords.secondary_keywords?.length > 0 && (
+                                            <div style={{ marginBottom: '1.25rem' }}>
+                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '0.5rem' }}>
+                                                    SECONDARY KEYWORDS
+                                                </span>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
+                                                    {keywords.secondary_keywords.map((kw, i) => (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => setSelectedKeyword(kw)}
+                                                            style={{
+                                                                padding: '0.4rem 1rem',
+                                                                background: selectedKeyword === kw ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
+                                                                border: '1px solid rgba(255,255,255,0.08)',
+                                                                borderRadius: '100px',
+                                                                color: selectedKeyword === kw ? 'white' : 'var(--text-secondary)',
+                                                                fontSize: '0.8rem',
+                                                                cursor: 'pointer',
+                                                                transition: 'all 0.2s ease'
+                                                            }}
+                                                        >
+                                                            {kw}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
+                                {/* Custom Keyword Input */}
+                                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                                    <input
+                                        type="text"
+                                        value={customKeyword}
+                                        onChange={(e) => setCustomKeyword(e.target.value)}
+                                        placeholder="Add custom keyword..."
+                                        style={{
+                                            flex: 1,
+                                            background: 'var(--bg-tertiary)',
+                                            border: '1px solid var(--card-border)',
+                                            color: 'var(--text-primary)',
+                                            padding: '0.6rem 1rem',
+                                            borderRadius: '8px',
+                                            outline: 'none',
+                                            fontSize: '0.85rem'
+                                        }}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' && customKeyword.trim()) setSelectedKeyword(customKeyword) }}
+                                    />
+                                    <button
+                                        onClick={() => { if (customKeyword.trim()) setSelectedKeyword(customKeyword) }}
+                                        className="btn btn-outline"
+                                        style={{ padding: '0.6rem 1rem', fontSize: '0.85rem' }}
+                                        disabled={!customKeyword.trim()}
+                                    >
+                                        Use
+                                    </button>
+                                </div>
+
+                                {selectedKeyword && (
+                                    <div style={{
+                                        marginTop: '1.25rem',
+                                        padding: '0.75rem 1rem',
+                                        background: '#0a1d15',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                                        fontSize: '0.85rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem'
+                                    }}>
+                                        <Check size={16} color="var(--success)" />
+                                        <span>Targeting: <strong style={{ color: 'var(--success)' }}>{selectedKeyword}</strong></span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Target Engine Selector */}
+                        {activeTab !== 'schema' && (
+                            <div style={{
+                                marginBottom: '1.5rem',
+                                padding: '1.25rem',
+                                background: 'var(--bg-secondary)',
+                                borderRadius: '12px',
+                                border: '1px solid var(--card-border)'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                                    <Sparkles size={18} color="var(--accent-primary)" />
+                                    <span style={{ fontWeight: '700', fontSize: '0.95rem', letterSpacing: '0.02em' }}>Target Engine</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    {[
+                                        { id: 'perplexity', label: 'Perplexity' },
+                                        { id: 'chatgpt', label: 'ChatGPT' },
+                                        { id: 'google_sge', label: 'Google SGE' }
+                                    ].map(engine => (
+                                        <button
+                                            key={engine.id}
+                                            onClick={() => setTargetEngine(engine.id)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '0.6rem',
+                                                borderRadius: '8px',
+                                                border: targetEngine === engine.id ? '1px solid var(--accent-primary)' : '1px solid var(--card-border)',
+                                                background: targetEngine === engine.id ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-tertiary)',
+                                                color: targetEngine === engine.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                                fontSize: '0.85rem',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            {engine.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Smart Injection Panel - RESTORED PHASE 2 */}
+                        {activeTab !== 'schema' && (
+                            <div style={{
+                                marginBottom: '1.5rem',
+                                padding: '1.5rem',
+                                background: 'linear-gradient(135deg, #0f172a 0%, #172554 100%)',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(59, 130, 246, 0.4)',
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                                position: 'relative',
+                                overflow: 'hidden'
+                            }}>
+                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'var(--accent-gradient)' }} />
+                                
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                                    <Zap size={20} color="var(--accent-primary)" fill="currentColor" />
+                                    <span style={{ fontSize: '1.1rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'white' }}>
+                                        Smart Injection Auto-Writer
+                                    </span>
+                                    <div style={{ marginLeft: 'auto', padding: '0.2rem 0.6rem', borderRadius: '100px', background: 'rgba(59, 130, 246, 0.2)', color: 'var(--accent-primary)', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                                        AI-Powered
+                                    </div>
+                                </div>
+                                
+                                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
+                                    Detected a semantic gap? Tell the AI what's missing and it will generate a tone-matched block to inject into your protagonists.
+                                </p>
+                                
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <input
+                                        type="text"
+                                        value={manualInjectionTarget}
+                                        onChange={(e) => setManualInjectionTarget(e.target.value)}
+                                        placeholder="e.g. 'Add a technical specifications comparison table' or 'Explain the E-E-A-T background'"
+                                        style={{
+                                            flex: 1,
+                                            background: 'rgba(0,0,0,0.4)',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            color: 'white',
+                                            padding: '0.75rem 1rem',
+                                            borderRadius: '8px',
+                                            outline: 'none',
+                                            fontSize: '0.9rem'
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => handleGenerateInjection()}
+                                        disabled={generatingInjection || !manualInjectionTarget.trim()}
+                                        style={{
+                                            padding: '0 1.5rem',
+                                            background: 'var(--accent-gradient)',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            color: 'white',
+                                            fontWeight: '700',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            opacity: (generatingInjection || !manualInjectionTarget.trim()) ? 0.6 : 1,
+                                            boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)'
+                                        }}
+                                    >
+                                        {generatingInjection ? <RefreshCw size={18} className="spin" /> : <PenTool size={18} />}
+                                        Inject
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'schema' ? (
+                            <>
+                                {/* Schema Type Selection */}
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        SCHEMA TYPE
+                                    </label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem' }}>
+                                        {['article', 'faq', 'howto'].map((type) => (
+                                            <button
+                                                key={type}
+                                                onClick={() => setSchemaType(type)}
+                                                className={`btn ${schemaType === type ? 'btn-primary' : 'btn-outline'}`}
+                                                style={{
+                                                    padding: '0.6rem',
+                                                    fontSize: '0.85rem',
+                                                    textTransform: 'capitalize',
+                                                    borderRadius: '8px',
+                                                    fontWeight: '600'
+                                                }}
+                                            >
+                                                {type === 'faq' ? 'FAQ' : type === 'howto' ? 'How-To' : type.charAt(0).toUpperCase() + type.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Dynamic Fields Based on Schema Type */}
+                                <div style={{ marginBottom: '2rem' }}>
+                                    {schemaType === 'article' && (
+                                        <div style={{ display: 'grid', gap: '1.25rem' }}>
+                                            <SchemaInput label="Article Headline *" value={schemaMetadata.title} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, title: v })} placeholder="The ultimate guide to..." />
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                                <SchemaInput label="Author Name" value={schemaMetadata.author} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, author: v })} placeholder="Jane Doe" />
+                                                <SchemaInput label="Date Published" value={schemaMetadata.datePublished} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, datePublished: v })} placeholder="YYYY-MM-DD" type="date" />
+                                            </div>
+                                            <SchemaInput label="Description" value={schemaMetadata.description} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, description: v })} placeholder="Brief summary for search engines" />
+                                            <SchemaInput label="Canonical URL" value={schemaMetadata.url} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, url: v })} placeholder="https://yourdomain.com/article" />
+                                        </div>
+                                    )}
+
+
+                                    {schemaType === 'faq' && (
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '1rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                FAQ ITEMS
+                                            </label>
+                                            <div style={{ display: 'grid', gap: '1.25rem' }}>
+                                                {schemaMetadata.faqItems.map((item, idx) => (
+                                                    <div key={idx} style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', marginBottom: '1rem', fontWeight: '800' }}>QUESTION #{idx + 1}</div>
+                                                        <input
+                                                            value={item.question}
+                                                            onChange={(e) => {
+                                                                const items = [...schemaMetadata.faqItems]
+                                                                items[idx].question = e.target.value
+                                                                setSchemaMetadata({ ...schemaMetadata, faqItems: items })
+                                                            }}
+                                                            placeholder="What is the return policy?"
+                                                            style={{ ...inputStyle, marginBottom: '1rem' }}
+                                                        />
+                                                        <textarea
+                                                            value={item.answer}
+                                                            onChange={(e) => {
+                                                                const items = [...schemaMetadata.faqItems]
+                                                                items[idx].answer = e.target.value
+                                                                setSchemaMetadata({ ...schemaMetadata, faqItems: items })
+                                                            }}
+                                                            placeholder="Our return policy is 30 days..."
+                                                            rows={2}
+                                                            style={{ ...inputStyle, resize: 'vertical' }}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button
+                                                onClick={() => setSchemaMetadata({ ...schemaMetadata, faqItems: [...schemaMetadata.faqItems, { question: '', answer: '' }] })}
+                                                className="btn btn-outline"
+                                                style={{ width: '100%', padding: '0.75rem', fontSize: '0.85rem', borderRadius: '8px', marginTop: '1.25rem' }}
+                                            >
+                                                + Add Another Question
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {schemaType === 'howto' && (
+                                        <div style={{ display: 'grid', gap: '1.25rem' }}>
+                                            <SchemaInput label="Guide Title *" value={schemaMetadata.title} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, title: v })} placeholder="How to setup your GEO engine" />
+                                            <SchemaInput label="Summary Description" value={schemaMetadata.description} onChange={(v) => setSchemaMetadata({ ...schemaMetadata, description: v })} placeholder="Step-by-step instructions for..." />
+
+                                            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                INSTRUCTION STEPS
+                                            </label>
+                                            <div style={{ display: 'grid', gap: '1rem' }}>
+                                                {schemaMetadata.howtoSteps.map((step, idx) => (
+                                                    <div key={idx} style={{ padding: '1.25rem', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', marginBottom: '0.75rem', fontWeight: '800' }}>STEP {idx + 1}</div>
+                                                        <input
+                                                            value={step.name}
+                                                            onChange={(e) => {
+                                                                const steps = [...schemaMetadata.howtoSteps]
+                                                                steps[idx].name = e.target.value
+                                                                setSchemaMetadata({ ...schemaMetadata, howtoSteps: steps })
+                                                            }}
+                                                            placeholder="Step title"
+                                                            style={{ ...inputStyle, marginBottom: '0.75rem' }}
+                                                        />
+                                                        <textarea
+                                                            value={step.text}
+                                                            onChange={(e) => {
+                                                                const steps = [...schemaMetadata.howtoSteps]
+                                                                steps[idx].text = e.target.value
+                                                                setSchemaMetadata({ ...schemaMetadata, howtoSteps: steps })
+                                                            }}
+                                                            placeholder="Instruction details"
+                                                            rows={2}
+                                                            style={{ ...inputStyle, resize: 'vertical' }}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button
+                                                onClick={() => setSchemaMetadata({ ...schemaMetadata, howtoSteps: [...schemaMetadata.howtoSteps, { name: '', text: '' }] })}
+                                                className="btn btn-outline"
+                                                style={{ width: '100%', padding: '0.75rem', fontSize: '0.85rem', borderRadius: '8px' }}
+                                            >
+                                                + Add Instruction Step
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <button
+                                    onClick={handleGenerateSchema}
+                                    disabled={schemaLoading}
+                                    className="btn btn-primary"
+                                    style={{ width: '100%', padding: '1rem' }}
+                                >
+                                    {schemaLoading ? 'Generating...' : <><Code2 size={18} /> Generate Schema</>}
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={handleOptimize}
+                                disabled={loading || !content.trim()}
+                                className="btn btn-primary"
+                                style={{ width: '100%', padding: '1rem' }}
+                            >
+                                {loading ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                                        <span>{activeTab === 'generate' ? 'Generating Content...' : 'Optimizing Content...'}</span>
+                                        <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{progress}% Complete</div>
+                                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
+                                            <div style={{ width: `${progress}%`, height: '100%', background: 'white', transition: 'width 0.5s ease' }} />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    activeTab === 'generate'
+                                        ? <><Sparkles size={18} /> Generate Content</>
+                                        : <><Zap size={18} /> Optimize Content</>
+                                )}
+                            </button>
+                        )}
+                        
+
+
+                        {error && (
+                            <div style={{ marginTop: '1rem', color: 'var(--error)', fontSize: '0.9rem' }}>
+                                Error: {error}
+                            </div>
+                        )}
                     </div>
-                )}
+
+                    {/* Results Area (conditionally rendered below input for now) */}
+                    {/* Schema Result Display */}
+                    {activeTab === 'schema' && schemaResult && (
+                        <div className="depth-card animate-fade-in" style={{ marginTop: '3rem', padding: '2.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                                <div>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>Generated Schema Object</h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <div style={{ padding: '0.2rem 0.6rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-primary)', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                                            {schemaResult.schema_type}
+                                        </div>
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Ready for deployment</span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={copySchemaToClipboard}
+                                    className="btn btn-primary"
+                                    style={{ fontSize: '0.85rem', padding: '0.75rem 1.25rem', gap: '0.5rem' }}
+                                >
+                                    {schemaCopied ? <><Check size={18} /> Copied!</> : <><Copy size={18} /> Copy JSON-LD</>}
+                                </button>
+                            </div>
+                            <pre style={{
+                                background: 'var(--bg-tertiary)',
+                                borderRadius: '12px',
+                                padding: '1.5rem',
+                                overflow: 'auto',
+                                maxHeight: '400px',
+                                fontSize: '0.85rem',
+                                color: 'var(--accent-primary)',
+                                fontFamily: 'JetBrains Mono, SF Mono, Menlo, monospace',
+                                border: '1px solid var(--card-border)',
+                                lineHeight: '1.5'
+                            }}>
+                                {JSON.stringify(schemaResult.json_ld, null, 2)}
+                            </pre>
+                            <div style={{
+                                marginTop: '1.5rem',
+                                padding: '1.25rem',
+                                background: 'rgba(16, 185, 129, 0.05)',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(16, 185, 129, 0.15)',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '0.75rem'
+                            }}>
+                                <InfoIcon color="var(--success)" size={20} />
+                                <p style={{ fontSize: '0.9rem', color: '#86efac', lineHeight: '1.5', margin: 0 }}>
+                                    Your schema is valid and ready. Copy the code above and paste it anywhere within the <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>&lt;head&gt;</code> of your page.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+
+
+                    {/* Results Area */}
+                    {activeTab !== 'schema' && (analysisResults || optimizedContent) && (
+                        <div style={{ marginTop: '3rem' }} className="animate-fade-in">
+                            {/* Result Tabs */}
+                            <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '2rem' }}>
+                                {activeTab !== 'generate' && (
+                                    <button
+                                        onClick={() => setViewMode('analysis')}
+                                        style={{
+                                            padding: '1rem 2rem',
+                                            background: 'none',
+                                            border: 'none',
+                                            borderBottom: viewMode === 'analysis' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                                            color: viewMode === 'analysis' ? 'white' : 'var(--text-tertiary)',
+                                            fontWeight: '700',
+                                            fontSize: '0.9rem',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        📊 Analysis
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setViewMode('result')}
+                                    style={{
+                                        padding: '1rem 2rem',
+                                        background: 'none',
+                                        border: 'none',
+                                        borderBottom: viewMode === 'result' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                                        color: viewMode === 'result' ? 'white' : 'var(--text-tertiary)',
+                                        fontWeight: '700',
+                                        fontSize: '0.9rem',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.05em',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                >
+                                    ✨ Optimized
+                                </button>
+                                
+                                {activeTab !== 'generate' && (
+                                    <button
+                                        onClick={() => setViewMode('compare')}
+                                        style={{
+                                            padding: '1rem 2rem',
+                                            background: 'none',
+                                            border: 'none',
+                                            borderBottom: viewMode === 'compare' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                                            color: viewMode === 'compare' ? 'white' : 'var(--text-tertiary)',
+                                            fontWeight: '700',
+                                            fontSize: '0.9rem',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        ⚖️ Compare
+                                    </button>
+                                )}
+                            </div>
+
+                            {activeTab !== 'generate' && viewMode === 'analysis' && analysisResults && (
+                                <ResultsPanel 
+                                    results={analysisResults} 
+                                    onReset={() => updateOptimization({ analysisResults: null, optimizedContent: '' })} 
+                                    onApplyInjection={(snippet) => {
+                                        const newContent = content + "\n\n" + snippet;
+                                        updateOptimization({ content: newContent });
+                                        toast.success("Injection applied to content!");
+                                        // Optional: Switch back to editor tab if needed
+                                    }}
+                                    context="text" 
+                                />
+                            )}
+                            {viewMode === 'result' && optimizedContent && (
+                                <div className="depth-card animate-fade-in" style={{ padding: '2.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--card-border)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1.5rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <div style={{ width: '8px', height: '24px', background: 'var(--accent-primary)', borderRadius: '4px' }}></div>
+                                            <h3 style={{ fontSize: '1.4rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                                                {activeTab === 'rewrite' ? 'Optimized Revision' : 'Generated Masterpiece'}
+                                            </h3>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                            <button
+                                                className="btn btn-primary"
+                                                onClick={async () => {
+                                                    try {
+                                                        if (resultRef.current) {
+                                                            const htmlBlob = new Blob([resultRef.current.innerHTML], { type: 'text/html' })
+                                                            const textBlob = new Blob([optimizedContent], { type: 'text/plain' })
+                                                            const item = new ClipboardItem({
+                                                                'text/html': htmlBlob,
+                                                                'text/plain': textBlob
+                                                            })
+                                                            await navigator.clipboard.write([item])
+                                                        } else {
+                                                            await navigator.clipboard.writeText(optimizedContent)
+                                                        }
+                                                    } catch (err) {
+                                                        navigator.clipboard.writeText(optimizedContent)
+                                                    }
+                                                }}
+                                                style={{ fontSize: '0.85rem', padding: '0.6rem 1.25rem', gap: '0.5rem', borderRadius: '100px' }}
+                                            >
+                                                <Copy size={16} /> Copy Content
+                                            </button>
+                                            <ContentExportButton 
+                                                content={optimizedContent} 
+                                                title={`geo-optimized-${activeTab}`}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* SEO Metadata Panel */}
+                                    {analysisResults && analysisResults.seo_metadata && (
+                                        <div style={{
+                                            marginBottom: '2rem',
+                                            padding: '1.5rem',
+                                            background: 'rgba(59, 130, 246, 0.05)',
+                                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                                            borderRadius: '12px'
+                                        }}>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--accent-primary)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                SEO Metadata Generated
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                                <div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem', fontWeight: '700' }}>Meta Title</div>
+                                                    <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', background: 'var(--bg-tertiary)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--card-border)' }}>
+                                                        {analysisResults.seo_metadata.title_tag}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem', fontWeight: '700' }}>Meta Description</div>
+                                                    <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', background: 'var(--bg-tertiary)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--card-border)' }}>
+                                                        {analysisResults.seo_metadata.meta_description}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem', fontWeight: '700' }}>URL Slug</div>
+                                                    <div style={{ fontSize: '0.95rem', color: 'var(--text-primary)', background: 'var(--bg-tertiary)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--card-border)', fontFamily: 'monospace' }}>
+                                                        /{analysisResults.seo_metadata.slug}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="markdown-content" ref={resultRef} style={{
+                                        lineHeight: '1.8',
+                                        color: 'var(--text-primary)',
+                                        fontFamily: 'Inter, sans-serif',
+                                        fontSize: '1.05rem'
+                                    }}>
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                table: TableWithCopy
+                                            }}
+                                        >
+                                            {optimizedContent}
+                                        </ReactMarkdown>
+                                    </div>
+                                </div>
+                            )}
+
+                            {viewMode === 'compare' && optimizedContent && (
+                                <div className="animate-fade-in">
+                                    {/* Word Count Comparison */}
+                                    <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                                        <div className="depth-card" style={{
+                                            flex: 1,
+                                            padding: '1.5rem',
+                                            background: 'rgba(239, 68, 68, 0.05)',
+                                            textAlign: 'center',
+                                            border: '1px solid rgba(239, 68, 68, 0.1)'
+                                        }}>
+                                            <div style={{ fontSize: '2rem', fontWeight: '800', color: '#ef4444' }}>{(content || '').split(/\s+/).filter(Boolean).length}</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Original Words</div>
+                                        </div>
+                                        <div className="depth-card" style={{
+                                            flex: 1,
+                                            padding: '1.5rem',
+                                            background: 'rgba(16, 185, 129, 0.05)',
+                                            textAlign: 'center',
+                                            border: '1px solid rgba(16, 185, 129, 0.1)'
+                                        }}>
+                                            <div style={{ fontSize: '2rem', fontWeight: '800', color: '#10b981' }}>{(optimizedContent || '').split(/\s+/).filter(Boolean).length}</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Optimized Words</div>
+                                        </div>
+                                    </div>
+
+                                    {viewMode === 'compare' && (
+                                        <div style={{ marginTop: '2rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
+                                                <button 
+                                                    onClick={() => setCompareView('side')}
+                                                    className={`btn ${compareView === 'side' ? 'btn-primary' : 'btn-outline'}`}
+                                                    style={{ padding: '0.5rem 1.5rem', fontSize: '0.8rem', borderRadius: '100px' }}
+                                                >
+                                                    Side by Side
+                                                </button>
+                                                <button 
+                                                    onClick={() => setCompareView('diff')}
+                                                    className={`btn ${compareView === 'diff' ? 'btn-primary' : 'btn-outline'}`}
+                                                    style={{ padding: '0.5rem 1.5rem', fontSize: '0.8rem', borderRadius: '100px' }}
+                                                >
+                                                    Highlight Changes
+                                                </button>
+                                            </div>
+
+                                            {compareView === 'side' ? (
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                                    <div className="depth-card" style={{ padding: '2rem', background: 'var(--bg-tertiary)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                                            <div style={{ width: '6px', height: '18px', background: '#ef4444', borderRadius: '4px' }}></div>
+                                                            <h4 style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>DRAFT VERSION</h4>
+                                                        </div>
+                                                        <div style={{
+                                                            whiteSpace: 'pre-wrap',
+                                                            fontSize: '0.95rem',
+                                                            lineHeight: '1.7',
+                                                            maxHeight: '500px',
+                                                            overflowY: 'auto',
+                                                            color: '#94a3b8'
+                                                        }}>
+                                                            {content}
+                                                        </div>
+                                                    </div>
+                                                    <div className="depth-card" style={{ padding: '2rem', background: 'var(--bg-tertiary)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                                            <div style={{ width: '6px', height: '18px', background: '#10b981', borderRadius: '4px' }}></div>
+                                                            <h4 style={{ fontSize: '0.9rem', fontWeight: '800', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>OPTIMIZED MASTER</h4>
+                                                        </div>
+                                                        <div className="markdown-content" style={{
+                                                            fontSize: '0.95rem',
+                                                            lineHeight: '1.7',
+                                                            maxHeight: '500px',
+                                                            overflowY: 'auto',
+                                                            color: '#f1f5f9'
+                                                        }}>
+                                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                {optimizedContent}
+                                                            </ReactMarkdown>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="depth-card" style={{ padding: '2rem' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <div style={{ width: '12px', height: '12px', background: 'rgba(16, 185, 129, 0.3)', border: '1px solid #10b981', borderRadius: '2px' }}></div>
+                                                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#10b981' }}>ADDED</span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <div style={{ width: '12px', height: '12px', background: 'rgba(239, 68, 68, 0.3)', border: '1px solid #ef4444', borderRadius: '2px' }}></div>
+                                                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444' }}>REMOVED</span>
+                                                        </div>
+                                                    </div>
+                                                    <VisualDiff oldText={content} newText={optimizedContent} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 {/* Right Column - Sidebar */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -872,6 +1740,41 @@ function ContentOptimization() {
                     {activeTab !== 'schema' && (
                         <div className="depth-card" style={{ padding: '1.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                                <Target size={18} color="var(--accent-primary)" />
+                                <span style={{ fontSize: '1rem', fontWeight: '800' }}>Optimization Strategy</span>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: '700' }}>CORE STRATEGY</label>
+                                    <select 
+                                        value={optimizationStrategy}
+                                        onChange={(e) => setOptimizationStrategy(e.target.value)}
+                                        style={inputStyle}
+                                    >
+                                        <option value="general">General GEO (Standard)</option>
+                                        <option value="authority_boost">Authority & Grounding</option>
+                                        <option value="ai_answer_mode">AI Answer Mode (Direct)</option>
+                                        <option value="semantic_expansion">Semantic Expansion</option>
+                                        <option value="technical">Technical / Expert Deep-Dive</option>
+                                        <option value="concise">Extreme Conciseness</option>
+                                    </select>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: '700' }}>TONE</label>
+                                        <select 
+                                            value={optimizationTone}
+                                            onChange={(e) => setOptimizationTone(e.target.value)}
+                                            style={inputStyle}
+                                        >
+                                            <option value="professional">Professional</option>
+                                            <option value="conversational">Conversational</option>
+                                            <option value="technical">Technical</option>
+                                            <option value="persuasive">Persuasive</option>
+                                        </select>
+                                    </div>
                                     <div>
                                         <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: '700' }}>AUDIENCE</label>
                                         <select 
@@ -928,6 +1831,7 @@ function ContentOptimization() {
                                     </p>
                                 </div>
                             </div>
+                        </div>
                     )}
                     {/* History Panel */}
                     <div className="depth-card" style={{ padding: '0', overflow: 'hidden' }}>
@@ -1132,7 +2036,7 @@ function ContentOptimization() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     )
 }
 
