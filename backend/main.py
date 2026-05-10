@@ -1760,9 +1760,8 @@ async def auto_fix_content(
             tone=getattr(payload, 'tone', 'professional') or 'professional'
         )
         
-        if not result or "error" in result:
-            error_msg = result.get("error", "LLM failed to generate a fix") if result else "LLM returned no result"
-            raise HTTPException(status_code=500, detail=error_msg)
+        if not result:
+            raise HTTPException(status_code=500, detail="LLM returned no result")
 
         # Save version only if we have a content_item_id
         if payload.content_item_id and "optimized_content" in result:

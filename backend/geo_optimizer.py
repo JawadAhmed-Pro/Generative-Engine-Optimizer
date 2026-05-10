@@ -935,11 +935,12 @@ class GEOOptimizer:
                             return self._extract_json(response_text)
                         return response_text
                     else:
-                        app_logger.error(f"Groq Error: {resp.status}")
-                        return {"error": f"LLM Error: {resp.status}"}
+                        error_text = await resp.text()
+                        app_logger.error(f"Groq Error: {resp.status} - {error_text}")
+                        raise Exception(f"LLM Provider Error (Groq {resp.status}): {error_text[:100]}")
         except Exception as e:
             app_logger.error(f"Groq Call Failed: {e}")
-            return {"error": str(e)}
+            raise e
 
 # Singleton instance
 geo_optimizer = GEOOptimizer()
