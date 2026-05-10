@@ -857,14 +857,33 @@ class GEOOptimizer:
             return {}
 
     async def _call_llm(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, prefer_gemini: bool = False, temperature: float = 0.2) -> Any:
-        """Helper to call LLM (Groq or Gemini) with fallback logic."""
+        """Helper to call LLM (Groq or Gemini) with robust dual-fallback logic."""
         
-        # Use Gemini for long generation OR if explicitly requested
-        if prefer_gemini or max_tokens > 4096:
-            return await self._call_gemini(prompt, json_mode, max_tokens, temperature)
+        # Determine primary and secondary based on preference and length
+        primary_is_gemini = prefer_gemini or max_tokens > 4096
         
-        # Default to Groq for speed on shorter tasks
-        return await self._call_groq(prompt, json_mode, max_tokens, temperature)
+        if primary_is_gemini:
+            primary_call = self._call_gemini
+            secondary_call = self._call_groq
+            primary_name = "Gemini"
+            secondary_name = "Groq"
+        else:
+            primary_call = self._call_groq
+            secondary_call = self._call_gemini
+            primary_name = "Groq"
+            secondary_name = "Gemini"
+
+        try:
+            # Try Primary
+            return await primary_call(prompt, json_mode, max_tokens, temperature)
+        except Exception as e:
+            app_logger.warning(f"Primary LLM ({primary_name}) failed: {e}. Attempting fallback to {secondary_name}...")
+            try:
+                # Try Secondary
+                return await secondary_call(prompt, json_mode, max_tokens, temperature)
+            except Exception as e2:
+                app_logger.error(f"Both LLM providers failed. Primary: {e}, Secondary: {e2}")
+                raise Exception(f"GEO Engine critical failure: Both AI providers ({primary_name}, {secondary_name}) are unavailable. Last error: {str(e2)}")
 
     async def _call_gemini(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, temperature: float = 0.2) -> Any:
         """Call Google Gemini API using new SDK."""
@@ -901,10 +920,7 @@ class GEOOptimizer:
             
             raise Exception("Gemini returned empty or blocked response")
         except Exception as e:
-            app_logger.error(f"Gemini Call Failed: {e}. Falling back to Groq.")
-            # Fallback to Groq if possible
-            if self.groq_api_key:
-                return await self._call_groq(prompt, json_mode, max_tokens, temperature)
+            # Fallback is now handled by _call_llm
             raise e
 
     async def _call_groq(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, temperature: float = 0.2) -> Any:
