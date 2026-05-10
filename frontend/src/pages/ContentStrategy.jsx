@@ -103,107 +103,114 @@ export default function ContentStrategy() {
                 </div>
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'stretch' }}>
-                {/* Left Column - Input Sidebar */}
-                <div style={{ flex: '1 1 350px', display: 'flex', flexDirection: 'column' }}>
-                    <div className="depth-card" style={{ padding: '2.5rem', position: 'relative', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', background: 'var(--accent-gradient)' }} />
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-                            <Zap size={20} color="var(--accent-primary)" fill="var(--accent-primary)" style={{ opacity: 0.8 }} />
-                            <h2 style={{ fontSize: '1.1rem', fontWeight: '800', margin: 0, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Discovery Engine</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                {/* Top Section - Input Form */}
+                <div className="depth-card" style={{ padding: '2rem', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', background: 'var(--accent-gradient)' }} />
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                        <Zap size={20} color="var(--accent-primary)" fill="var(--accent-primary)" style={{ opacity: 0.8 }} />
+                        <h2 style={{ fontSize: '1rem', fontWeight: '800', margin: 0, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Discovery Engine</h2>
+                    </div>
+
+                    <form onSubmit={handleDiscover} style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5rem', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '2 1 400px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                                <Target size={14} color="var(--accent-primary)" />
+                                <span style={{ fontWeight: '700', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>TARGET KEYWORD / TOPIC</span>
+                            </div>
+                            <input
+                                type="text"
+                                value={keyword}
+                                onChange={(e) => setKeyword(e.target.value)}
+                                placeholder="e.g. ai automation tools"
+                                required
+                                style={{
+                                    width: '100%',
+                                    background: 'rgba(0,0,0,0.3)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '10px',
+                                    padding: '0.85rem 1.25rem',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    outline: 'none'
+                                }}
+                                className="focus-ring"
+                            />
                         </div>
 
-                        <form onSubmit={handleDiscover} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', flex: 1 }}>
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-                                    <Target size={16} color="var(--accent-primary)" />
-                                    <span style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>TARGET KEYWORD / TOPIC</span>
-                                </div>
-                                <input
-                                    type="text"
-                                    value={keyword}
-                                    onChange={(e) => setKeyword(e.target.value)}
-                                    placeholder="e.g. ai automation tools"
-                                    required
+                        <div style={{ flex: '1 1 200px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                                {nicheConfigs[niche]?.icon || <Table size={14} />}
+                                <span style={{ fontWeight: '700', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Industry / Niche</span>
+                            </div>
+                            <div style={{ position: 'relative' }}>
+                                <select
+                                    value={niche}
+                                    onChange={(e) => setNiche(e.target.value)}
                                     style={{
                                         width: '100%',
                                         background: 'rgba(0,0,0,0.3)',
                                         border: '1px solid rgba(255,255,255,0.1)',
                                         borderRadius: '10px',
-                                        padding: '1rem',
+                                        padding: '0.85rem 2.5rem 0.85rem 1.25rem',
                                         color: 'white',
                                         fontSize: '1rem',
-                                        outline: 'none'
+                                        outline: 'none',
+                                        appearance: 'none',
+                                        cursor: 'pointer'
                                     }}
                                     className="focus-ring"
-                                />
-                            </div>
-
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-                                    {nicheConfigs[niche]?.icon || <Table size={16} />}
-                                    <span style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Industry / Niche</span>
-                                </div>
-                                <div style={{ position: 'relative' }}>
-                                    <select
-                                        value={niche}
-                                        onChange={(e) => setNiche(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            background: 'rgba(0,0,0,0.3)',
-                                            border: '1px solid rgba(255,255,255,0.1)',
-                                            borderRadius: '10px',
-                                            padding: '1rem 2.5rem 1rem 1rem',
-                                            color: 'white',
-                                            fontSize: '1rem',
-                                            outline: 'none',
-                                            appearance: 'none',
-                                            cursor: 'pointer'
-                                        }}
-                                        className="focus-ring"
-                                    >
-                                        <option value="general">General / Blog</option>
-                                        <option value="education">Education</option>
-                                    </select>
-                                    <ChevronDown size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }} />
-                                </div>
-                            </div>
-
-                            <div style={{ marginTop: 'auto', paddingTop: '1.5rem' }}>
-                                <button
-                                    type="submit"
-                                    disabled={isLoading || !keyword.trim()}
-                                    className="btn btn-primary"
-                                    style={{ width: '100%', padding: '1.1rem', background: 'var(--accent-gradient)', border: 'none', fontSize: '1.1rem', fontWeight: '700', gap: '0.75rem', boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.4)' }}
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
-                                        {isLoading ? (
-                                            <>
-                                                <RefreshCwIcon size={22} className="spin" />
-                                                <span>Strategizing...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Search size={22} />
-                                                <span>Generate Strategy</span>
-                                            </>
-                                        )}
-                                    </div>
-                                </button>
+                                    <option value="general">General / Blog</option>
+                                    <option value="education">Education</option>
+                                </select>
+                                <ChevronDown size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }} />
                             </div>
-                        </form>
+                        </div>
 
-                        {error && (
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', color: '#ef4444', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <Info size={18} /> {error}
-                            </motion.div>
-                        )}
-                    </div>
+                        <div style={{ flex: '0 0 auto' }}>
+                            <button
+                                type="submit"
+                                disabled={isLoading || !keyword.trim()}
+                                className="btn btn-primary"
+                                style={{ 
+                                    padding: '0.85rem 2rem', 
+                                    background: 'var(--accent-gradient)', 
+                                    border: 'none', 
+                                    fontSize: '1rem', 
+                                    fontWeight: '700', 
+                                    gap: '0.75rem', 
+                                    boxShadow: '0 8px 20px -5px rgba(59, 130, 246, 0.4)',
+                                    height: '50px'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+                                    {isLoading ? (
+                                        <>
+                                            <RefreshCwIcon size={20} className="spin" />
+                                            <span>Strategizing...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Search size={20} />
+                                            <span>Generate Strategy</span>
+                                        </>
+                                    )}
+                                </div>
+                            </button>
+                        </div>
+                    </form>
+
+                    {error && (
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', color: '#ef4444', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <Info size={18} /> {error}
+                        </motion.div>
+                    )}
                 </div>
 
-                {/* Right Column - Strategy Results */}
-                <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column' }}>
+                {/* Bottom Section - Strategy Results */}
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
                     <AnimatePresence mode="wait">
                         {prompts.length === 0 ? (
                             <motion.div 
