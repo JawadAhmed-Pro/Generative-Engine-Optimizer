@@ -20,10 +20,25 @@ const VisualDiff = ({ oldText, newText }) => {
         }}>
             {differences.map((part, index) => {
                 const style = part.added
-                    ? { background: 'rgba(16, 185, 129, 0.25)', color: '#10b981', padding: '0 2px', borderRadius: '2px', fontWeight: '600' }
+                    ? { 
+                        background: 'rgba(16, 185, 129, 0.15)', 
+                        color: '#10b981', 
+                        padding: '2px 4px', 
+                        borderRadius: '4px', 
+                        fontWeight: '600',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        margin: '0 1px'
+                      }
                     : part.removed
-                        ? { background: 'rgba(239, 68, 68, 0.25)', color: '#ef4444', textDecoration: 'line-through', padding: '0 2px', borderRadius: '2px' }
-                        : { color: 'var(--text-secondary)', opacity: 0.8 };
+                        ? { 
+                            background: 'rgba(239, 68, 68, 0.1)', 
+                            color: '#ef4444', 
+                            textDecoration: 'line-through', 
+                            padding: '1px 3px', 
+                            borderRadius: '3px',
+                            opacity: 0.7
+                          }
+                        : { color: 'var(--text-secondary)', opacity: 0.9 };
 
                 return (
                     <span key={index} style={style}>

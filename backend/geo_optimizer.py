@@ -116,11 +116,12 @@ class GEOOptimizer:
             USER INSTRUCTIONS: {additional_instructions or "None"}
             
             CRITICAL MISSION (Zero-Tolerance for Laziness):
-            1. DO NOT RETURN THE ORIGINAL TEXT. You must rewrite at least 50% of the sentences.
-            2. INFORMATION GAIN: Inject technical specifications, expert analysis, and semantic context.
-            3. RETAIN E-E-A-T: Keep all personal anecdotes (cycling, 12 mini history) but weave them into a more professional, authoritative narrative.
-            4. MARKDOWN: Use tables for specs. Use bolding for entities.
-            5. WORD COUNT: The optimized version MUST be significantly longer and more detailed than the original.
+            1. FIX 1 (Heading-Aware): Maintain the exact H2/H3 structure provided. Rewrite the body under each heading while ensuring the heading remains a distinct, optimized anchor for AI scrapers.
+            2. FIX 2 (Experience Preservation): Never remove personal anecdotes or first-person narrative (e.g., Owning the 12 mini, the cycling accident). These are high-value E-E-A-T signals. Preserve and polish them.
+            3. DO NOT RETURN THE ORIGINAL TEXT. You must rewrite at least 60% of the sentences to increase semantic depth and information gain.
+            4. INFORMATION GAIN: Inject technical specifications, expert analysis, and semantic context.
+            5. MARKDOWN: Use tables for specs. Use bolding for entities.
+            6. WORD COUNT: The optimized version MUST be significantly longer (at least 20-30% expansion) and more detailed than the original.
             
             ORIGINAL CONTENT:
             ---
@@ -143,9 +144,15 @@ class GEOOptimizer:
                 optimized = str(result) if result else section_content
                 all_changes.append("Applied non-JSON optimization pass")
                 
+            # FIX 3: Detail-Density Guardrail
+            orig_word_count = len(section_content.split())
+            new_word_count = len(optimized.split())
+            if orig_word_count > 50 and new_word_count < orig_word_count * 0.8:
+                all_changes.append(f"WARNING: AI significantly reduced the detail density in section '{section_label}'. Word count dropped from {orig_word_count} to {new_word_count}. Review for missing technical data.")
+            
             # Fallback check: If AI returned identical text, we flag it
             if optimized.strip() == section_content.strip() and len(section_content) > 50:
-                all_changes.append(f"NOTICE: AI determined section '{section_label}' was already optimal. No changes applied.")
+                all_changes.append(f"NOTICE: AI determined section '{section_label}' was already optimal or failed to apply significant changes.")
             
             if has_header:
                 # Strip accidentally repeated headings
@@ -616,7 +623,7 @@ class GEOOptimizer:
         
         Content:
         ---
-        {content[:2000]}
+        {content[:3000]}
         ---
         
         Return the diagnostics in valid JSON format exactly as follows:
@@ -629,7 +636,21 @@ class GEOOptimizer:
             "geo_potential_score": 0-100
         }}
         """
-        return await self._call_llm(prompt)
+        try:
+            result = await self._call_llm(prompt)
+            if not isinstance(result, dict) or "intent_match_score" not in result:
+                raise ValueError("Incomplete diagnostic metrics from LLM")
+            return result
+        except Exception as e:
+            app_logger.warning(f"Diagnostic Analysis Failed: {e}. Returning default metrics.")
+            return {
+                "intent_match_score": 50,
+                "readability_score": 50,
+                "entity_coverage_pct": 50,
+                "content_depth_score": 50,
+                "redundancy_detection": ["Diagnostics service temporarily unavailable"],
+                "geo_potential_score": 50
+            }
 
     def get_structural_score(self, content: str) -> Dict[str, Any]:
         """
@@ -875,10 +896,22 @@ class GEOOptimizer:
 
         try:
             # Try Primary
+            if primary_call == self._call_gemini and not self.gemini_client:
+                raise Exception("Gemini client not initialized")
+            if primary_call == self._call_groq and not self.groq_api_key:
+                raise Exception("Groq API key not configured")
+                
             app_logger.info(f"Engine: Attempting primary optimization with {primary_name}...")
             return await primary_call(prompt, json_mode, max_tokens, temperature)
         except Exception as e:
             app_logger.warning(f"GEO ENGINE ALERT: Primary provider ({primary_name}) failed or hit limits. Error: {str(e)[:100]}")
+            
+            # Check if secondary is available
+            if (secondary_call == self._call_gemini and not self.gemini_client) or \
+               (secondary_call == self._call_groq and not self.groq_api_key):
+                app_logger.error(f"FAIL-SAFE ABORTED: Secondary provider ({secondary_name}) is not configured.")
+                raise e
+                
             app_logger.info(f"Engine: Activating FAIL-SAFE. Switching to {secondary_name} for this request...")
             try:
                 # Try Secondary
