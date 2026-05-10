@@ -39,8 +39,8 @@ function Navbar() {
                     maxWidth: '1200px'
                 }}
             >
-                {/* Left Section: Logo + Actions */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                {/* Left Section: Logo + Links */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
                     <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
                         <div style={{
                             width: '36px',
@@ -75,42 +75,42 @@ function Navbar() {
                         </span>
                     </Link>
 
-                    {/* Actions - Now on the Left */}
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                        <Link to="/login" style={{
-                            color: 'var(--text-secondary)',
-                            textDecoration: 'none',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            padding: '0.5rem 1.25rem',
-                            transition: 'all 0.2s',
-                            borderRadius: 'var(--radius-full)'
-                        }}>
-                            Sign In
-                        </Link>
-                        <Link to="/app" style={{
-                            background: 'var(--accent-primary)',
-                            color: 'white',
-                            padding: '0.6rem 1.25rem',
-                            fontSize: '0.85rem',
-                            fontWeight: '700',
-                            borderRadius: '100px',
-                            textDecoration: 'none',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            boxShadow: 'var(--accent-glow)'
-                        }}>
-                            Launch App <ArrowRight size={14} />
-                        </Link>
+                    {/* Desktop Links - Now in Middle */}
+                    <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                        <a href="#features" className="nav-link-premium">Features</a>
+                        <a href="#how-it-works" className="nav-link-premium">Systems</a>
+                        <a href="#pricing" className="nav-link-premium">Pricing</a>
                     </div>
                 </div>
 
-                {/* Right Section: Desktop Links */}
-                <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-                    <a href="#features" className="nav-link-premium">Features</a>
-                    <a href="#how-it-works" className="nav-link-premium">Systems</a>
-                    <a href="#pricing" className="nav-link-premium">Pricing</a>
+                {/* Right Section: Actions */}
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <Link to="/login" style={{
+                        color: 'var(--text-secondary)',
+                        textDecoration: 'none',
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        padding: '0.5rem 1.25rem',
+                        transition: 'all 0.2s',
+                        borderRadius: 'var(--radius-full)'
+                    }}>
+                        Sign In
+                    </Link>
+                    <Link to="/app" style={{
+                        background: 'var(--accent-primary)',
+                        color: 'white',
+                        padding: '0.6rem 1.25rem',
+                        fontSize: '0.85rem',
+                        fontWeight: '700',
+                        borderRadius: '100px',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        boxShadow: 'var(--accent-glow)'
+                    }}>
+                        Launch App <ArrowRight size={14} />
+                    </Link>
                 </div>
             </motion.div>
         </nav>
