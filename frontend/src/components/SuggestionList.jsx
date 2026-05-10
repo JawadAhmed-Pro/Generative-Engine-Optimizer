@@ -1,12 +1,15 @@
-import React, { useState } from 'react'
-import { Lightbulb, Circle, Wand2, RefreshCw, Check, Copy, AlertTriangle, Zap } from 'lucide-react'
+import React, { useState, useRef } from 'react'
+import { Lightbulb, Circle, Wand2, RefreshCw, Check, Copy, AlertTriangle, Zap, Download, FileText, Code, Image as ImageIcon, ChevronDown } from 'lucide-react'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import html2canvas from 'html2canvas'
 
 function SuggestionList({ suggestions, contentItemId, context = 'url', rawContent = "", onApplyInjection }) {
     const [fixingId, setFixingId] = useState(null)
     const [fixes, setFixes] = useState({}) // suggestion_text -> fix_data
+    const [activeDropdown, setActiveDropdown] = useState(null)
+    const contentRefs = useRef({})
 
     const handleFix = async (suggestionText, id) => {
         setFixingId(id)
@@ -25,9 +28,43 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
         }
     }
 
-    const copyToClipboard = (text) => {
+    const copyToClipboard = (text, label = "Content") => {
         navigator.clipboard.writeText(text)
-        alert("Copied to clipboard!")
+        alert(`${label} copied to clipboard!`)
+        setActiveDropdown(null)
+    }
+
+    const copyAsHtml = (suggestionText) => {
+        const el = contentRefs.current[suggestionText]
+        if (el) {
+            const html = el.innerHTML
+            navigator.clipboard.writeText(html)
+            alert("HTML Table copied to clipboard!")
+        }
+        setActiveDropdown(null)
+    }
+
+    const downloadAsImage = async (suggestionText) => {
+        const el = contentRefs.current[suggestionText]
+        if (el) {
+            try {
+                const canvas = await html2canvas(el, {
+                    backgroundColor: '#0a0a0a',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
+                })
+                const image = canvas.toDataURL("image/png")
+                const link = document.createElement('a')
+                link.href = image
+                link.download = `geo-optimization-${Date.now()}.png`
+                link.click()
+            } catch (err) {
+                console.error("Image capture failed:", err)
+                alert("Failed to capture image. Please use manual screenshot.")
+            }
+        }
+        setActiveDropdown(null)
     }
 
     const getPriorityColor = (priority) => {
@@ -50,7 +87,6 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
 
     const safeSuggestions = Array.isArray(suggestions) ? suggestions : []
 
-    // Normalize suggestions to handle both objects and simple strings
     const normalizedSuggestions = safeSuggestions.map((s, idx) => {
         const item = typeof s === 'string' ? {
             text: s,
@@ -61,7 +97,6 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
         return { ...item, id: item.id || `sug-${idx}` }
     })
 
-    // Group by priority
     const groupedSuggestions = {
         HIGH: normalizedSuggestions.filter(s => s?.priority === 'HIGH'),
         MEDIUM: normalizedSuggestions.filter(s => s?.priority === 'MEDIUM'),
@@ -134,7 +169,6 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                         )}
                                     </div>
 
-                                    {/* Display Fix Result */}
                                     {fixes[suggestion.text] && (
                                         <div style={{ 
                                             marginTop: '1.25rem', 
@@ -148,9 +182,9 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-primary)', fontSize: '0.85rem', fontWeight: '700' }}>
                                                     <Check size={16} /> SURGICAL IMPROVEMENT GENERATED
                                                 </div>
-                                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                                <div style={{ position: 'relative' }}>
                                                     <button 
-                                                        onClick={() => copyToClipboard(fixes[suggestion.text].optimized_content)}
+                                                        onClick={() => setActiveDropdown(activeDropdown === suggestion.id ? null : suggestion.id)}
                                                         style={{ 
                                                             background: 'rgba(255,255,255,0.05)', 
                                                             border: '1px solid var(--card-border)', 
@@ -160,21 +194,64 @@ function SuggestionList({ suggestions, contentItemId, context = 'url', rawConten
                                                             alignItems: 'center',
                                                             gap: '0.4rem',
                                                             fontSize: '0.8rem',
-                                                            padding: '0.3rem 0.75rem',
+                                                            padding: '0.4rem 0.75rem',
                                                             borderRadius: '6px'
                                                         }}
                                                     >
-                                                        <Copy size={14} /> Copy to Clipboard
+                                                        <Download size={14} /> Export Table <ChevronDown size={14} />
                                                     </button>
+                                                    
+                                                    {activeDropdown === suggestion.id && (
+                                                        <div style={{
+                                                            position: 'absolute',
+                                                            right: 0,
+                                                            top: '110%',
+                                                            background: 'var(--bg-secondary)',
+                                                            border: '1px solid var(--card-border)',
+                                                            borderRadius: '8px',
+                                                            boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                                                            zIndex: 100,
+                                                            minWidth: '180px',
+                                                            overflow: 'hidden'
+                                                        }}>
+                                                            <button 
+                                                                onClick={() => copyToClipboard(fixes[suggestion.text].optimized_content, "Markdown")}
+                                                                style={{ width: '100%', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', borderBottom: '1px solid var(--card-border)' }}
+                                                                onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                                                                onMouseOut={(e) => e.target.style.background = 'none'}
+                                                            >
+                                                                <FileText size={14} /> Copy as Markdown (.md)
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => copyAsHtml(suggestion.text)}
+                                                                style={{ width: '100%', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left', borderBottom: '1px solid var(--card-border)' }}
+                                                                onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                                                                onMouseOut={(e) => e.target.style.background = 'none'}
+                                                            >
+                                                                <Code size={14} /> Copy as HTML Table
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => downloadAsImage(suggestion.text)}
+                                                                style={{ width: '100%', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left' }}
+                                                                onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                                                                onMouseOut={(e) => e.target.style.background = 'none'}
+                                                            >
+                                                                <ImageIcon size={14} /> Download as Image
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             
-                                            <div className="markdown-content" style={{ fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+                                            <div 
+                                                className="markdown-content" 
+                                                ref={el => contentRefs.current[suggestion.text] = el}
+                                                style={{ fontSize: '0.95rem', color: 'var(--text-secondary)' }}
+                                            >
                                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                     {fixes[suggestion.text].optimized_content}
                                                 </ReactMarkdown>
 
-                                                {/* NEW: Citation Warnings for this specific fix */}
                                                 {fixes[suggestion.text].citation_warnings && fixes[suggestion.text].citation_warnings.length > 0 && (
                                                     <div style={{ 
                                                         marginTop: '1.5rem', 
