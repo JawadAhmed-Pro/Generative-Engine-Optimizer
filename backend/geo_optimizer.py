@@ -875,15 +875,19 @@ class GEOOptimizer:
 
         try:
             # Try Primary
+            app_logger.info(f"Engine: Attempting primary optimization with {primary_name}...")
             return await primary_call(prompt, json_mode, max_tokens, temperature)
         except Exception as e:
-            app_logger.warning(f"Primary LLM ({primary_name}) failed: {e}. Attempting fallback to {secondary_name}...")
+            app_logger.warning(f"GEO ENGINE ALERT: Primary provider ({primary_name}) failed or hit limits. Error: {str(e)[:100]}")
+            app_logger.info(f"Engine: Activating FAIL-SAFE. Switching to {secondary_name} for this request...")
             try:
                 # Try Secondary
-                return await secondary_call(prompt, json_mode, max_tokens, temperature)
+                result = await secondary_call(prompt, json_mode, max_tokens, temperature)
+                app_logger.info(f"Engine: Fail-safe successful. {secondary_name} completed the optimization.")
+                return result
             except Exception as e2:
-                app_logger.error(f"Both LLM providers failed. Primary: {e}, Secondary: {e2}")
-                raise Exception(f"GEO Engine critical failure: Both AI providers ({primary_name}, {secondary_name}) are unavailable. Last error: {str(e2)}")
+                app_logger.error(f"CRITICAL: Both LLM providers failed. Primary: {e}, Secondary: {e2}")
+                raise Exception(f"GEO Engine critical failure: Both AI providers ({primary_name}, {secondary_name}) are unavailable. Please check your API keys and quotas.")
 
     async def _call_gemini(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, temperature: float = 0.2) -> Any:
         """Call Google Gemini API using new SDK."""
