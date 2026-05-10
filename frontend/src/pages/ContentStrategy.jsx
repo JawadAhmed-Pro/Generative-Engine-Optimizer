@@ -171,21 +171,21 @@ export default function ContentStrategy() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
+                        <div style={{ marginTop: '0.5rem' }}>
                             <button
                                 type="submit"
                                 disabled={isLoading || !keyword.trim()}
                                 className="btn btn-primary"
                                 style={{ 
-                                    padding: '0.85rem 3rem', 
+                                    width: '100%',
+                                    padding: '0.85rem 1.5rem', 
                                     background: 'var(--accent-gradient)', 
                                     border: 'none', 
                                     fontSize: '1rem', 
                                     fontWeight: '700', 
                                     gap: '0.75rem', 
                                     boxShadow: '0 8px 20px -5px rgba(59, 130, 246, 0.4)',
-                                    height: '50px',
-                                    minWidth: '280px'
+                                    height: '54px'
                                 }}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
