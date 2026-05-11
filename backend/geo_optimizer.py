@@ -342,28 +342,52 @@ class GEOOptimizer:
     def _apply_entity_links(self, content: str, linked_entities: List[Dict[str, str]]) -> str:
         """
         Surgically injects Markdown hyperlinks for entities found in the content.
+        O7 FIX: Skips table rows and code blocks to prevent breaking structured content.
         Prevents multiple links to the same entity to avoid 'link-spam'.
         """
         if not linked_entities:
             return content
-            
+        
+        # O7 FIX: Split content into safe and unsafe zones
+        # Lines inside tables (containing |) or code blocks (``` fences) should not be linked
+        lines = content.split('\n')
+        in_code_block = False
+        safe_line_indices = set()
+        
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped.startswith('```'):
+                in_code_block = not in_code_block
+                continue
+            if in_code_block:
+                continue
+            # Skip table rows (contain | as column separator)
+            if '|' in stripped and ('---' in stripped or stripped.startswith('|')):
+                continue
+            safe_line_indices.add(i)
+        
         processed_entities = set()
         for ent in linked_entities:
             name = ent.get("name")
             uri = ent.get("uri")
             if not name or not uri or name.lower() in processed_entities:
                 continue
+            if len(name) < 3:  # Skip very short entity names
+                continue
                 
-            # Use regex to find the name but only if NOT already part of a link
-            # This is a 'negative lookahead' to ensure we don't break existing markdown links
-            pattern = rf'(?<!\[){re.escape(name)}(?!!\[)(?![^\[]*\])'
-            
-            # We only link the FIRST occurrence of the entity
-            if re.search(pattern, content, flags=re.IGNORECASE):
-                content = re.sub(pattern, f"[{name}]({uri})", content, count=1, flags=re.IGNORECASE)
-                processed_entities.add(name.lower())
+            # Link only the FIRST occurrence, and only in safe lines
+            linked = False
+            for i in safe_line_indices:
+                if linked:
+                    break
+                # Check if entity exists in this line and is not already linked
+                pattern = rf'(?<!\[){re.escape(name)}(?![^\[]*\])'
+                if re.search(pattern, lines[i], flags=re.IGNORECASE):
+                    lines[i] = re.sub(pattern, f"[{name}]({uri})", lines[i], count=1, flags=re.IGNORECASE)
+                    processed_entities.add(name.lower())
+                    linked = True
                 
-        return content
+        return '\n'.join(lines)
 
     async def generate_from_idea(self, idea: str, strategy: str = 'general', tone: str = 'professional', audience: str = 'intermediate', strength: int = 50, target_query: str = "", grounding_context: str = "", additional_instructions: str = None, competitor_gaps: str = None) -> Dict[str, Any]:
         """

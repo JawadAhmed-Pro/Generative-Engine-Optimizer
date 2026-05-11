@@ -1,14 +1,15 @@
 import uuid
 import asyncio
+import time
 from datetime import datetime
 from typing import Dict, Any, Callable
 import traceback
+from logger import app_logger
 
 class JobManager:
     """
     In-memory and DB-backed job manager for long-running AI tasks.
-    In a true enterprise setup, this would wrap Celery or ARQ with Redis.
-    For this MVP scaling step, we use asyncio.create_task and track status in the DB.
+    All lifecycle events are structured-logged for post-mortem analysis.
     """
     def __init__(self):
         self.background_tasks = set()
@@ -24,7 +25,7 @@ class JobManager:
                     job.progress = progress
                     await db.commit()
         except Exception as e:
-            print(f"Warning: Failed to update progress for job {job_id}: {e}")
+            app_logger.warning(f"[Job:{job_id}] Failed to update progress to {progress}%: {e}")
 
     async def submit_job(self, db_sessionmaker: Callable, job_type: str, user_id: int, func: Callable, *args, **kwargs) -> str:
         """
@@ -34,7 +35,6 @@ class JobManager:
         job_id = str(uuid.uuid4())
         
         # 1. Create initial job record in DB
-        # Since we use Async DB engine, we can use an isolated session
         async with db_sessionmaker() as db:
             from models import AnalysisJob
             job = AnalysisJob(
@@ -46,9 +46,10 @@ class JobManager:
             )
             db.add(job)
             await db.commit()
+        
+        app_logger.info(f"[Job:{job_id}] Submitted | type={job_type} user={user_id}")
             
         # 2. Dispatch to event loop
-        # Pass the db_sessionmaker down to the runner so it can manage its own lifecycle
         task = asyncio.create_task(self._run_job(job_id, user_id, db_sessionmaker, func, *args, **kwargs))
         self.background_tasks.add(task)
         task.add_done_callback(self.background_tasks.discard)
@@ -61,30 +62,32 @@ class JobManager:
         from models import AnalysisJob
         from sqlalchemy import select
 
+        start_time = time.time()
+
         async def set_tenant_context(session, uid):
-            # Only set tenant context if using PostgreSQL
             if session.bind.dialect.name == 'postgresql':
                 try:
                     await session.execute(text("SELECT set_config('app.current_tenant', :uid, true)"), {"uid": str(uid)})
                 except Exception as e:
-                    print(f"Failed to set tenant context: {e}")
+                    app_logger.error(f"[Job:{job_id}] Failed to set tenant context: {e}")
                     await session.rollback()
 
         async with db_sessionmaker() as db:
             await set_tenant_context(db, user_id)
-            
-            # Set to running
             job = (await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))).scalars().first()
             if job:
                 job.status = "running"
                 await db.commit()
+        
+        app_logger.info(f"[Job:{job_id}] Running...")
             
         try:
-            # Execute actual heavy lifting function with injected context
             kwargs['job_id'] = job_id
             kwargs['user_id'] = user_id
             kwargs['db_sessionmaker'] = db_sessionmaker
             result = await func(*args, **kwargs)
+            
+            elapsed = round(time.time() - start_time, 1)
             
             async with db_sessionmaker() as db:
                 await set_tenant_context(db, user_id)
@@ -95,19 +98,23 @@ class JobManager:
                     job.result = result
                     job.completed_at = datetime.utcnow()
                     await db.commit()
+            
+            app_logger.info(f"[Job:{job_id}] Completed in {elapsed}s")
                     
         except Exception as e:
-            traceback.print_exc()
+            elapsed = round(time.time() - start_time, 1)
+            app_logger.error(f"[Job:{job_id}] FAILED after {elapsed}s: {str(e)[:200]}", exc_info=True)
             try:
                 async with db_sessionmaker() as db:
                     await set_tenant_context(db, user_id)
                     job = (await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))).scalars().first()
                     if job:
                         job.status = "failed"
-                        job.error_message = str(e)
+                        job.error_message = str(e)[:500]
                         job.completed_at = datetime.utcnow()
                         await db.commit()
             except Exception as inner_e:
-                print(f"Critical: Failed to update job status to 'failed': {inner_e}")
+                app_logger.error(f"[Job:{job_id}] CRITICAL: Failed to persist failure status: {inner_e}")
 
 job_manager = JobManager()
+
