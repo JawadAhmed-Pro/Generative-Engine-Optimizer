@@ -77,6 +77,7 @@ function CompetitorAnalysis() {
             const response = await axios.post('/api/competitor-compare', {
                 user_url: userUrl.trim(),
                 competitor_urls: validCompetitors,
+                target_keyword: targetKeyword,
                 content_type: contentType,
                 niche: contentType
             })

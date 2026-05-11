@@ -669,43 +669,7 @@ function ContentOptimization() {
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '1.5rem' }}>
                 {/* Left Column - Input */}
                 <div>
-                    {/* Diagnostic Bar */}
-                    {diagnostics && activeTab !== 'schema' && (
-                        <div className="glass-card animate-fade-in" style={{
-                            marginBottom: '1rem',
-                            padding: '1rem 1.5rem',
-                            background: 'rgba(15, 23, 42, 0.6)',
-                            borderRadius: '12px',
-                            border: '1px solid rgba(59, 130, 246, 0.2)',
-                            display: 'flex',
-                            gap: '1.5rem',
-                            alignItems: 'center',
-                            overflowX: 'auto'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
-                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Intent Match</div>
-                                <div style={{ fontSize: '1rem', fontWeight: '800', color: diagnostics.intent_match_score > 70 ? 'var(--success)' : 'var(--warning)' }}>{diagnostics.intent_match_score}%</div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
-                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Readability</div>
-                                <div style={{ fontSize: '1rem', fontWeight: '800', color: diagnostics.readability_score > 70 ? 'var(--success)' : 'var(--warning)' }}>{diagnostics.readability_score}%</div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
-                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Entity Coverage</div>
-                                <div style={{ fontSize: '1rem', fontWeight: '800', color: diagnostics.entity_coverage_pct > 70 ? 'var(--success)' : 'var(--warning)' }}>{diagnostics.entity_coverage_pct}%</div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 'max-content' }}>
-                                <div style={{ fontSize: '0.7rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>GEO Potential</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: '900', color: 'var(--accent-primary)', textShadow: '0 0 10px rgba(59, 130, 246, 0.5)' }}>{diagnostics.geo_potential_score}%</div>
-                            </div>
-                            {diagnostics.redundancy_detection?.length > 0 && (
-                                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.3rem 0.75rem', borderRadius: '100px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                                    <InfoIcon size={14} color="#ef4444" />
-                                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444' }}>{diagnostics.redundancy_detection.length} Redundancies Found</span>
-                                </div>
-                            )}
-                        </div>
-                    )}
+
 
                     <div className="depth-card" style={{ padding: '1.5rem' }}>
                         <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -822,6 +786,52 @@ function ContentOptimization() {
                                     display: activeTab === 'schema' ? 'none' : 'block'
                                 }}
                             />
+
+                            {/* Diagnostics Footer Bar */}
+                            {diagnostics && activeTab !== 'schema' && (
+                                <div style={{
+                                    marginTop: '1rem',
+                                    padding: '0.75rem 1.25rem',
+                                    background: 'rgba(30, 41, 59, 0.4)',
+                                    borderRadius: '10px',
+                                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                                    display: 'flex',
+                                    gap: '1.5rem',
+                                    alignItems: 'center',
+                                    overflowX: 'auto',
+                                    position: 'relative'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 'max-content' }}>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: diagnostics.intent_match_score > 70 ? 'var(--success)' : 'var(--warning)' }} />
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontSize: '0.6rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Intent</span>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>{diagnostics.intent_match_score}%</span>
+                                        </div>
+                                    </div>
+                                    <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.05)' }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 'max-content' }}>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: diagnostics.readability_score > 70 ? 'var(--success)' : 'var(--warning)' }} />
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontSize: '0.6rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Readability</span>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>{diagnostics.readability_score}%</span>
+                                        </div>
+                                    </div>
+                                    <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.05)' }} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 'max-content' }}>
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: diagnostics.entity_coverage_pct > 70 ? 'var(--success)' : 'var(--warning)' }} />
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontSize: '0.6rem', fontWeight: '800', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Entities</span>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: '700' }}>{diagnostics.entity_coverage_pct}%</span>
+                                        </div>
+                                    </div>
+                                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 'max-content' }}>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontSize: '0.6rem', fontWeight: '800', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>GEO Score</div>
+                                            <div style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--accent-primary)', letterSpacing: '-0.02em' }}>{diagnostics.geo_potential_score}%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Floating Toolbar */}
                             {selection.visible && (

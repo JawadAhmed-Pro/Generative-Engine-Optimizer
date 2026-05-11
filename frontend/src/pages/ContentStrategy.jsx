@@ -171,33 +171,36 @@ export default function ContentStrategy() {
                             </div>
                         </div>
 
-                        <div style={{ marginTop: '0.5rem' }}>
+                        <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'center' }}>
                             <button
                                 type="submit"
                                 disabled={isLoading || !keyword.trim()}
                                 className="btn btn-primary"
                                 style={{ 
                                     width: '100%',
-                                    padding: '0.85rem 1.5rem', 
+                                    maxWidth: '800px', // Added a max-width for better balance on ultra-wide screens, but still full width of the 'centered' content
+                                    padding: '1.25rem 2rem', 
                                     background: 'var(--accent-gradient)', 
                                     border: 'none', 
-                                    fontSize: '1rem', 
-                                    fontWeight: '700', 
+                                    fontSize: '1.1rem', 
+                                    fontWeight: '800', 
                                     gap: '0.75rem', 
-                                    boxShadow: '0 8px 20px -5px rgba(59, 130, 246, 0.4)',
-                                    height: '54px'
+                                    boxShadow: '0 10px 30px -5px rgba(59, 130, 246, 0.5), var(--accent-glow)',
+                                    height: '60px',
+                                    borderRadius: '14px',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                                 }}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
                                     {isLoading ? (
                                         <>
-                                            <RefreshCwIcon size={20} className="spin" />
-                                            <span>Strategizing...</span>
+                                            <RefreshCwIcon size={24} className="spin" />
+                                            <span>Orchestrating Strategy...</span>
                                         </>
                                     ) : (
                                         <>
-                                            <Search size={20} />
-                                            <span>Generate Strategy</span>
+                                            <Zap size={24} fill="currentColor" />
+                                            <span style={{ letterSpacing: '0.02em' }}>Initialize Strategic Discovery</span>
                                         </>
                                     )}
                                 </div>
