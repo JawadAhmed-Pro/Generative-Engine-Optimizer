@@ -59,8 +59,11 @@ class CitationProbabilityModel:
 
         # 2. FRESHNESS FACTOR (Decay Curve)
         freshness_data = rule_scores.get('freshness', {})
-        last_updated_year = freshness_data.get('details', {}).get('extracted_year', 2026)
-        is_evergreen = freshness_data.get('details', {}).get('is_evergreen', False)
+        freshness_details = freshness_data.get('details', {})
+        last_updated_year = freshness_details.get('extracted_year', 2026)
+        # V4 FIX: Rule scorer uses 'is_stale', not 'is_evergreen'. Detect evergreen as: not stale AND recent year
+        is_stale = freshness_details.get('is_stale', False)
+        is_evergreen = (not is_stale) and last_updated_year >= 2025
         
         def get_freshness_factor(year, evergreen):
             if evergreen: return 1.0
@@ -110,8 +113,12 @@ class CitationProbabilityModel:
             })
 
         # 4. DATA & STATS
-        stats = auth_data.get('statistics', 0)
-        if stats >= 3:
+        # V4 FIX: Rule scorer stores count under 'citations' and 'fact_density', not 'statistics'
+        stats = auth_data.get('citations', 0)
+        fact_density = auth_data.get('fact_density', 0)
+        # Combine both signals: citations count + fact_density ratio
+        has_empirical_data = stats >= 3 or fact_density >= 0.1
+        if has_empirical_data:
             stat_lift = 1.25
             multiplier_total *= stat_lift
             factors.append({

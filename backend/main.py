@@ -855,84 +855,39 @@ async def analyze_url(
             ContentItem.url == payload.url
         ).first()
 
-        content_type = getattr(payload, 'content_type', 'general') or 'general'
-
-        if content_item:
-            # Update existing item (Historical Tracking)
-            content_item.content = extracted['content']
-            content_item.title = extracted['title']
-            content_item.updated_at = datetime.utcnow()
-            
-            # Preserve old metadata but update content_type
-            meta = content_item.content_metadata or {}
-            meta.update(extracted['metadata'])
-            meta['content_type'] = content_type
-            content_item.content_metadata = meta
-        else:
+        if not content_item:
             content_item = ContentItem(
                 project_id=payload.project_id,
-                user_id=current_user["id"],  # Track ownership
+                user_id=current_user["id"],
                 url=payload.url,
-                content=extracted['content'],
-                title=extracted['title'],
-                content_metadata=extracted['metadata'],
+                content="", # Will be filled by background job
+                title="Fetching...",
+                content_metadata={},
                 updated_at=datetime.utcnow()
             )
             db.add(content_item)
-            
-        db.commit()
-        db.refresh(content_item)
-        
-        # Chunk and store in vector DB (optional - don't fail if this errors)
-        try:
-            chunks = services.chunker.chunk_content(
-                extracted['content'],
-                {
-                    'title': extracted['title'],
-                    'url': payload.url,
-                    **extracted['metadata']
-                }
-            )
-            services.vector_store.add_chunks(chunks, content_item.id)
-        except Exception as e:
-            print(f"Warning: Vector storage failed (this is OK): {str(e)}")
-        
-        # Perform analysis
-        analysis = await perform_analysis(extracted['content'], extracted, db, content_item.id, engine=payload.engine)
-        
-        # Log metrics
-        latency_ms = (time.time() - start_time) * 1000
-        monitor = MonitoringService(db)
-        monitor.log_request(
-            endpoint="/api/analyze-url",
-            method="POST",
-            status_code=200,
-            latency_ms=latency_ms
+            db.commit()
+            db.refresh(content_item)
+
+        # Submit background job
+        job_id = await job_manager.submit_job(
+            AsyncSessionLocal,
+            "analyze_url",
+            current_user["id"],
+            _run_analysis_job,
+            url=payload.url,
+            project_id=payload.project_id,
+            content_item_id=content_item.id,
+            engine=payload.engine,
+            content_type=getattr(payload, 'content_type', 'general')
         )
         
-        return analysis
+        return {"job_id": job_id, "status": "pending", "message": "Analysis started in background"}
         
     except Exception as e:
-        # Check for scraping errors
-        if "403" in str(e) or "Forbidden" in str(e):
-            raise HTTPException(
-                status_code=400, 
-                detail="Designed Security: This website blocks automated access. Please copy the text and use the 'Check Text' tab instead."
-            )
-            
-        # Log other errors
         import traceback
         traceback.print_exc()
-        latency_ms = (time.time() - start_time) * 1000
-        monitor = MonitoringService(db)
-        monitor.log_request(
-            endpoint="/api/analyze-url",
-            method="POST",
-            status_code=500,
-            latency_ms=latency_ms,
-            error_message=str(e)
-        )
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to start analysis: {str(e)}")
 
 
 @app.post("/api/analyze-text", response_model=AnalysisResponse)
@@ -954,9 +909,9 @@ async def analyze_text(
         # Create content item
         content_item = ContentItem(
             project_id=payload.project_id,
-            user_id=current_user["id"], # Track ownership
-            content=clean_content,
-            title=clean_title,
+            user_id=current_user["id"],
+            content=payload.content,
+            title=payload.title or "Direct Text Input",
             content_metadata={},
             updated_at=datetime.utcnow()
         )
@@ -964,40 +919,26 @@ async def analyze_text(
         db.commit()
         db.refresh(content_item)
         
-        # Chunk and store (optional)
-        try:
-            chunks = services.chunker.chunk_content(
-                clean_content,
-                {'title': clean_title}
-            )
-            services.vector_store.add_chunks(chunks, content_item.id)
-        except Exception as e:
-            print(f"Warning: Vector storage failed (this is OK): {str(e)}")
-        
-        # Perform analysis
-        extracted = {
-            'content': clean_content,
-            'title': clean_title,
-            'content_type': getattr(payload, 'content_type', 'general') or 'general',
-            'metadata': {},
-            'headings': {},
-            'schema': {}
-        }
-        analysis = await perform_analysis(clean_content, extracted, db, content_item.id, engine=payload.engine)
-        
-        # Log metrics
-        latency_ms = (time.time() - start_time) * 1000
-        monitor = MonitoringService(db)
-        monitor.log_request(
-            endpoint="/api/analyze-text",
-            method="POST",
-            status_code=200,
-            latency_ms=latency_ms
+        # Submit background job
+        job_id = await job_manager.submit_job(
+            AsyncSessionLocal,
+            "analyze_text",
+            current_user["id"],
+            _run_analysis_job,
+            content=payload.content,
+            title=payload.title,
+            project_id=payload.project_id,
+            content_item_id=content_item.id,
+            engine=payload.engine,
+            content_type=getattr(payload, 'content_type', 'general')
         )
         
-        return analysis
+        return {"job_id": job_id, "status": "pending", "message": "Analysis started in background"}
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to start analysis: {str(e)}")
         latency_ms = (time.time() - start_time) * 1000
         monitor = MonitoringService(db)
         monitor.log_request(
@@ -1066,6 +1007,118 @@ async def simulate_ai(payload: SimulateAIRequest = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+async def _run_analysis_job(**kwargs):
+    """Internal runner for analysis background jobs."""
+    job_id = kwargs.get('job_id')
+    user_id = kwargs.get('user_id')
+    db_maker = kwargs.get('db_sessionmaker')
+    content_item_id = kwargs.get('content_item_id')
+    
+    try:
+        # 1. FETCH PHASE
+        if job_id: await job_manager.update_job_progress(job_id, 10, db_maker)
+        
+        if kwargs.get('url'):
+            extracted = await services.content_fetcher.async_fetch_url(kwargs.get('url'))
+        else:
+            # V1 FIX: Parse Markdown headings from text so rule scorer gets proper structure
+            import re as _re
+            raw_content = kwargs.get('content', '')
+            md_h1 = _re.findall(r'^#\s+(.+)$', raw_content, _re.MULTILINE)
+            md_h2 = _re.findall(r'^##\s+(.+)$', raw_content, _re.MULTILINE)
+            md_h3 = _re.findall(r'^###\s+(.+)$', raw_content, _re.MULTILINE)
+            
+            extracted = {
+                'content': raw_content,
+                'title': kwargs.get('title') or "Direct Text Input",
+                'metadata': {},
+                'headings': {'h1': md_h1, 'h2': md_h2, 'h3': md_h3},
+                'schema': {},
+                'links': []
+            }
+        
+        extracted['content_type'] = kwargs.get('content_type', 'general')
+        
+        # V2 FIX: Set target_keyword from title so LLM scorer grades intent against real topic
+        if not extracted.get('target_keyword'):
+            title = extracted.get('title', '')
+            # Use the first meaningful part of the title (before | or - separators)
+            clean_title = title.split('|')[0].split(' - ')[0].strip()
+            extracted['target_keyword'] = clean_title if clean_title and clean_title != "Direct Text Input" else extracted.get('content', '')[:100]
+        
+        # Update content item with real content
+        async with db_maker() as db:
+            from sqlalchemy import select
+            item = (await db.execute(select(ContentItem).filter(ContentItem.id == content_item_id))).scalars().first()
+            if item:
+                item.content = extracted['content']
+                item.title = extracted['title']
+                item.content_metadata = extracted.get('metadata', {})
+                await db.commit()
+
+        # 2. ANALYSIS PHASE
+        if job_id: await job_manager.update_job_progress(job_id, 30, db_maker)
+        
+        # We need a sync-style DB session for perform_analysis or we wrap it
+        # Optimization: Perform the analysis steps directly here to avoid session conflicts
+        rule_scores = services.rule_scorer.analyze(extracted['content'], extracted, extracted['content_type'])
+        
+        if job_id: await job_manager.update_job_progress(job_id, 50, db_maker)
+        llm_scores = await services.llm_scorer.analyze(extracted['content'], extracted, engine=kwargs.get('engine', 'perplexity'))
+        
+        if job_id: await job_manager.update_job_progress(job_id, 70, db_maker)
+        final_scores = services.aggregator.aggregate(rule_scores, llm_scores)
+        
+        # 3. LIVE VALIDATION PHASE
+        if job_id: await job_manager.update_job_progress(job_id, 85, db_maker)
+        
+        # Dynamic keyword selection for validation
+        target_kw = extracted.get('target_keyword', '').strip()
+        if not target_kw or target_kw.lower() in ['the topic', 'general']:
+            target_kw = llm_scores.get('primary_keyword') or extracted.get('title', 'topic').split('|')[0].strip()
+
+        from live_verifier import live_verifier
+        predicted_anchor = final_scores.get('overall_visibility_score', 60.0)
+        live_results = await live_verifier.verify_citations(url=extracted.get('url', ''), queries=[target_kw], predicted_score=predicted_anchor)
+        
+        # NEW: Grounding Audit
+        grounding_audit = await geo_optimizer.suggest_hard_grounding(extracted['content'], extracted['content_type'])
+        
+        # 4. PERSISTENCE
+        async with db_maker() as db:
+            # Create AnalysisResult
+            new_result = AnalysisResult(
+                content_item_id=content_item_id,
+                structural_clarity_score=final_scores['structural_clarity_score'],
+                citation_worthiness_score=final_scores['citation_worthiness_score'],
+                semantic_coverage_score=final_scores['semantic_coverage_score'],
+                freshness_authority_score=final_scores['freshness_authority_score'],
+                rule_based_scores=final_scores['rule_based_scores'],
+                llm_scores=final_scores['llm_scores'],
+                suggestions=final_scores['suggestions'],
+                target_engine=kwargs.get('engine', 'perplexity')
+            )
+            db.add(new_result)
+            
+            # Add Grounding Insight
+            insight = Insight(
+                content_item_id=content_item_id,
+                insight_type="grounding",
+                content=json.dumps(grounding_audit)
+            )
+            db.add(insight)
+            await db.commit()
+            
+        if job_id: await job_manager.update_job_progress(job_id, 100, db_maker)
+        return {"content_item_id": content_item_id, "success": True}
+        
+    except Exception as e:
+        app_logger.error(f"Analysis Job Failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise e
+
+
 @app.post("/api/optimize")
 async def optimize_full_content(
     payload: OptimizeContentRequest = Body(...),
@@ -1129,9 +1182,30 @@ async def optimize_full_content(
                 if job_id: await job_manager.update_job_progress(job_id, 70, db_maker)
                 app_logger.info(f"[{job_id}] Running analysis on optimized content")
                 
-                # Perform full audit on optimized content
-                extracted = {'content': optimized_text, 'content_type': kwargs.get('content_type', 'article')}
-                rule_scores = services.rule_scorer.analyze(optimized_text, extracted)
+                # O3 FIX: Build proper metadata from optimized Markdown so rule scorer
+                # can see the structural improvements the optimizer just created
+                import re as _re
+                opt_h1 = _re.findall(r'^#\s+(.+)$', optimized_text, _re.MULTILINE)
+                opt_h2 = _re.findall(r'^##\s+(.+)$', optimized_text, _re.MULTILINE)
+                opt_h3 = _re.findall(r'^###\s+(.+)$', optimized_text, _re.MULTILINE)
+                
+                # Extract links from Markdown [text](url)
+                opt_links = _re.findall(r'\[.*?\]\((https?://[^\)]+)\)', optimized_text)
+                
+                # Build target keyword from title or original idea
+                opt_title = opt_res.get('title', '') or kwargs.get('target_keyword', '') or (kwargs.get('content', '')[:80])
+                
+                extracted = {
+                    'content': optimized_text,
+                    'content_type': kwargs.get('content_type', 'article'),
+                    'title': opt_title,
+                    'target_keyword': opt_title.split('|')[0].split(' - ')[0].strip(),
+                    'headings': {'h1': opt_h1, 'h2': opt_h2, 'h3': opt_h3},
+                    'schema': {},
+                    'links': opt_links,
+                    'metadata': {'title': opt_title}
+                }
+                rule_scores = services.rule_scorer.analyze(optimized_text, extracted, extracted['content_type'])
                 llm_scores_res = await services.llm_scorer.analyze(optimized_text, extracted, engine=kwargs.get('engine', 'perplexity'))
                 final_scores = services.aggregator.aggregate(rule_scores, llm_scores_res)
 
@@ -1300,6 +1374,54 @@ def generate_schema(payload: GenerateSchemaRequest = Body(...)):
             **result
         }
     except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "primary_keyword": "",
+            "secondary_keywords": [],
+            "long_tail_keywords": []
+        }
+
+
+@app.get("/api/jobs/{job_id}", response_model=JobStatusResponse)
+async def get_job_status(
+    job_id: str,
+    db: Session = Depends(get_async_db),
+    current_user: dict = Depends(require_auth)
+):
+    """Get the status and result of a background job."""
+    from models import AnalysisJob
+    from sqlalchemy import select
+    
+    # Use await with async db
+    result = await db.execute(select(AnalysisJob).filter(AnalysisJob.id == job_id))
+    job = result.scalars().first()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    # Security check: Ensure user owns the job
+    if job.user_id and job.user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Access denied to this job")
+        
+    return job
+
+
+@app.get("/api/analysis/latest/{content_item_id}")
+async def get_latest_analysis(
+    content_item_id: int,
+    db: Session = Depends(get_tenant_session),
+    current_user: dict = Depends(require_auth)
+):
+    """Helper to get the most recent analysis result for a content item."""
+    result = db.query(AnalysisResult).filter(
+        AnalysisResult.content_item_id == content_item_id
+    ).order_by(AnalysisResult.created_at.desc()).first()
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="No analysis found for this item")
+        
+    return result
         raise HTTPException(status_code=500, detail=f"Schema generation failed: {str(e)}")
 
 

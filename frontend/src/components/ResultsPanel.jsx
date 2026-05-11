@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { CheckCircle, AlertTriangle, XCircle, Sparkles, TrendingUp, TrendingDown, Minus, Wand2, RefreshCw, Info } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { CheckCircle, AlertTriangle, XCircle, Sparkles, TrendingUp, TrendingDown, Minus, Wand2, RefreshCw, Info, Trophy } from 'lucide-react'
 import MetricCard from './MetricCard'
 import SuggestionList from './SuggestionList'
 import ExportButton from './ExportButton'
@@ -179,14 +180,41 @@ function ResultsPanel({ results, onReset, onApplyInjection, context = 'url' }) {
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
                         Overall GEO Visibility
                     </div>
-                    <div style={{ fontSize: '4.5rem', fontWeight: '900', color: 'var(--accent-primary)', lineHeight: 1, textShadow: '0 0 30px rgba(59, 130, 246, 0.2)' }}>
-                        {results.overall_visibility_score ?? Math.round(
-                            ((results.structural_clarity_score || 0) +
-                                (results.citation_worthiness_score || 0) +
-                                (results.semantic_coverage_score || 0) +
-                                (results.freshness_authority_score || 0)) / 4
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <motion.div 
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: 'spring', damping: 12 }}
+                            style={{ fontSize: '5.5rem', fontWeight: '900', color: 'var(--accent-primary)', lineHeight: 1, textShadow: '0 0 40px rgba(59, 130, 246, 0.3)' }}
+                        >
+                            <AnimatedNumber value={overallScore} />
+                            <span style={{ fontSize: '1.5rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem' }}>%</span>
+                        </motion.div>
+                        {scoreDelta !== 0 && (
+                            <motion.div 
+                                initial={{ x: 20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ delay: 1 }}
+                                style={{ 
+                                    position: 'absolute', 
+                                    top: '0', 
+                                    right: '-80px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.2rem',
+                                    color: scoreDelta > 0 ? 'var(--success)' : 'var(--error)',
+                                    fontSize: '1rem',
+                                    fontWeight: 'bold',
+                                    background: scoreDelta > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                    padding: '0.2rem 0.6rem',
+                                    borderRadius: '20px',
+                                    border: `1px solid ${scoreDelta > 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+                                }}
+                            >
+                                {scoreDelta > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                                {Math.abs(scoreDelta).toFixed(1)}%
+                            </motion.div>
                         )}
-                        <span style={{ fontSize: '1.5rem', color: 'var(--text-tertiary)', marginLeft: '0.5rem' }}>%</span>
                     </div>
                 </div>
 
@@ -479,6 +507,34 @@ function ResultsPanel({ results, onReset, onApplyInjection, context = 'url' }) {
             )}
         </div>
     )
+}
+
+function AnimatedNumber({ value }) {
+    const [displayValue, setDisplayValue] = useState(0);
+
+    useEffect(() => {
+        let start = 0;
+        const end = parseInt(value);
+        if (start === end) return;
+
+        let totalDuration = 1500;
+        let iterationTime = 20;
+        let increment = (end / (totalDuration / iterationTime));
+        
+        let timer = setInterval(() => {
+            start += increment;
+            if (start >= end) {
+                setDisplayValue(end);
+                clearInterval(timer);
+            } else {
+                setDisplayValue(Math.floor(start));
+            }
+        }, iterationTime);
+
+        return () => clearInterval(timer);
+    }, [value]);
+
+    return <span>{displayValue}</span>;
 }
 
 export default ResultsPanel

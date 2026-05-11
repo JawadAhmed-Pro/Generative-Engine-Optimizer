@@ -73,7 +73,7 @@ class CompetitorAnalyzer:
                 "schema_types": extracted.get('schema', {}).get('types', []),
                 "headings": extracted.get('headings', {}),
                 "analyzed_at": datetime.utcnow().isoformat(),
-                "raw_text_sample": extracted.get('content', '')[:1500] 
+                "raw_text_sample": extracted.get('content', '')[:10000] 
             }
 
         except Exception as e:

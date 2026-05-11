@@ -39,9 +39,24 @@ class RuleBasedScorer:
         headings = metadata.get('headings', {})
         
         # 1. H-Tag Hierarchy (Pillar 1 - Depth Aware)
-        h1_count = len(headings.get('h1', []))
-        h2_count = len(headings.get('h2', []))
-        h3_count = len(headings.get('h3', []))
+        # Combine metadata headings with Markdown heading detection from content
+        md_h1 = re.findall(r'^#\s+(.+)$', content, re.MULTILINE)
+        md_h2 = re.findall(r'^##\s+(.+)$', content, re.MULTILINE)
+        md_h3 = re.findall(r'^###\s+(.+)$', content, re.MULTILINE)
+        
+        h1_list = list(set(metadata.get('headings', {}).get('h1', []) + md_h1))
+        h2_list = list(set(metadata.get('headings', {}).get('h2', []) + md_h2))
+        h3_list = list(set(metadata.get('headings', {}).get('h3', []) + md_h3))
+        
+        h1_count = len(h1_list)
+        h2_count = len(h2_list)
+        h3_count = len(h3_list)
+        
+        # Also store these for downstream keyword checks
+        if 'headings' not in metadata: metadata['headings'] = {}
+        metadata['headings']['h1'] = h1_list
+        metadata['headings']['h2'] = h2_list
+        metadata['headings']['h3'] = h3_list
         
         score_htag = 0
         if h1_count == 1:       score_htag += 40   # exactly one H1 is correct
@@ -51,6 +66,9 @@ class RuleBasedScorer:
         
         score += score_htag
         details['htag_score'] = score_htag
+        details['h1_count'] = h1_count
+        details['h2_count'] = h2_count
+        details['h3_count'] = h3_count
         
         if h1_count == 0:
             suggestions.append("Critical: Add a single H1 heading to define the main topic")
@@ -113,8 +131,13 @@ class RuleBasedScorer:
         else:
             suggestions.append("Add bullet points or numbered lists (Medium Impact: +15% Lift)")
         
-        # General Content Introduction Suggestion
-        suggestions.append("Add a comprehensive introduction paragraph (30+ words)")
+        # V6 FIX: Only suggest intro improvement if the first paragraph is actually short
+        # Find content before the first heading
+        first_heading_match = re.search(r'^(#{1,3}\s|<h[1-3])', content, re.MULTILINE)
+        if first_heading_match:
+            intro_text = content[:first_heading_match.start()].strip()
+            if len(intro_text.split()) < 30:
+                suggestions.append("Add a comprehensive introduction paragraph (30+ words) before your first heading")
         
         # Structural Scrapability (ChatGPT Specialized)
         has_tables = '|' in content and '---' in content
@@ -261,7 +284,11 @@ class RuleBasedScorer:
                 stat_count = len(fact_entities)
             else:
                 # Fallback to simple regex if spacy is disabled or fails
-                stat_count = len(re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', content))
+                # Filter out common sentence starters/stop words from Title Case entity detection
+                blacklist = {'The', 'This', 'That', 'In', 'On', 'At', 'From', 'With', 'By', 'An', 'A', 'However', 'Moreover', 'Furthermore', 'Thus', 'Therefore'}
+                raw_entities = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', content)
+                fact_entities = [ent for ent in raw_entities if ent not in blacklist]
+                stat_count = len(fact_entities)
             
             details['nlp_entities_found'] = stat_count
             

@@ -204,6 +204,9 @@ function TrendChart({ projectId = null, limit = 10 }) {
                         strokeWidth={3}
                         dot={{ fill: 'var(--accent-primary)', strokeWidth: 2, r: 4 }}
                         activeDot={{ r: 6, stroke: 'var(--accent-primary)', strokeWidth: 2, fill: 'white' }}
+                        isAnimationActive={true}
+                        animationDuration={1500}
+                        animationEasing="ease-in-out"
                     />
                 </LineChart>
             </ResponsiveContainer>

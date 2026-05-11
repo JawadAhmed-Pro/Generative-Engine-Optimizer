@@ -29,7 +29,7 @@ class LLMScorer:
         # 1. Deterministic Slice for Intent Alignment (First 100 words)
         words = content.split()
         intent_slice = ' '.join(words[:100])
-        content_sample = ' '.join(words[:3000]) if len(words) > 3000 else content
+        content_sample = ' '.join(words[:12000]) if len(words) > 12000 else content
         
         content_type = metadata.get('content_type', 'general')
         query = metadata.get('target_keyword', 'General Topic')
@@ -105,12 +105,12 @@ You are an expert Generative Engine Optimizer.
 Run a "Semantic Gap Analysis" between the User's Content and the Top Ranking Competitors.
 
 USER CONTENT:
-{user_content[:2000]}
+{user_content[:10000]}
 
 TOP COMPETITORS:
 """
         for i, comp in enumerate(competitor_contents):
-            prompt += f"\n--- Competitor {i+1} ---\n{comp[:1500]}\n"
+            prompt += f"\n--- Competitor {i+1} ---\n{comp[:10000]}\n"
 
         prompt += """
 Identify exactly what structural elements the user is missing that the competitors have. Focus on empirical differences like:
@@ -150,10 +150,10 @@ Keep it brief, extremely direct, and highly actionable. No fluff.
         Compare how well the User's Content and the Competitor's Content cover the following specific AI Prompts.
         
         USER CONTENT:
-        {user_content[:2000]}
+        {user_content[:10000]}
         
         COMPETITOR CONTENT:
-        {competitor_content[:2000]}
+        {competitor_content[:10000]}
         
         PROMPTS TO CHECK:
         {json.dumps(prompts)}
@@ -211,7 +211,7 @@ You are a master structural copywriter. Your task is to generate a specific miss
 DO NOT rewrite the existing text. ONLY produce the new requested section in valid Markdown.
 
 CONTEXT OF THE EXISTING ARTICLE (Use to match Topic & Tone):
-{context_text[:2000]}
+{context_text[:10000]}
 
 REQUESTED INJECTION / MISSING PIECE:
 {injection_target}
@@ -634,7 +634,7 @@ USER'S QUERY: {query}
 DOMAIN: {domain}
 
 USER'S CONTENT (what they want AI to cite):
-{content[:2000]}
+{content[:10000]}
 
 AI'S ACTUAL RESPONSE TO THE QUERY:
 {ai_response}

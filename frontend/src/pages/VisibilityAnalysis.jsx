@@ -20,6 +20,8 @@ function VisibilityAnalysis() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [history, setHistory] = useState([])
+    const [pollingJobId, setPollingJobId] = useState(null)
+    const [jobProgress, setJobProgress] = useState(0)
     const [loadingStep, setLoadingStep] = useState(0)
     const loadingSteps = [
         "Initializing GEO Agent...",
@@ -32,15 +34,62 @@ function VisibilityAnalysis() {
 
     useEffect(() => {
         let interval;
-        if (loading) {
+        if (loading && !pollingJobId) {
+            // Fallback animation for quick tasks
             interval = setInterval(() => {
                 setLoadingStep(prev => (prev + 1) % loadingSteps.length)
             }, 2500)
-        } else {
-            setLoadingStep(0)
         }
         return () => clearInterval(interval)
-    }, [loading])
+    }, [loading, pollingJobId])
+
+    // Polling Logic
+    useEffect(() => {
+        let pollInterval;
+        
+        if (pollingJobId) {
+            pollInterval = setInterval(async () => {
+                try {
+                    const response = await axios.get(`/api/jobs/${pollingJobId}`)
+                    const job = response.data
+                    
+                    setJobProgress(job.progress || 0)
+                    
+                    // Map progress to steps
+                    if (job.progress < 20) setLoadingStep(0)
+                    else if (job.progress < 40) setLoadingStep(1)
+                    else if (job.progress < 60) setLoadingStep(2)
+                    else if (job.progress < 80) setLoadingStep(3)
+                    else if (job.progress < 95) setLoadingStep(4)
+                    else setLoadingStep(5)
+
+                    if (job.status === 'completed') {
+                        setPollingJobId(null)
+                        const resultId = job.result?.content_item_id
+                        if (resultId) {
+                            // Fetch final analysis
+                            const resResponse = await axios.get(`/api/analysis/${resultId}`)
+                            // Handle potential nesting
+                            const data = resResponse.data
+                            const finalResults = data.analysis ? { ...data.analysis, id: data.id, raw_content: data.content, insights: data.insights } : data
+                            updateVisibility({ analysisResults: finalResults })
+                            fetchHistory()
+                        }
+                        setLoading(false)
+                    } else if (job.status === 'failed') {
+                        setPollingJobId(null)
+                        setLoading(false)
+                        setError(job.error_message || 'Analysis failed in background')
+                    }
+                } catch (err) {
+                    console.error('Polling error:', err)
+                    // Don't stop on single error, might be transient
+                }
+            }, 2000)
+        }
+        
+        return () => clearInterval(pollInterval)
+    }, [pollingJobId])
     const [selectedProject, setSelectedProject] = useState(projectFromUrl || contextProject || '')
     const [targetEngine, setTargetEngine] = useState('perplexity')
 
@@ -137,11 +186,17 @@ function VisibilityAnalysis() {
                 project_id: selectedProject ? parseInt(selectedProject) : null,
                 engine: targetEngine
             })
-            updateVisibility({ analysisResults: response.data })
-            fetchHistory() // Refresh history
+            
+            if (response.data.job_id) {
+                setPollingJobId(response.data.job_id)
+                setJobProgress(0)
+            } else {
+                updateVisibility({ analysisResults: response.data })
+                fetchHistory()
+                setLoading(false)
+            }
         } catch (err) {
             setError(err.response?.data?.detail || err.message || 'Analysis failed')
-        } finally {
             setLoading(false)
         }
     }
@@ -439,9 +494,20 @@ function VisibilityAnalysis() {
                         }}
                     >
                         {loading ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <RefreshCw size={22} className="spin" />
-                                <span>{loadingSteps[loadingStep]}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <RefreshCw size={22} className="spin" />
+                                    <span>{loadingSteps[loadingStep]}</span>
+                                </div>
+                                {pollingJobId && (
+                                    <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '0.5rem' }}>
+                                        <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${jobProgress}%` }}
+                                            style={{ height: '100%', background: 'var(--accent-primary)', borderRadius: '2px' }} 
+                                        />
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <><Search size={22} /> Run Visibility Audit</>

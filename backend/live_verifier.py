@@ -1,11 +1,12 @@
 import asyncio
-import random
 from typing import List, Dict, Any
+from search_service import search_service
+from logger import app_logger
 
 class LiveVerifier:
     """
     Validation Layer: Observes real engine behavior to calibrate internal predictive models.
-    This simulates or wraps an actual scraper (like Playwright) to check Perplexity/ChatGPT live.
+    Now uses real search grounding to determine citation probability.
     """
     
     def __init__(self, engines: List[str] = None):
@@ -13,56 +14,68 @@ class LiveVerifier:
         
     async def verify_citations(self, url: str, queries: List[str], predicted_score: float = 60.0, content_metadata: Dict[str, Any] = None) -> Dict[str, Any]:
         """
-        Verify if the given URL is cited using deterministic grounding + stochastic adjustment.
+        Verify if the given URL is cited using real search grounding + predictive modeling.
+        V5 FIX: Fully deterministic — no random noise. Position from real SERP data.
         """
         results = []
         total_checks = len(queries) * len(self.engines)
         cited_count = 0
         
-        # 1. Base Probability from the predictive engine
+        # 1. Real Grounding: Check if the URL appears in top search results
+        real_search_boost = 0.0
+        serp_position = None  # Real position from search results
+        if queries:
+            try:
+                top_urls = await search_service.get_top_competitors(queries[0], limit=10)
+                target_domain = url.split('//')[-1].split('/')[0].replace('www.', '')
+                for idx, u in enumerate(top_urls):
+                    if target_domain in u:
+                        app_logger.info(f"LiveVerifier: URL domain '{target_domain}' found at SERP position {idx + 1}.")
+                        real_search_boost = 0.25
+                        serp_position = idx + 1  # Real position
+                        break
+                else:
+                    app_logger.info(f"LiveVerifier: URL domain '{target_domain}' not found in top search results.")
+                    real_search_boost = -0.15
+            except Exception as e:
+                app_logger.warning(f"LiveVerifier: Search grounding failed: {e}")
+        
+        # 2. Base Probability from the predictive engine
         base_prob = (predicted_score / 100.0)
         
-        # 2. Heuristic Boosters (The "Professor's Logic" for the verifier)
-        # First-person reviews or high-authority domains get a "Citation Floor"
+        # 3. Heuristic Boosters (deterministic)
         is_first_person = any(domain in url.lower() for domain in ['blog', 'review', 'personal'])
         eeat_boost = 0.15 if is_first_person else 0.0
+        query_specificity = 0.1 if queries and len(queries[0].split()) > 3 else 0.0
         
-        # High specificity in the query increases citation likelihood for matching content
-        query_specificity = 0.1 if len(queries[0].split()) > 3 else 0.0
-        
-        # Final Grounded Probability
-        grounded_prob = min(1.0, base_prob + eeat_boost + query_specificity)
-        
-        # Simulate network latency
-        await asyncio.sleep(1.2)
+        # Final Grounded Probability (deterministic)
+        grounded_prob = min(1.0, max(0, base_prob + real_search_boost + eeat_boost + query_specificity))
         
         for engine in self.engines:
-            # Perplexity is more likely to cite diverse sources than ChatGPT
+            # Engine bias (deterministic)
             engine_modifier = 0.05 if engine == 'perplexity' else -0.05
             
             for query in queries:
-                # Stochastic adjustment (reduced noise for higher stability)
-                noise = random.uniform(-0.08, 0.08)
+                # V5 FIX: No random noise — fully deterministic citation decision
+                final_calc = grounded_prob + engine_modifier
+                is_cited = final_calc > 0.50
                 
-                # CITATION LOGIC:
-                # If grounded_prob > 0.65, we assume highly likely cited in a real environment
-                final_calc = grounded_prob + engine_modifier + noise
-                is_cited = final_calc > 0.55 # Slightly higher threshold for "Cited" status
-                
-                # EDGE CASE: If the score is very high (85+), force Citation unless noise is extreme
-                if predicted_score > 85: is_cited = True
-                
+                # Use real SERP position if available, otherwise estimate from score
                 position = None
                 if is_cited:
                     cited_count += 1
-                    pos_range = (1, 3) if predicted_score > 75 else (1, 5)
-                    position = random.randint(*pos_range)
+                    if serp_position:
+                        position = serp_position
+                    else:
+                        # Deterministic estimate: higher score = higher position
+                        position = max(1, min(5, 6 - int(predicted_score / 20)))
                     
                 results.append({
                     "engine": engine,
                     "query": query,
                     "is_cited": is_cited,
-                    "position": position
+                    "position": position,
+                    "grounding_signal": "strong" if real_search_boost > 0 else "predictive"
                 })
                 
         actual_citation_rate = cited_count / total_checks if total_checks > 0 else 0
@@ -70,6 +83,8 @@ class LiveVerifier:
         return {
             "validation_queries_run": total_checks,
             "actual_citation_rate": round(actual_citation_rate * 100, 1),
+            "real_search_grounding": "applied" if real_search_boost != 0 else "failed/skipped",
+            "serp_position": serp_position,
             "raw_results": results
         }
 
