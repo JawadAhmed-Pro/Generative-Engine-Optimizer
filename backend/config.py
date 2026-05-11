@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     
     # Model Selection
     # Model Selection
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-2.0-flash"
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
     
     # Versioning & Benchmarks

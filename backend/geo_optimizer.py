@@ -10,6 +10,8 @@ from google.genai import types
 from config import settings
 from logger import app_logger
 from schema_generator import schema_generator
+import asyncio
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 class GEOOptimizer:
     """The 'Action Layer' - AI Agent that rewrites content for GEO optimization."""
@@ -135,6 +137,10 @@ class GEOOptimizer:
             }}
             """
             # Using higher temperature (0.8) for more significant rewriting
+            # Rate-limit guard: small delay between sections for fresh accounts
+            if grouped_sections.index(section) > 0:
+                await asyncio.sleep(1.0)
+                
             result = await self._call_llm(rewrite_prompt, temperature=0.8)
             
             if isinstance(result, dict):
@@ -922,6 +928,12 @@ class GEOOptimizer:
                 app_logger.error(f"CRITICAL: Both LLM providers failed. Primary: {e}, Secondary: {e2}")
                 raise Exception(f"GEO Engine critical failure: Both AI providers ({primary_name}, {secondary_name}) are unavailable. Please check your API keys and quotas.")
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type(Exception), # Broad for now, refined below
+        reraise=True
+    )
     async def _call_gemini(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, temperature: float = 0.2) -> Any:
         """Call Google Gemini API using new SDK."""
         try:
@@ -960,6 +972,12 @@ class GEOOptimizer:
             # Fallback is now handled by _call_llm
             raise e
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(Exception),
+        reraise=True
+    )
     async def _call_groq(self, prompt: str, json_mode: bool = True, max_tokens: int = 4096, temperature: float = 0.2) -> Any:
         """Call Groq Llama API."""
         url = "https://api.groq.com/openai/v1/chat/completions"

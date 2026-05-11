@@ -21,6 +21,7 @@ python-dotenv
 alembic
 lxml
 html5lib
+tenacity
 
 # RAG Enhancement - Moved to Google API to save RAM
 
