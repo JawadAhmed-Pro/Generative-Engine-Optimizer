@@ -834,7 +834,7 @@ def get_analysis_by_item(
 
 
 # Content Analysis
-@app.post("/api/analyze-url", response_model=AnalysisResponse)
+@app.post("/api/analyze-url")
 @limiter.limit("10/minute")
 async def analyze_url(
     request: Request, 
@@ -890,7 +890,7 @@ async def analyze_url(
         raise HTTPException(status_code=500, detail=f"Failed to start analysis: {str(e)}")
 
 
-@app.post("/api/analyze-text", response_model=AnalysisResponse)
+@app.post("/api/analyze-text")
 @limiter.limit("10/minute")
 async def analyze_text(
     request: Request, 
