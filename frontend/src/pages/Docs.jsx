@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Book, Zap, FileText, BarChart2, Sparkles, CheckCircle2, ArrowRight, Home } from 'lucide-react'
+import { Book, Zap, FileText, BarChart2, Sparkles, CheckCircle2, ArrowRight, Home, MousePointer2, Clipboard, Play, Search } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/landing/Navbar'
@@ -12,7 +12,7 @@ const sections = [
         content: (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: '1.7' }}>
-                    Welcome to the Generative Engine Optimizer (GEO). This tool is designed to help your content get noticed, cited, and recommended by AI engines like ChatGPT, Gemini, and Perplexity.
+                    Welcome to the Generative Engine Optimizer (GEO). Follow this guide to master the flow of optimizing your content for the AI-first search era.
                 </p>
                 
                 <div style={{ 
@@ -22,21 +22,21 @@ const sections = [
                     padding: '1.5rem' 
                 }}>
                     <h4 style={{ color: 'var(--accent-primary)', fontWeight: 'bold', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Zap size={18} /> Pro Tip
+                        <Zap size={18} /> Essential Flow
                     </h4>
                     <p style={{ fontSize: '0.9rem', color: 'rgba(248, 250, 252, 0.8)' }}>
-                        For the best results, always use the "Deep Optimization" mode when working on educational or pillar blog content. This enables the Jina Search grounding for maximum factual density.
+                        <strong>1. Analyze</strong> your current visibility → <strong>2. Optimize</strong> with Grounding → <strong>3. Verify</strong> with the Simulator.
                     </p>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)' }}>The Workflow</h3>
+                    <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)' }}>The 4-Step Method</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                         {[
-                            { step: '1', title: 'Research', desc: 'Identify semantic gaps in your niche.' },
-                            { step: '2', title: 'Optimize', desc: 'Rewrite content with Jina-powered grounding.' },
-                            { step: '3', title: 'Verify', desc: 'Test perception using the AI Simulator.' },
-                            { step: '4', title: 'Publish', desc: 'Watch your AI citations grow.' }
+                            { step: '1', title: 'Navigate', desc: 'Select a tool from the sidebar.' },
+                            { step: '2', title: 'Input Data', desc: 'Provide a URL or raw content.' },
+                            { step: '3', title: 'Run Action', desc: 'Click Run to begin processing.' },
+                            { step: '4', title: 'Elaborate', desc: 'Interpret scores and citations.' }
                         ].map((s) => (
                             <div key={s.step} style={{ 
                                 padding: '1.25rem', 
@@ -61,11 +61,46 @@ const sections = [
         content: (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                 <div>
-                    <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1rem' }}>Rewriting for AI-First Search</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                        Our optimization engine doesn't just "fix" grammar. It injects **Semantic Bridges** and **Grounded Facts** that AI scrapers look for when building their knowledge base.
-                    </p>
+                    <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Optimization Guide</h3>
                     
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', color: 'var(--accent-primary)' }}><MousePointer2 size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>1. Navigate</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Click **"Content Optimization"** on the dashboard sidebar.</p>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', color: 'var(--accent-primary)' }}><Clipboard size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>2. Input URL or Text</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Paste your article content or enter the URL you want to rewrite.</p>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', color: 'var(--accent-primary)' }}><Play size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>3. Click Run Analysis</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Choose **"Deep Optimization"** to enable Jina-powered grounding for maximum factual density.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ 
+                        borderRadius: 'var(--radius-lg)', 
+                        overflow: 'hidden', 
+                        border: '1px solid rgba(255, 255, 255, 0.1)', 
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        marginBottom: '2.5rem'
+                    }}>
+                        <img 
+                            src="/docs/rewrite content paste.png" 
+                            alt="Rewriting Content Paste" 
+                            style={{ width: '100%', height: 'auto', display: 'block' }}
+                        />
+                    </div>
+
                     <div style={{ 
                         borderRadius: 'var(--radius-lg)', 
                         overflow: 'hidden', 
@@ -74,48 +109,24 @@ const sections = [
                         marginBottom: '2rem'
                     }}>
                         <img 
-                            src="/docs/rewrite content paste.png" 
-                            alt="Rewriting Content" 
-                            style={{ width: '100%', height: 'auto', display: 'block' }}
-                        />
-                        <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-tertiary)', background: 'rgba(255, 255, 255, 0.02)', fontStyle: 'italic' }}>
-                            Paste your existing content or a target URL to begin the audit.
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <h4 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-primary)' }}>How it Works:</h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            {[
-                                { title: 'Jina Search Grounding', text: 'The tool searches the web for real-world stats to back your claims.' },
-                                { title: 'Entity Enrichment', text: 'We inject high-authority entities that link your content to the broader knowledge graph.' },
-                                { title: 'FAQ Injection', text: 'Every rewrite includes a schema-ready FAQ section to capture "Answer Boxes."' }
-                            ].map((item, idx) => (
-                                <div key={idx} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                                    <CheckCircle2 style={{ color: 'var(--accent-primary)', marginTop: '0.25rem' }} size={18} />
-                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                                        <strong style={{ color: 'var(--text-primary)' }}>{item.title}:</strong> {item.text}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div style={{ 
-                        marginTop: '2.5rem',
-                        borderRadius: 'var(--radius-lg)', 
-                        overflow: 'hidden', 
-                        border: '1px solid rgba(255, 255, 255, 0.1)', 
-                        background: 'rgba(0, 0, 0, 0.3)'
-                    }}>
-                        <img 
                             src="/docs/Rewrite content  result.png" 
                             alt="Optimization Result" 
                             style={{ width: '100%', height: 'auto', display: 'block' }}
                         />
-                        <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-tertiary)', background: 'rgba(255, 255, 255, 0.02)', fontStyle: 'italic' }}>
-                            The final result features a punchy H1, high fact density, and structured citations.
-                        </div>
+                    </div>
+
+                    <div style={{ 
+                        background: 'rgba(255, 255, 255, 0.03)', 
+                        border: '1px solid rgba(255, 255, 255, 0.08)', 
+                        borderRadius: 'var(--radius-lg)', 
+                        padding: '1.5rem' 
+                    }}>
+                        <h4 style={{ color: 'var(--text-primary)', fontWeight: '700', marginBottom: '0.75rem' }}>How to Elaborate the Results:</h4>
+                        <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                            <li>• <strong style={{ color: 'var(--accent-primary)' }}>Scientific Audit:</strong> Check the "Grounding Gap" to see what facts were missing.</li>
+                            <li>• <strong style={{ color: 'var(--accent-primary)' }}>Citation Index:</strong> Look for the generated `[1]` markers—these are the trust signals AI engines crave.</li>
+                            <li>• <strong style={{ color: 'var(--accent-primary)' }}>FAQ Density:</strong> Ensure the generated FAQs cover common user intent to rank in AI answer boxes.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -128,10 +139,31 @@ const sections = [
         content: (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                 <div>
-                    <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1rem' }}>See Your Content Through AI Eyes</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                        Before you publish, use the AI Simulator to see if an LLM (like GPT-4) would actually cite your content for a specific query.
-                    </p>
+                    <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Verification Flow</h3>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(168, 85, 247, 0.1)', borderRadius: '8px', color: '#A855F7' }}><MousePointer2 size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>1. Navigate</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Go to **"AI Simulator"** from the sidebar.</p>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(168, 85, 247, 0.1)', borderRadius: '8px', color: '#A855F7' }}><Clipboard size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>2. Input Content & Query</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Paste your content and the specific query you want to test against.</p>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(168, 85, 247, 0.1)', borderRadius: '8px', color: '#A855F7' }}><Play size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>3. Click Run Simulation</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Wait for the LLM to process and determine your citation probability.</p>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div style={{ 
                         borderRadius: 'var(--radius-lg)', 
@@ -148,31 +180,31 @@ const sections = [
                     </div>
 
                     <div style={{ 
-                        background: 'rgba(168, 85, 247, 0.1)', 
-                        border: '1px solid rgba(168, 85, 247, 0.2)', 
-                        borderRadius: 'var(--radius-lg)', 
-                        padding: '1.5rem',
-                        marginBottom: '2rem'
-                    }}>
-                        <p style={{ fontSize: '0.9rem', color: 'rgba(248, 250, 252, 0.8)' }}>
-                            The simulator analyzes "Citation Probability." If your content is too vague or lacks unique data, the AI is less likely to use it as a source.
-                        </p>
-                    </div>
-
-                    <div style={{ 
                         borderRadius: 'var(--radius-lg)', 
                         overflow: 'hidden', 
                         border: '1px solid rgba(255, 255, 255, 0.1)', 
-                        background: 'rgba(0, 0, 0, 0.3)'
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        marginBottom: '2rem'
                     }}>
                         <img 
                             src="/docs/ai simulator result.png" 
                             alt="AI Simulator Result" 
                             style={{ width: '100%', height: 'auto', display: 'block' }}
                         />
-                        <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-tertiary)', background: 'rgba(255, 255, 255, 0.02)', fontStyle: 'italic' }}>
-                            A high probability score means your content is "Cite-Ready."
-                        </div>
+                    </div>
+
+                    <div style={{ 
+                        background: 'rgba(255, 255, 255, 0.03)', 
+                        border: '1px solid rgba(255, 255, 255, 0.08)', 
+                        borderRadius: 'var(--radius-lg)', 
+                        padding: '1.5rem' 
+                    }}>
+                        <h4 style={{ color: 'var(--text-primary)', fontWeight: '700', marginBottom: '0.75rem' }}>How to Elaborate the Results:</h4>
+                        <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                            <li>• <strong style={{ color: '#A855F7' }}>Citation Probability:</strong> Anything above **80%** means your content is highly optimized.</li>
+                            <li>• <strong style={{ color: '#A855F7' }}>Semantic Alignment:</strong> If the score is low, re-optimize your content with more specific "Entities."</li>
+                            <li>• <strong style={{ color: '#A855F7' }}>Direct Response Test:</strong> The result simulates if a user would be satisfied by the AI using your content.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -185,10 +217,31 @@ const sections = [
         content: (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                 <div>
-                    <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1rem' }}>Track Your Citations</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                        Paste a URL to see how many AI engines are currently referencing your brand or content.
-                    </p>
+                    <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Audit Flow</h3>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', color: '#10B981' }}><MousePointer2 size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>1. Navigate</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Select **"Visibility Analysis"** from the sidebar.</p>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', color: '#10B981' }}><Search size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>2. Input URL</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Paste the full URL of the domain or article you want to audit.</p>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', color: '#10B981' }}><Play size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>3. Click Run Analysis</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Wait for the global crawl to identify your AI citations.</p>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div style={{ 
                         borderRadius: 'var(--radius-lg)', 
@@ -208,16 +261,28 @@ const sections = [
                         borderRadius: 'var(--radius-lg)', 
                         overflow: 'hidden', 
                         border: '1px solid rgba(255, 255, 255, 0.1)', 
-                        background: 'rgba(0, 0, 0, 0.3)'
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        marginBottom: '2rem'
                     }}>
                         <img 
                             src="/docs/visibility analysis results.png" 
                             alt="Visibility Results" 
                             style={{ width: '100%', height: 'auto', display: 'block' }}
                         />
-                        <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-tertiary)', background: 'rgba(255, 255, 255, 0.02)', fontStyle: 'italic' }}>
-                            Understand where you stand in the Generative Search ecosystem.
-                        </div>
+                    </div>
+
+                    <div style={{ 
+                        background: 'rgba(255, 255, 255, 0.03)', 
+                        border: '1px solid rgba(255, 255, 255, 0.08)', 
+                        borderRadius: 'var(--radius-lg)', 
+                        padding: '1.5rem' 
+                    }}>
+                        <h4 style={{ color: 'var(--text-primary)', fontWeight: '700', marginBottom: '0.75rem' }}>How to Elaborate the Results:</h4>
+                        <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                            <li>• <strong style={{ color: '#10B981' }}>Brand Citation Chart:</strong> See which specific AI engines (Perplexity, ChatGPT) are already using your content.</li>
+                            <li>• <strong style={{ color: '#10B981' }}>Share of Voice:</strong> Understand how much of the "AI Conversation" you own compared to competitors.</li>
+                            <li>• <strong style={{ color: '#10B981' }}>Blind Spots:</strong> Identify keywords where you are invisible to AI.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -230,25 +295,58 @@ const sections = [
         content: (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                 <div>
-                    <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1rem' }}>Build Topical Authority</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                        Enter a keyword, and we'll map out a cluster of 10-15 related articles you need to write to own that niche.
-                    </p>
+                    <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Strategy Flow</h3>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '8px', color: '#F59E0B' }}><MousePointer2 size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>1. Navigate</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Click **"Content Strategy"** in the sidebar.</p>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '8px', color: '#F59E0B' }}><Search size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>2. Input Keyword</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Enter the main topic you want to dominate (e.g., 'SaaS SEO').</p>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ padding: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '8px', color: '#F59E0B' }}><Play size={18}/></div>
+                            <div>
+                                <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>3. Click Generate Strategy</h4>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Wait for the engine to map out your cluster of authority.</p>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div style={{ 
                         borderRadius: 'var(--radius-lg)', 
                         overflow: 'hidden', 
                         border: '1px solid rgba(255, 255, 255, 0.1)', 
-                        background: 'rgba(0, 0, 0, 0.3)'
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        marginBottom: '2rem'
                     }}>
                         <img 
                             src="/docs/content startegy input with result.png" 
-                            alt="Content Strategy" 
+                            alt="Content Strategy Result" 
                             style={{ width: '100%', height: 'auto', display: 'block' }}
                         />
-                        <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-tertiary)', background: 'rgba(255, 255, 255, 0.02)', fontStyle: 'italic' }}>
-                            Complete topical maps to dominate AI engine responses.
-                        </div>
+                    </div>
+
+                    <div style={{ 
+                        background: 'rgba(255, 255, 255, 0.03)', 
+                        border: '1px solid rgba(255, 255, 255, 0.08)', 
+                        borderRadius: 'var(--radius-lg)', 
+                        padding: '1.5rem' 
+                    }}>
+                        <h4 style={{ color: 'var(--text-primary)', fontWeight: '700', marginBottom: '0.75rem' }}>How to Elaborate the Results:</h4>
+                        <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                            <li>• <strong style={{ color: '#F59E0B' }}>Authority Cluster:</strong> Each article in the list is a "building block" for your brand trust.</li>
+                            <li>• <strong style={{ color: '#F59E0B' }}>Topical Map:</strong> Cover all these articles to ensure AI engines see you as the #1 source.</li>
+                            <li>• <strong style={{ color: '#F59E0B' }}>Intent Coverage:</strong> These titles are generated to match common AI search intents.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -289,7 +387,7 @@ function Docs() {
                     flexDirection: 'column',
                     gap: '0.5rem'
                 }}>
-                    <div style={{ sticky: 'top', top: '8rem' }}>
+                    <div style={{ position: 'sticky', top: '8rem' }}>
                         <div style={{ padding: '0 1rem', marginBottom: '1.5rem' }}>
                             <h2 style={{ 
                                 fontSize: '0.75rem', 
@@ -298,7 +396,7 @@ function Docs() {
                                 letterSpacing: '0.2em', 
                                 color: 'var(--text-tertiary)' 
                             }}>
-                                Documentation
+                                User Manual
                             </h2>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
