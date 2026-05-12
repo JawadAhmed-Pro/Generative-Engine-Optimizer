@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 import time
 import logging
+import json
 from datetime import datetime
 
 from config import settings
