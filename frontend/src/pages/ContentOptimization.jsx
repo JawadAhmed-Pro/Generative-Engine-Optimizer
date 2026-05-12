@@ -501,22 +501,20 @@ function ContentOptimization() {
 
                 if (isGenerate) {
                     analysisData = {
-                        scores: {
-                            structural: optimizationResult.structural_score?.score || 85,
-                            semantic: optimizationResult.semantic_score?.score || 85,
-                            citation: optimizationResult.citation_worthiness_score || 85,
-                            geo_lift: optimizationResult.overall_score || 85
-                        },
+                        overall_score: optimizationResult.overall_score || 85,
+                        structural_clarity_score: optimizationResult.structural_score?.score || optimizationResult.structural_score || 85,
+                        semantic_coverage_score: optimizationResult.semantic_score?.score || optimizationResult.semantic_score || 85,
+                        citation_worthiness_score: optimizationResult.citation_worthiness_score || 85,
+                        freshness_authority_score: optimizationResult.overall_score || 85,
                         suggestions: ["Content generated from idea. Refine with specific data for higher ranking."]
                     };
                 } else if (optimizationResult.structural_score) {
                     analysisData = {
-                        scores: {
-                            structural: optimizationResult.structural_score?.score || optimizationResult.structural_score || 80,
-                            citation: optimizationResult.citation_worthiness_score || 80,
-                            semantic: optimizationResult.semantic_score?.score || optimizationResult.semantic_score || 80,
-                            geo_lift: optimizationResult.overall_score || 80
-                        },
+                        overall_score: optimizationResult.overall_score || 80,
+                        structural_clarity_score: optimizationResult.structural_score?.score || optimizationResult.structural_score || 80,
+                        citation_worthiness_score: optimizationResult.citation_worthiness_score || 80,
+                        semantic_coverage_score: optimizationResult.semantic_score?.score || optimizationResult.semantic_score || 80,
+                        freshness_authority_score: optimizationResult.overall_score || 80,
                         suggestions: optimizationResult.changes_made || []
                     };
                 }

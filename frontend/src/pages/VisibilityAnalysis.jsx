@@ -71,7 +71,13 @@ function VisibilityAnalysis() {
                             const resResponse = await axios.get(`/api/analysis/${resultId}`)
                             // Handle potential nesting
                             const data = resResponse.data
-                            const finalResults = data.analysis ? { ...data.analysis, id: data.id, raw_content: data.content, insights: data.insights } : data
+                            const finalResults = data.analysis ? { 
+                                ...data.analysis, 
+                                id: data.id, 
+                                raw_content: data.content, 
+                                insights: data.insights,
+                                suggestions: data.analysis.recommendations || data.analysis.suggestions_detailed || []
+                            } : data
                             updateVisibility({ analysisResults: finalResults })
                             fetchHistory()
                         }
