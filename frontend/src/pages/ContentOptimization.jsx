@@ -503,18 +503,19 @@ function ContentOptimization() {
                     analysisData = {
                         scores: {
                             structural: optimizationResult.structural_score?.score || 85,
-                            semantic: 85,
-                            geo_lift: 85
+                            semantic: optimizationResult.semantic_score?.score || 85,
+                            citation: optimizationResult.citation_worthiness_score || 85,
+                            geo_lift: optimizationResult.overall_score || 85
                         },
                         suggestions: ["Content generated from idea. Refine with specific data for higher ranking."]
                     };
                 } else if (optimizationResult.structural_score) {
                     analysisData = {
                         scores: {
-                            structural: optimizationResult.structural_score.score || 80,
+                            structural: optimizationResult.structural_score?.score || optimizationResult.structural_score || 80,
                             citation: optimizationResult.citation_worthiness_score || 80,
-                            semantic: 80,
-                            geo_lift: 80
+                            semantic: optimizationResult.semantic_score?.score || optimizationResult.semantic_score || 80,
+                            geo_lift: optimizationResult.overall_score || 80
                         },
                         suggestions: optimizationResult.changes_made || []
                     };
