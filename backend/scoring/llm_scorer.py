@@ -358,27 +358,27 @@ INSTRUCTIONS:
 """
         
         if mode == 'rewrite':
-            return f"""You are a Generative Engine Optimization (GEO) Expert. Your task is to COMPLETELY REWRITE and EXPAND this content into a comprehensive, high-ranking article.
+            return f"""You are a Generative Engine Optimization (GEO) Expert. Your task is to COMPLETELY REWRITE and EXPAND this content into a massive, authoritative pillar page.
 
 {geo_requirements}
 
-## STRICT INSTRUCTIONS:
-- START directly with a high-impact # H1 Title.
-- DO NOT include any preamble like "Here is your rewritten content".
-- DO NOT include any tool-specific links or instructions (e.g., "visit jina.ai", "authentication required").
-- DO NOT include any meta-commentary.
-- FOCUS ON INFORMATION GAIN: Add new perspectives, deeper technical details, and specific industry context.
+## STRICT CONTEXT LOCK:
+- DO NOT SUMMARIZE. The output MUST be significantly longer than the input.
+- DO NOT OMIT any sections or topics from the original text. If the original discusses 'Marketing' and 'Software Development', the output MUST also discuss them in depth.
+- PRESERVE the original intent while adding 2-3x more technical detail and data-driven insights.
+- START directly with a high-impact # H1 Title that matches the original topic.
+- DO NOT include any preamble, tool links (jina.ai), or meta-commentary.
 
 ## ORIGINAL CONTENT TO REWRITE:
 {content}
 
 ## YOUR TASK:
-Rewrite and expand this content following ALL requirements. The rewritten version should:
-1. Start with an H1 headline followed by a clear, direct answer in the first paragraph.
-2. Significantly increase depth and technical authority (aim for 1500+ words).
-3. Have perfect Markdown structure with headers (H1, H2, H3), lists, and a comparison table.
-4. Include specific data points, statistics, or authoritative references.
-5. Be immediately publishable as a professional pillar page.
+Expand every single point from the original text with new perspectives and technical authority. The rewritten version should:
+1. Start with an H1 headline.
+2. Follow with a "Key Takeaways" summary box.
+3. Expand every original paragraph into a full section with at least 250-400 words of depth each.
+4. Have perfect Markdown structure with headers (H1, H2, H3), lists, and at least TWO comparison tables.
+5. Include specific data points, statistics, or authoritative references for every claim.
 
 ## OUTPUT FORMAT:
 Return ONLY the Markdown content starting with # H1.
