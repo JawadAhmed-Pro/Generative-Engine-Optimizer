@@ -24,7 +24,12 @@ class LiveVerifier:
         # 1. Real Grounding: Check if the URL appears in top search results
         real_search_boost = 0.0
         serp_position = None  # Real position from search results
-        if queries:
+        
+        # Check if this is a live URL or fresh content
+        is_live_url = url.startswith('http') and 'localhost' not in url and 'example.com' not in url
+        is_new_content = content_metadata.get('is_new_content', False) if content_metadata else False
+
+        if queries and is_live_url:
             try:
                 top_urls = await search_service.get_top_competitors(queries[0], limit=10)
                 target_domain = url.split('//')[-1].split('/')[0].replace('www.', '')
@@ -39,6 +44,13 @@ class LiveVerifier:
                     real_search_boost = -0.15
             except Exception as e:
                 app_logger.warning(f"LiveVerifier: Search grounding failed: {e}")
+        elif is_new_content:
+            # SIMULATION MODE: If content is new/optimized, we assume it WILL be grounded 
+            # if it has high factual density.
+            fact_density = content_metadata.get('fact_density', 0) if content_metadata else 0
+            if fact_density > 0.05: # High fact density
+                real_search_boost = 0.15 # Predictive boost for high-quality new content
+                app_logger.info("LiveVerifier: Applying Simulation Boost for high-density new content.")
         
         # 2. Base Probability from the predictive engine
         base_prob = (predicted_score / 100.0)

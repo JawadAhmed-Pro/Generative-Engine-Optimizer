@@ -1031,7 +1031,7 @@ async def _run_analysis_job(**kwargs):
             extracted = {
                 'content': raw_content,
                 'title': kwargs.get('title') or "Direct Text Input",
-                'metadata': {},
+                'metadata': {'is_new_content': True},
                 'headings': {'h1': md_h1, 'h2': md_h2, 'h3': md_h3},
                 'schema': {},
                 'links': []
@@ -1079,7 +1079,18 @@ async def _run_analysis_job(**kwargs):
 
         from live_verifier import live_verifier
         predicted_anchor = final_scores.get('overall_visibility_score', 60.0)
-        live_results = await live_verifier.verify_citations(url=extracted.get('url', ''), queries=[target_kw], predicted_score=predicted_anchor)
+        
+        # Prepare metadata for verifier (Simulation support)
+        verifier_metadata = extracted.get('metadata', {}).copy()
+        # Include fact density from rule scores if available
+        verifier_metadata['fact_density'] = rule_scores.get('citations', {}).get('score', 0) / 10.0 if 'citations' in rule_scores else 0
+        
+        live_results = await live_verifier.verify_citations(
+            url=extracted.get('url', ''), 
+            queries=[target_kw], 
+            predicted_score=predicted_anchor,
+            content_metadata=verifier_metadata
+        )
         
         # NEW: Grounding Audit
         grounding_audit = await geo_optimizer.suggest_hard_grounding(extracted['content'], extracted['content_type'])
