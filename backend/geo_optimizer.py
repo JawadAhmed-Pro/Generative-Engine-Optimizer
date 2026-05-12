@@ -148,12 +148,12 @@ class GEOOptimizer:
             ---
             
             CRITICAL MISSION (Zero-Tolerance for Laziness):
-            1. FIX 1 (Heading-Aware): Maintain the exact H2/H3 structure provided. Rewrite the body under each heading while ensuring the heading remains a distinct, optimized anchor for AI scrapers.
-            2. FIX 2 (Experience Preservation): Never remove personal anecdotes or first-person narrative. These are high-value E-E-A-T signals. Preserve and polish them.
-            3. DO NOT RETURN THE ORIGINAL TEXT. You must rewrite at least 60% of the sentences to increase semantic depth and information gain.
-            4. INFORMATION GAIN: Use the GROUNDING DATA above to inject real statistics, expert names, and verifiable facts. This is CRITICAL for authority scores.
-            5. MARKDOWN: Use tables for specs. Use bolding for entities.
-            6. WORD COUNT: The optimized version MUST be significantly longer (at least 20-30% expansion) and more detailed than the original.
+            1. INFORMATION DENSITY: Every paragraph MUST contain at least one specific fact, statistic, date, or expert reference. Use the GROUNDING DATA to inject real-world numbers (e.g., "According to 2024 benchmarks...", "Market growth of 14.2%...").
+            2. CITATIONS: Use bracketed citations like [Source: Industry Report] or [1] for every major claim. Add a "Sources" list if this is the end of the article.
+            3. HEADING HIERARCHY: Ensure this section starts with a clear, authoritative H2 or H3. Optimize the heading for "User Intent" (e.g., instead of "Conclusion", use "Final Verdict: Is AI Worth the Investment?").
+            4. EDUCATIONAL DEPTH: Explain 'Why' and 'How', not just 'What'. Provide step-by-step breakdowns or comparison tables where possible.
+            5. WORD COUNT: Significantly EXPAND the text. Aim for 2x length compared to the original by adding technical nuance and background context.
+            6. ZERO FLUFF: Remove generic phrases like "In today's fast-paced world". Start with value immediately.
             
             ORIGINAL CONTENT:
             ---
@@ -163,7 +163,8 @@ class GEOOptimizer:
             Return JSON format:
             {{
                 "optimized_content": "The significantly improved, detailed Markdown text...",
-                "changes": ["List of specific improvements made"]
+                "changes": ["List of specific improvements made"],
+                "missing_citations": ["List of facts that need more grounding"]
             }}
             """
             # O6 FIX: Use enumerate instead of .index() for rate-limiting
@@ -221,11 +222,13 @@ class GEOOptimizer:
         full_content = "\n\n".join(processed_sections)
         full_content = self._remove_duplicate_headings(full_content)
         
-        # 5. Final Scoring
-        structural = self.get_structural_score(full_content)
-        semantic = await self.get_semantic_score(full_content)
+        # 4. Final Polish Pass (Structural Hierarchy, FAQs, Citations)
+        app_logger.info("Agent: Applying final editorial polish (H1, FAQs, Citations)...")
+        polish_result = await self._final_polish(full_content, strategy, tone)
+        final_clean_content = polish_result.get("polished_content", full_content)
+        all_changes.extend(polish_result.get("polish_notes", []))
 
-        # 6. Post-Rewrite Entity Check
+        # 5. Post-Rewrite Entity Check
         # O5 FIX: New entities are EXPECTED from grounded optimization. Log as enrichment, not warning.
         new_entities = self._extract_entities(full_content)
         added_entities = [ent for ent in new_entities if ent not in page_context["allowed_entity_pool"]]
@@ -233,13 +236,16 @@ class GEOOptimizer:
             app_logger.info(f"Agent: Optimization enriched content with {len(added_entities)} new entities: {added_entities[:10]}")
             all_changes.append(f"Enriched content with {len(added_entities)} new authority entities (grounded from search data)")
 
-        # 7. Extract Citation Flags
-        final_clean_content, citation_warnings = self.extract_citation_flags(full_content)
-
-        # 8. Entity Linking & Schema Generation
+        # 6. Entity Linking & Schema Generation
         linked_entities = await self._link_entities(new_entities)
         final_clean_content = self._apply_entity_links(final_clean_content, linked_entities)
 
+        # 7. Extract Citation Flags
+        final_clean_content, citation_warnings = self.extract_citation_flags(final_clean_content)
+
+        # 8. Final Scoring & Meta
+        structural = self.get_structural_score(final_clean_content)
+        semantic = await self.get_semantic_score(final_clean_content)
         seo_meta = await self._generate_seo_metadata(final_clean_content)
         schema_data = schema_generator.detect_schema_type(final_clean_content)
         schema_result = schema_generator.generate_schema(
@@ -260,41 +266,42 @@ class GEOOptimizer:
             "geo_lift_estimate": f"Estimated +{structural['score']}% structural lift"
         }
 
-    async def _structural_audit(self, content: str, strategy: str, tone: str) -> Dict[str, Any]:
+    async def _final_polish(self, content: str, strategy: str, tone: str) -> Dict[str, Any]:
         """
-        Phase A Improvement: Specialized Editorial Agent that checks structural integrity
-        and flows without aggressive rewriting.
+        Final phase: Editorial Agent that enforces H1 hierarchy, adds FAQs, and formats citations.
         """
         audit_prompt = f"""
-        Act as a Senior Content Editor and GEO Specialist.
-        Your task is to perform a Structural Audit of the following content.
+        Act as a Senior Editor and GEO Expert.
+        YOUR TASK: Perform a final authority-polish on the following article.
         
-        GOAL: Ensure cohesive flow, fix transition gaps, and remove any remaining redundancy or duplicate headings.
+        CRITICAL REACTION (Education & Blog Standard):
+        1. H1 HEADER: Ensure the article starts with ONE clear, punchy H1 header. If missing, create a powerhouse title.
+        2. H2/H3 STRUCTURE: Ensure logical hierarchy. No skipped levels. Use bullet points for readability.
+        3. MANDATORY FAQ: Add a "Frequently Asked Questions" section at the end with 3-5 specific, high-value questions and answers.
+        4. CITATION FORMATTING: Ensure all [Source: X] or [1] citations are consistently formatted. Add a "References" section at the very bottom listing the sources used.
+        5. FACT DENSITY CHECK: If any paragraph feels "fluffy," inject a clarifying detail or statistic.
         
         RULES:
-        1. Maintain the EXACT structure (headings, tables, lists).
-        2. Do NOT remove or add headings.
-        3. Do NOT invent new facts or statistics.
-        4. Focus on 'Semantic Bridges': Ensure each section flows logically into the next.
-        5. Respect the strategy: {strategy} and tone: {tone}.
-        6. Return the ENTIRE audited article.
+        - Strategy: {strategy} | Tone: {tone}
+        - Preserve all Markdown formatting (tables, bolding).
+        - RETURN THE ENTIRE ARTICLE.
         
         Return JSON format:
         {{
-            "audited_content": "The full article text here...",
-            "audit_fixes": ["Fixed transition between X and Y", "Removed duplicate info in Z"]
+            "polished_content": "The full polished Markdown article...",
+            "polish_notes": ["List of structural and authority improvements"]
         }}
         
-        Content:
+        Content to Polish:
         ---
         {content[:15000]}
         ---
         """
-        # Using Gemini for the large context window and better reasoning on flow
+        # Using Gemini for large context and high-quality reasoning
         result = await self._call_llm(audit_prompt, prefer_gemini=True, max_tokens=16384)
         
-        if not isinstance(result, dict) or "audited_content" not in result:
-            return {"audited_content": content, "audit_fixes": ["Audit pass failed, returned raw content"]}
+        if not isinstance(result, dict) or "polished_content" not in result:
+            return {"polished_content": content, "polish_notes": ["Polish pass failed, returned raw content"]}
             
         return result
 
@@ -493,27 +500,43 @@ class GEOOptimizer:
         # Extract citation flags
         final_clean_content, citation_warnings = self.extract_citation_flags(content)
         
+        # NEW: Final Polish Pass (H1, FAQs, Citations)
+        app_logger.info("Agent: Applying final editorial polish to generated content...")
+        polish_result = await self._final_polish(final_clean_content, strategy, tone)
+        final_clean_content = polish_result.get("polished_content", final_clean_content)
+        
         # Phase B Improvement: Entity Linking
         new_entities = self._extract_entities(final_clean_content)
         linked_entities = await self._link_entities(new_entities)
         
-        # NEW: Apply active hyperlinks
+        # Apply active hyperlinks
         final_clean_content = self._apply_entity_links(final_clean_content, linked_entities)
 
         # Generate SEO Metadata
         seo_meta = await self._generate_seo_metadata(final_clean_content)
         
+        # Generate Schema
+        schema_data = schema_generator.detect_schema_type(final_clean_content)
+        schema_result = schema_generator.generate_schema(
+            final_clean_content,
+            content_type=schema_data,
+            metadata={"title": seo_meta.get("title"), "entities": linked_entities}
+        )
+
+        all_changes = result.get("changes_made", ["Generated comprehensive article from idea"]) if isinstance(result, dict) else ["Generated comprehensive article from idea"]
+        all_changes.extend(polish_result.get("polish_notes", []))
+        
         return {
             "optimized_content": final_clean_content,
-            "title": result.get("title", idea) if isinstance(result, dict) else idea,
-            "changes_made": result.get("changes_made", ["Generated comprehensive article from idea"]) if isinstance(result, dict) else ["Generated comprehensive article from idea"],
-            "missing_citations": result.get("missing_citations", []) + citation_warnings,
+            "title": seo_meta.get("title", idea),
+            "changes_made": list(set(all_changes)),
+            "missing_citations": list(set(result.get("missing_citations", []) + citation_warnings)) if isinstance(result, dict) else citation_warnings,
             "citation_warnings": citation_warnings,
             "structural_score": structural,
             "semantic_score": semantic,
             "seo_metadata": seo_meta,
-            "geo_lift_estimate": result.get("geo_lift_estimate", f"Estimated +{structural['score']}% structural lift"),
-            "sections_generated": result.get("sections_generated", [])
+            "schema_markup": schema_result,
+            "geo_lift_estimate": result.get("geo_lift_estimate", f"Estimated +{structural['score']}% structural lift") if isinstance(result, dict) else f"Estimated +{structural['score']}% structural lift",
         }
 
     async def generate_rag_payload(self, content: str, target_keyword: str) -> Dict[str, Any]:
