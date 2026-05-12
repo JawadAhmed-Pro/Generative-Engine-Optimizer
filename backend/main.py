@@ -769,14 +769,19 @@ def get_analysis_by_item(
         {"type": i.insight_type, "content": i.content, "created_at": i.created_at.isoformat()}
         for i in stored_insights
     ]
-    # Calculate Citation Probability
-    probability_metrics = services.probability_model.calculate_probability(
-        overall_score=overall_score,
-        rule_scores=analysis.rule_based_scores or {},
-        llm_scores=analysis.llm_scores or {},
-        content_type=item.content_metadata.get('content_type', 'general') if item.content_metadata else "general",
-        engine=getattr(analysis, 'target_engine', 'perplexity') or 'perplexity'
-    )
+    # Retrieve stored probability metrics (which contain the Live Verifier 'validation_layer')
+    stored_prob = analysis.llm_scores.get('probability_metrics') if analysis.llm_scores else None
+    if stored_prob and isinstance(stored_prob, dict) and 'details' in stored_prob:
+        probability_metrics = stored_prob['details']
+    else:
+        # Fallback to recalculation if missing
+        probability_metrics = services.probability_model.calculate_probability(
+            overall_score=overall_score,
+            rule_scores=analysis.rule_based_scores or {},
+            llm_scores=analysis.llm_scores or {},
+            content_type=item.content_metadata.get('content_type', 'general') if item.content_metadata else "general",
+            engine=getattr(analysis, 'target_engine', 'perplexity') or 'perplexity'
+        )
 
     # Get historical analyses for this content item
     history = db.query(AnalysisResult).filter(
