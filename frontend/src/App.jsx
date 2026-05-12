@@ -9,7 +9,6 @@ import Projects from './pages/Projects'
 import ProjectDetail from './pages/ProjectDetail'
 import VisibilityAnalysis from './pages/VisibilityAnalysis'
 
-import CompetitorAnalysis from './pages/CompetitorAnalysis'
 import ContentStrategy from './pages/ContentStrategy'
 import Settings from './pages/Settings'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -52,7 +51,6 @@ function App() {
                                 <Route path="projects/:id" element={<ProjectDetail />} />
                                 <Route path="visibility" element={<VisibilityAnalysis />} />
 
-                                <Route path="competitors" element={<CompetitorAnalysis />} />
                                 <Route path="strategy" element={<ContentStrategy />} />
                                 <Route path="settings" element={<Settings />} />
                             </Route>
