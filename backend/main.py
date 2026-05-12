@@ -1433,7 +1433,7 @@ async def get_latest_analysis(
         raise HTTPException(status_code=404, detail="No analysis found for this item")
         
     return result
-        raise HTTPException(status_code=500, detail=f"Schema generation failed: {str(e)}")
+
 
 
 @app.post("/api/extract-keywords")
