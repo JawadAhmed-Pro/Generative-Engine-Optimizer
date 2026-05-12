@@ -128,6 +128,12 @@ class ScoreAggregator:
             'readability_ux': llm_metrics['readability_ux']
         }
         
+        # Final Intent and EEAT data extraction
+        user_intent_val = llm_metrics['user_intent']
+        experience_score = llm_metrics['experience']
+        authoritativeness_score = llm_metrics['authoritativeness']
+        trustworthiness_score = llm_metrics['trustworthiness']
+
         formatted_llm_scores_response = {
             'structural_clarity': {
                 'score': llm_metrics['structural_integrity'],
@@ -202,12 +208,6 @@ class ScoreAggregator:
         
         # Merge, ensuring dynamic LLM insights come first
         final_suggestions.extend(rule_suggestions[:3])
-
-        # Final Intent and EEAT data extraction
-        user_intent_val = llm_metrics['user_intent']
-        experience_score = llm_metrics['experience']
-        authoritativeness_score = llm_metrics['authoritativeness']
-        trustworthiness_score = llm_metrics['trustworthiness']
 
         # Calculate overall score using dynamic weights
         overall_visibility_score = (
