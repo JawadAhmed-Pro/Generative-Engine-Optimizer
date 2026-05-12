@@ -70,8 +70,18 @@ class GEOOptimizer:
         grounding_context = ""
         try:
             from search_service import search_service
-            search_topic = target_query or content[:200]
-            app_logger.info(f"Agent: Fetching search grounding for rewrite: {search_topic[:80]}...")
+            # IMPROVED: Extract a better search topic than just the first 200 chars
+            # Try to find H1 or first strong sentence
+            h1_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+            if h1_match:
+                search_topic = h1_match.group(1).strip()
+            else:
+                # Take first 2 sentences
+                sentences = re.split(r'[.!?]', content)
+                search_topic = ". ".join(sentences[:2]).strip()
+            
+            search_topic = target_query or search_topic or "general topic"
+            app_logger.info(f"Agent: Fetching HIGH-DENSITY grounding data for rewrite: {search_topic[:80]}...")
             grounding_context = await search_service.search_and_ground(search_topic)
             app_logger.info(f"Agent: Grounding data fetched ({len(grounding_context)} chars)")
         except Exception as e:
