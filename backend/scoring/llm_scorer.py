@@ -358,29 +358,30 @@ INSTRUCTIONS:
 """
         
         if mode == 'rewrite':
-            return f"""You are a Generative Engine Optimization (GEO) Expert. Your task is to COMPLETELY REWRITE and EXPAND this content to maximize its visibility in AI Search Engines.
+            return f"""You are a Generative Engine Optimization (GEO) Expert. Your task is to COMPLETELY REWRITE and EXPAND this content into a comprehensive, high-ranking article.
 
 {geo_requirements}
 
 ## STRICT INSTRUCTIONS:
+- START directly with a high-impact # H1 Title.
 - DO NOT include any preamble like "Here is your rewritten content".
 - DO NOT include any tool-specific links or instructions (e.g., "visit jina.ai", "authentication required").
-- DO NOT include any meta-commentary about your own process.
-- FOCUS ON INFORMATION GAIN: Add new perspectives, deeper technical details, or specific industry context that is missing from the original.
+- DO NOT include any meta-commentary.
+- FOCUS ON INFORMATION GAIN: Add new perspectives, deeper technical details, and specific industry context.
 
 ## ORIGINAL CONTENT TO REWRITE:
 {content}
 
 ## YOUR TASK:
-Rewrite this content following ALL the requirements above. The rewritten version should:
-1. Maintain the original topic but significantly increase depth and technical authority.
-2. Be significantly longer and more comprehensive (aim for 2x the original length if possible).
-3. Have perfect Markdown structure with headers, lists, and a comparison table.
+Rewrite and expand this content following ALL requirements. The rewritten version should:
+1. Start with an H1 headline followed by a clear, direct answer in the first paragraph.
+2. Significantly increase depth and technical authority (aim for 1500+ words).
+3. Have perfect Markdown structure with headers (H1, H2, H3), lists, and a comparison table.
 4. Include specific data points, statistics, or authoritative references.
-5. Be immediately usable for professional publication.
+5. Be immediately publishable as a professional pillar page.
 
 ## OUTPUT FORMAT:
-Return ONLY the optimized Markdown content. Do not include any meta-commentary.
+Return ONLY the Markdown content starting with # H1.
 """
         else:  # generate
             return f"""You are a Generative Engine Optimization (GEO) Expert. Your task is to GENERATE a comprehensive, high-ranking article that AI Search Engines will want to cite and reference.
@@ -392,17 +393,23 @@ Return ONLY the optimized Markdown content. Do not include any meta-commentary.
 
 ## CONTENT TYPE: {content_type}
 
+## STRICT INSTRUCTIONS:
+- START directly with a high-impact # H1 Title.
+- DO NOT include any preamble, explanation, or meta-commentary.
+- DO NOT include any tool-specific links or instructions (e.g., "visit jina.ai").
+- FOCUS ON INFORMATION GAIN: Provide a unique perspective and deep data-driven insights.
+
 ## YOUR TASK:
-Generate a comprehensive article (1500-2500 words) following ALL the requirements above. The article should:
-1. Start with a clear, direct answer in the first paragraph
-2. Have at least 5-7 main sections with H2 headings
-3. Include bullet points, numbered lists, and at least one table
-4. Reference specific statistics or industry data
-5. Include a Key Takeaways section and a conclusion
-6. Be immediately publishable as a professional blog post
+Generate a comprehensive article (1500-2500 words) following ALL requirements. The article should:
+1. Start with an H1 headline followed by a clear, direct answer in the first paragraph.
+2. Have at least 5-7 main sections with H2 headings.
+3. Include bullet points, numbered lists, and at least one comparison table.
+4. Reference specific statistics or industry data.
+5. Include a Key Takeaways section and a conclusion.
+6. Be immediately publishable as a professional blog post.
 
 ## OUTPUT FORMAT:
-Return ONLY the Markdown content. Do not include any preamble, explanation, or meta-commentary. Start directly with the article title as # H1.
+Return ONLY the Markdown content starting with # H1.
 """
 
     async def _analyze_with_groq(self, content: str, intent_slice: str, query: str, metadata: Dict[str, Any], engine: str = "perplexity") -> Dict[str, Any]:
