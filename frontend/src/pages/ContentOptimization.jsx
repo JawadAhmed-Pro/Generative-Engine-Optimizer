@@ -506,6 +506,7 @@ function ContentOptimization() {
                         semantic_coverage_score: optimizationResult.semantic_score?.score || optimizationResult.semantic_score || 85,
                         citation_worthiness_score: optimizationResult.citation_worthiness_score || 85,
                         freshness_authority_score: optimizationResult.overall_score || 85,
+                        llm_scores: optimizationResult.llm_scores || null,
                         suggestions: ["Content generated from idea. Refine with specific data for higher ranking."]
                     };
                 } else if (optimizationResult.structural_score) {
@@ -515,6 +516,7 @@ function ContentOptimization() {
                         citation_worthiness_score: optimizationResult.citation_worthiness_score || 80,
                         semantic_coverage_score: optimizationResult.semantic_score?.score || optimizationResult.semantic_score || 80,
                         freshness_authority_score: optimizationResult.overall_score || 80,
+                        llm_scores: optimizationResult.llm_scores || null,
                         suggestions: optimizationResult.changes_made || []
                     };
                 }
