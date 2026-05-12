@@ -1085,7 +1085,22 @@ async def _run_analysis_job(**kwargs):
             target_kw = llm_scores.get('primary_keyword') or extracted.get('title', 'topic').split('|')[0].strip()
 
         from live_verifier import live_verifier
-        predicted_anchor = final_scores.get('overall_visibility_score', 60.0)
+        
+        # Calculate initial probability baseline
+        current_overall = final_scores.get('overall_visibility_score', 0)
+        detection_context = final_scores['llm_scores'].copy()
+        detection_context['raw_content'] = extracted['content']
+        detection_context['target_keyword'] = target_kw
+        
+        prob_calc = services.probability_model.calculate_probability(
+            overall_score=current_overall,
+            rule_scores=rule_scores,
+            llm_scores=detection_context,
+            content_type=extracted['content_type'],
+            engine=kwargs.get('engine', 'perplexity')
+        )
+        
+        predicted_anchor = prob_calc.get('probability', 60.0)
         
         # Prepare metadata for verifier (Simulation support)
         verifier_metadata = extracted.get('metadata', {}).copy()
@@ -1098,6 +1113,24 @@ async def _run_analysis_job(**kwargs):
             predicted_score=predicted_anchor,
             content_metadata=verifier_metadata
         )
+        
+        actual_rate = live_results.get("actual_citation_rate", 0)
+        error_gap = predicted_anchor - actual_rate
+        
+        prob_calc['validation_layer'] = {
+            "queries_tested": [target_kw],
+            "total_checks": 1,
+            "citation_status": "Cited" if actual_rate > 0 else "Not Cited",
+            "snapshot_label": "Point-in-time snapshot — results vary per query",
+            "error_gap": round(error_gap, 1),
+            "status": "Validated" if abs(error_gap) <= 15 else "High Variance"
+        }
+        
+        final_scores['llm_scores']['probability_metrics'] = {
+            'score': predicted_anchor,
+            'details': prob_calc,
+            'suggestions': []
+        }
         
         # NEW: Grounding Audit
         grounding_audit = await geo_optimizer.suggest_hard_grounding(extracted['content'], extracted['content_type'])
