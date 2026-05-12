@@ -299,19 +299,24 @@ class RuleBasedScorer:
             details['regex_statistics'] = stat_count
             details['nlp_error'] = str(e)
 
-        # Fact density per 200 words
-        fact_density = stat_count / max(word_count / 200, 1)
-        details['fact_density'] = round(fact_density, 2)
+        # Fact density per 200 words (Normalized to 0-100 scale: 2.0 = 100%)
+        raw_fact_density = stat_count / max(word_count / 200, 1)
+        fact_density_score = min(100, round(raw_fact_density * 50, 1))
+        details['fact_density'] = fact_density_score
         
-        if fact_density >= 2.0:
+        if raw_fact_density >= 2.0:
             score += 30
-        elif fact_density >= 1.0:
+        elif raw_fact_density >= 1.0:
             score += 15
         else:
             suggestions.append("Increase Information Density using NLP entities (Names, Organizations, Metrics) (High Impact: +30% Lift)")
 
         # 3. Inline Source Citations
-        citation_patterns = [r'according to', r'source:', r'\[\d+\]', r'\(202\d\)']
+        citation_patterns = [
+            r'according to', r'source:', r'\[\d+\]', r'\(202\d\)', 
+            r'reported by', r'says', r'stated by', r'found by', 
+            r'data from', r'research by', r'analysis by'
+        ]
         citation_count = sum(len(re.findall(p, content.lower())) for p in citation_patterns)
         details['citations'] = citation_count
         
@@ -514,15 +519,16 @@ class RuleBasedScorer:
         if ratio < 0.4:
             suggestions.append("Increase Direct Answer Density: Start more sentences with declarative Subject+Verb patterns")
         
-        # Narrative Noise Detector (ChatGPT Specialized)
+        # Narrative Clarity Detector (Inverted Noise: 100 is Perfect)
         fluff_phrases = ["in conclusion", "furthermore", "moreover", "it is important to note", "it is worth noting", "additionally", "as such", "consequently", "it should be noted"]
         noise_count = sum(content.lower().count(p) for p in fluff_phrases)
-        noise_score = min(100, (noise_count * 15)) # Every fluff phrase adds 15% noise
-        details['narrative_noise'] = noise_score
+        noise_penalty = min(100, (noise_count * 12)) # Every fluff phrase adds 12% noise penalty
+        narrative_clarity = 100 - noise_penalty
+        details['narrative_clarity'] = narrative_clarity
         
-        if noise_score > 30:
+        if narrative_clarity < 70:
             score -= 15
-            suggestions.append(f"High Narrative Noise ({noise_score}%): Remove generic transition fluff like 'Moreover' or 'It is important to note'")
+            suggestions.append(f"Low Narrative Clarity ({narrative_clarity}%): Remove generic transition fluff like 'Moreover' or 'It is important to note'")
         
         # Active voice - Relaxed
         words = content.lower().split()

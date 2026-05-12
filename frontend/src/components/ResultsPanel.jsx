@@ -146,7 +146,7 @@ function ResultsPanel({ results, onReset, onApplyInjection, context = 'url' }) {
                         key: key,
                         title: title,
                         score: value,
-                        unit: (key.includes('count') || key.includes('found') || key.includes('density')) ? "" : "/ 100"
+                        unit: (key.includes('count') || key.includes('found')) ? "" : "/ 100"
                     });
                 });
             }
