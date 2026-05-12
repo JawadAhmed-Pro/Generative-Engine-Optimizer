@@ -1420,7 +1420,7 @@ async def get_job_status(
         "status": job.status,
         "progress": job.progress,
         "result": job.result,
-        "error": job.error,
+        "error": job.error_message,
         "completed_at": job.completed_at
     }
 
