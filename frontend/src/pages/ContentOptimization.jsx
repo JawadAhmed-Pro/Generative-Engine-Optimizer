@@ -138,6 +138,7 @@ function ContentOptimization() {
     const [compareView, setCompareView] = useState('side') // 'side' or 'diff'
     const [additionalInstructions, setAdditionalInstructions] = useState('')
     const [progress, setProgress] = useState(0)
+    const [loadingAnalysis, setLoadingAnalysis] = useState(false)
     const [selection, setSelection] = useState({ text: '', top: 0, left: 0, visible: false })
     const [versionHistory, setVersionHistory] = useState([])
 
@@ -492,70 +493,98 @@ function ContentOptimization() {
         }
     }
 
-    const pollJobStatus = async (jobId, isGenerate = false) => {
+    const pollJobStatus = async (jobId, isGenerate = false, isAnalysisOnly = false) => {
         try {
             const res = await axios.get(`/api/jobs/${jobId}`);
             if (res.data.status === 'completed') {
-                const optimizationResult = res.data.result;
+                const result = res.data.result;
                 let analysisData = null;
 
-                if (isGenerate) {
+                if (isAnalysisOnly) {
+                    analysisData = result;
+                } else if (isGenerate) {
                     analysisData = {
-                        overall_score: optimizationResult.overall_score || 85,
-                        structural_clarity_score: optimizationResult.structural_score?.score || optimizationResult.structural_score || 85,
-                        semantic_coverage_score: optimizationResult.semantic_score?.score || optimizationResult.semantic_score || 85,
-                        citation_worthiness_score: optimizationResult.citation_worthiness_score || 85,
-                        freshness_authority_score: optimizationResult.overall_score || 85,
-                        llm_scores: optimizationResult.llm_scores || null,
+                        overall_score: result.overall_score || 85,
+                        structural_clarity_score: result.structural_score?.score || result.structural_score || 85,
+                        semantic_coverage_score: result.semantic_score?.score || result.semantic_score || 85,
+                        citation_worthiness_score: result.citation_worthiness_score || 85,
+                        freshness_authority_score: result.overall_score || 85,
+                        llm_scores: result.llm_scores || null,
                         suggestions: ["Content generated from idea. Refine with specific data for higher ranking."]
                     };
-                } else if (optimizationResult.structural_score) {
+                } else if (result.structural_score || result.overall_score) {
                     analysisData = {
-                        overall_score: optimizationResult.overall_score || 80,
-                        structural_clarity_score: optimizationResult.structural_score?.score || optimizationResult.structural_score || 80,
-                        citation_worthiness_score: optimizationResult.citation_worthiness_score || 80,
-                        semantic_coverage_score: optimizationResult.semantic_score?.score || optimizationResult.semantic_score || 80,
-                        freshness_authority_score: optimizationResult.overall_score || 80,
-                        llm_scores: optimizationResult.llm_scores || null,
-                        suggestions: optimizationResult.changes_made || []
+                        overall_score: result.overall_score || 80,
+                        structural_clarity_score: result.structural_score?.score || result.structural_score || 80,
+                        citation_worthiness_score: result.citation_worthiness_score || 80,
+                        semantic_coverage_score: result.semantic_score?.score || result.semantic_score || 80,
+                        freshness_authority_score: result.overall_score || 80,
+                        llm_scores: result.llm_scores || null,
+                        suggestions: result.changes_made || []
                     };
                 }
 
                 updateOptimization({
                     analysisResults: analysisData,
-                    optimizedContent: optimizationResult.optimized_content
+                    optimizedContent: isAnalysisOnly ? content : result.optimized_content
                 });
 
                 setProgress(100);
                 setLoading(false);
-                setViewMode('result');
-                setShowSplitView(true);
+                setLoadingAnalysis(false);
+                if (!isAnalysisOnly) {
+                    setViewMode('result');
+                    setShowSplitView(true);
+                } else {
+                    setViewMode('editor');
+                    setShowSplitView(true);
+                }
                 fetchHistory();
             } else if (res.data.status === 'failed') {
-                const errorMsg = res.data.error || 'Optimization job failed';
-                if (errorMsg.includes('429')) {
-                    setError('GEO Engine rate limit hit. Falling back to default analysis...');
-                    toast.warning('Provider rate limit reached. Please wait a few moments.');
-                } else {
-                    setError(errorMsg);
-                    toast.error(errorMsg);
-                }
+                const errorMsg = res.data.error || 'Job failed';
+                setError(errorMsg);
+                toast.error(errorMsg);
                 setLoading(false);
+                setLoadingAnalysis(false);
                 setProgress(0);
             } else {
-                // Update progress from backend if available
                 if (res.data.progress) {
                     setProgress(res.data.progress);
                 }
-                // Poll every 3 seconds
-                setTimeout(() => pollJobStatus(jobId, isGenerate), 3000);
+                setTimeout(() => pollJobStatus(jobId, isGenerate, isAnalysisOnly), 3000);
             }
         } catch (err) {
             console.error('Job polling failed:', err);
-            setError('Failed to track optimization progress');
+            setError('Failed to track progress');
             setLoading(false);
+            setLoadingAnalysis(false);
         }
     };
+
+    const handleInitialAnalysis = async () => {
+        if (!content.trim()) return
+        
+        setLoadingAnalysis(true)
+        setError(null)
+        
+        try {
+            const response = await axios.post('/api/analyze-text', {
+                content: content,
+                project_id: selectedProject || undefined,
+                engine: targetEngine,
+                content_type: contentType
+            });
+            
+            if (response.data.job_id) {
+                pollJobStatus(response.data.job_id, false, true);
+            }
+        } catch (err) {
+            const msg = err.response?.data?.detail || err.message || 'Analysis failed'
+            setError(msg)
+            toast.error(msg)
+            setLoadingAnalysis(false)
+        }
+    }
 
     const handleOptimize = async () => {
         if (!content.trim()) return
@@ -1382,26 +1411,53 @@ function ContentOptimization() {
                                 </button>
                             </>
                         ) : (
-                            <button
-                                onClick={handleOptimize}
-                                disabled={loading || !content.trim()}
-                                className="btn btn-primary"
-                                style={{ width: '100%', padding: '1rem' }}
-                            >
-                                {loading ? (
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                                        <span>{activeTab === 'generate' ? 'Generating Content...' : 'Optimizing Content...'}</span>
-                                        <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{progress}% Complete</div>
-                                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
-                                            <div style={{ width: `${progress}%`, height: '100%', background: 'white', transition: 'width 0.5s ease' }} />
+                            <div style={{ display: 'grid', gap: '1rem' }}>
+                                <button
+                                    onClick={handleInitialAnalysis}
+                                    disabled={loading || loadingAnalysis || !content.trim()}
+                                    className="btn btn-outline"
+                                    style={{ 
+                                        width: '100%', 
+                                        padding: '1rem',
+                                        borderColor: 'var(--accent-primary)',
+                                        color: 'var(--accent-primary)',
+                                        background: 'rgba(99, 102, 241, 0.05)'
+                                    }}
+                                >
+                                    {loadingAnalysis ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                                            <span>Running Baseline Analysis...</span>
+                                            <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{progress}% Complete</div>
+                                            <div style={{ width: '100%', height: '4px', background: 'rgba(99, 102, 241, 0.2)', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
+                                                <div style={{ width: `${progress}%`, height: '100%', background: 'var(--accent-primary)', transition: 'width 0.5s ease' }} />
+                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    activeTab === 'generate'
-                                        ? <><Sparkles size={18} /> Generate Content</>
-                                        : <><Zap size={18} /> Optimize Content</>
-                                )}
-                            </button>
+                                    ) : (
+                                        <><TrendingUp size={18} /> Step 1: Run Initial Analysis (Before)</>
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={handleOptimize}
+                                    disabled={loading || loadingAnalysis || !content.trim()}
+                                    className="btn btn-primary"
+                                    style={{ width: '100%', padding: '1rem' }}
+                                >
+                                    {loading ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                                            <span>{activeTab === 'generate' ? 'Generating Content...' : 'Optimizing Content...'}</span>
+                                            <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{progress}% Complete</div>
+                                            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
+                                                <div style={{ width: `${progress}%`, height: '100%', background: 'white', transition: 'width 0.5s ease' }} />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        activeTab === 'generate'
+                                            ? <><Sparkles size={18} /> Generate Optimized Content</>
+                                            : <><Zap size={18} /> Step 2: Optimize & Inject GEO Signals (After)</>
+                                    )}
+                                </button>
+                            </div>
                         )}
                         
 
