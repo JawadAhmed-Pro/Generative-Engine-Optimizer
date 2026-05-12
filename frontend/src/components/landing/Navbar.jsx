@@ -39,8 +39,8 @@ function Navbar() {
                     maxWidth: '1200px'
                 }}
             >
-                {/* Left Section: Logo + Links */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
+                {/* Left Section: Logo */}
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                     <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
                         <div style={{
                             width: '36px',
@@ -74,17 +74,17 @@ function Navbar() {
                             GEO Tool
                         </span>
                     </Link>
+                </div>
 
-                    {/* Desktop Links - Now in Middle */}
-                    <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-                        <a href="#features" className="nav-link-premium">Features</a>
-                        <a href="#how-it-works" className="nav-link-premium">Systems</a>
-                        <a href="#pricing" className="nav-link-premium">Pricing</a>
-                    </div>
+                {/* Center Section: Desktop Links */}
+                <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                    <a href="#features" className="nav-link-premium">Features</a>
+                    <a href="#how-it-works" className="nav-link-premium">Systems</a>
+                    <a href="#pricing" className="nav-link-premium">Pricing</a>
                 </div>
 
                 {/* Right Section: Actions */}
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <div style={{ flex: 1, display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: 'flex-end' }}>
                     <Link to="/login" style={{
                         color: 'var(--text-secondary)',
                         textDecoration: 'none',
