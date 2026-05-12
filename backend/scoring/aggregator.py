@@ -168,7 +168,8 @@ class ScoreAggregator:
                 'authoritativeness': authoritativeness_score,
                 'trustworthiness': round(hybrid_trust, 1),
                 'overall_eeat': round(overall_eeat, 1)
-            }
+            },
+            'grounding_gaps': llm_scores.get('grounding_gaps', [])
         }
 
         # Collect Suggestions (Balanced Strategy: 4 LLM + 4 Rule-Based)

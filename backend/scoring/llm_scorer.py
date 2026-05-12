@@ -536,7 +536,8 @@ You are an OBJECTIVE AUDITOR. Grade fairly based on industry standards.
     "authoritativeness_score": <int>,
     "trustworthiness_score": <int>,
     "explanation": "<summary string>",
-    "suggestions": ["<impact_prefix>: <suggestion_string>", "..."]
+    "suggestions": ["<impact_prefix>: <suggestion_string>", "..."],
+    "grounding_gaps": ["Specific research request 1", "Specific research request 2", "..."]
 }
 
 ### {engine.upper()} SPECIALIZED SIGNALS (NEW):
@@ -603,7 +604,8 @@ In your 'explanation' field, include a 'Logic Audit' section:
             "authoritativeness_score": 50,
             "trustworthiness_score": 50,
             "explanation": "Analysis failed. Using default scores.",
-            "suggestions": ["Retry analysis."]
+            "suggestions": ["Retry analysis."],
+            "grounding_gaps": []
         }
         
         return defaults

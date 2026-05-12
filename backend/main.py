@@ -1135,8 +1135,9 @@ async def _run_analysis_job(**kwargs):
             'suggestions': []
         }
         
-        # NEW: Grounding Audit
-        grounding_audit = await geo_optimizer.suggest_hard_grounding(extracted['content'], extracted['content_type'])
+        # Extract Grounding Audit from combined LLM response
+        grounding_suggestions = final_scores['llm_scores'].get('grounding_gaps', [])
+        grounding_audit = {"suggestions": grounding_suggestions}
         
         # 4. PERSISTENCE
         async with db_maker() as db:
