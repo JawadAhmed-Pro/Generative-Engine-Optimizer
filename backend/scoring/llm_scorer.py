@@ -358,23 +358,29 @@ INSTRUCTIONS:
 """
         
         if mode == 'rewrite':
-            return f"""You are a Generative Engine Optimization (GEO) Expert. Your task is to COMPLETELY REWRITE this content to maximize its visibility in AI Search Engines (ChatGPT, Gemini, Google AI Overview).
+            return f"""You are a Generative Engine Optimization (GEO) Expert. Your task is to COMPLETELY REWRITE and EXPAND this content to maximize its visibility in AI Search Engines.
 
 {geo_requirements}
+
+## STRICT INSTRUCTIONS:
+- DO NOT include any preamble like "Here is your rewritten content".
+- DO NOT include any tool-specific links or instructions (e.g., "visit jina.ai", "authentication required").
+- DO NOT include any meta-commentary about your own process.
+- FOCUS ON INFORMATION GAIN: Add new perspectives, deeper technical details, or specific industry context that is missing from the original.
 
 ## ORIGINAL CONTENT TO REWRITE:
 {content}
 
 ## YOUR TASK:
 Rewrite this content following ALL the requirements above. The rewritten version should:
-1. Maintain the original topic and key points
-2. Be significantly longer and more comprehensive (add 50-100% more content)
-3. Have perfect Markdown structure with headers, lists, and formatting
-4. Include specific data points, statistics, or authoritative references
-5. Be immediately usable for blog posts or educational content
+1. Maintain the original topic but significantly increase depth and technical authority.
+2. Be significantly longer and more comprehensive (aim for 2x the original length if possible).
+3. Have perfect Markdown structure with headers, lists, and a comparison table.
+4. Include specific data points, statistics, or authoritative references.
+5. Be immediately usable for professional publication.
 
 ## OUTPUT FORMAT:
-Return ONLY the optimized Markdown content. Do not include any preamble, explanation, or meta-commentary. Start directly with the content.
+Return ONLY the optimized Markdown content. Do not include any meta-commentary.
 """
         else:  # generate
             return f"""You are a Generative Engine Optimization (GEO) Expert. Your task is to GENERATE a comprehensive, high-ranking article that AI Search Engines will want to cite and reference.
