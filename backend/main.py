@@ -1415,7 +1415,14 @@ async def get_job_status(
     if job.user_id and job.user_id != current_user["id"]:
         raise HTTPException(status_code=403, detail="Access denied to this job")
         
-    return job
+    return {
+        "job_id": job.id,
+        "status": job.status,
+        "progress": job.progress,
+        "result": job.result,
+        "error": job.error,
+        "completed_at": job.completed_at
+    }
 
 
 @app.get("/api/analysis/latest/{content_item_id}")
