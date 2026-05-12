@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage'
 import NotFound from './pages/NotFound'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Docs from './pages/Docs'
 import App from './App'
 
 
@@ -13,6 +14,7 @@ function AppRouter() {
         <AuthProvider>
             <Routes>
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/docs" element={<Docs />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/app/*" element={<App />} />

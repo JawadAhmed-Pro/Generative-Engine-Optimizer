@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Folder, FileText, BarChart2, Settings, LogOut, Code2, Zap, Sparkles, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { LayoutDashboard, Folder, FileText, BarChart2, Settings, LogOut, Code2, Zap, Sparkles, Book, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
@@ -27,6 +27,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen = false }) {
         { icon: <Zap size={20} />, label: 'AI Simulator', path: '/app/ai-simulator' },
         { icon: <BarChart2 size={20} />, label: 'Visibility Analysis', path: '/app/visibility' },
         { icon: <Sparkles size={20} />, label: 'Content Strategy', path: '/app/strategy' },
+        { icon: <Book size={20} />, label: 'User Manual', path: '/docs' },
         { icon: <Settings size={20} />, label: 'Settings', path: '/app/settings' },
     ]
 

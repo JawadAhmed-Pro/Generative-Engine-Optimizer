@@ -81,6 +81,7 @@ function Navbar() {
                     <a href="#features" className="nav-link-premium">Features</a>
                     <a href="#how-it-works" className="nav-link-premium">Systems</a>
                     <a href="#pricing" className="nav-link-premium">Pricing</a>
+                    <Link to="/docs" className="nav-link-premium">Docs</Link>
                 </div>
 
                 {/* Right Section: Actions */}
