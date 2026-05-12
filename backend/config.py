@@ -33,8 +33,8 @@ class Settings(BaseSettings):
     
     # Model Selection
     # Model Selection
-    GEMINI_MODEL: str = "gemini-2.0-flash"
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
     
     # Versioning & Benchmarks
     GEO_BENCHMARK_VERSION: str = "2025.1"
