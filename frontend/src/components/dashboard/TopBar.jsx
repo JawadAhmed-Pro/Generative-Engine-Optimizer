@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Bell, HelpCircle, User, Menu, X, Settings, LogOut, FileText, TrendingUp, ExternalLink, Zap, ArrowLeft, Search, Command } from 'lucide-react'
+import { Bell, HelpCircle, User, Menu, X, Settings, LogOut, FileText, TrendingUp, ExternalLink, Zap, ArrowLeft, Search, Command, Book } from 'lucide-react'
 import axios from 'axios'
 
 function TopBar({ onMenuToggle, isMobile }) {
@@ -242,6 +242,24 @@ function TopBar({ onMenuToggle, isMobile }) {
                         }}>
                             <h4 style={{ fontWeight: '600', marginBottom: '1rem' }}>Quick Help</h4>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem' }}>
+                                <Link 
+                                    to="/docs" 
+                                    style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: '0.75rem', 
+                                        padding: '0.75rem', 
+                                        background: 'var(--accent-primary)', 
+                                        color: 'white', 
+                                        borderRadius: '8px', 
+                                        textDecoration: 'none',
+                                        fontWeight: '700',
+                                        marginBottom: '0.5rem',
+                                        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+                                    }}
+                                >
+                                    <Book size={16} /> Open Full User Manual
+                                </Link>
                                 <div>
                                     <strong style={{ color: 'var(--accent-primary)' }}>Visibility Analysis</strong>
                                     <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>Analyze how AI sees your web pages</p>
@@ -256,14 +274,12 @@ function TopBar({ onMenuToggle, isMobile }) {
                                 </div>
                             </div>
                             <div className="dropdown-divider" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid currentColor' }}>
-                                <a
-                                    href="https://github.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                <Link
+                                    to="/docs"
+                                    style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}
                                 >
-                                    <ExternalLink size={12} /> Documentation
-                                </a>
+                                    <FileText size={12} /> Detailed Documentation
+                                </Link>
                             </div>
                         </div>
                     )}
