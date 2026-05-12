@@ -25,7 +25,7 @@ const sections = [
                         <Zap size={18} /> Essential Flow
                     </h4>
                     <p style={{ fontSize: '0.9rem', color: 'rgba(248, 250, 252, 0.8)' }}>
-                        <strong>1. Analyze</strong> your current visibility → <strong>2. Optimize</strong> with Grounding → <strong>3. Verify</strong> with the Simulator.
+                        <strong style={{ color: 'var(--text-primary)' }}>1. Analyze</strong> your current visibility → <strong style={{ color: 'var(--text-primary)' }}>2. Optimize</strong> with Grounding → <strong style={{ color: 'var(--text-primary)' }}>3. Verify</strong> with the Simulator.
                     </p>
                 </div>
 
@@ -68,7 +68,7 @@ const sections = [
                             <div style={{ padding: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', color: 'var(--accent-primary)' }}><MousePointer2 size={18}/></div>
                             <div>
                                 <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>1. Navigate</h4>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Click **"Content Optimization"** on the dashboard sidebar.</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Click <strong style={{ color: 'var(--text-primary)' }}>"Content Optimization"</strong> on the dashboard sidebar.</p>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
@@ -82,7 +82,7 @@ const sections = [
                             <div style={{ padding: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', color: 'var(--accent-primary)' }}><Play size={18}/></div>
                             <div>
                                 <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>3. Click Run Analysis</h4>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Choose **"Deep Optimization"** to enable Jina-powered grounding for maximum factual density.</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Choose <strong style={{ color: 'var(--text-primary)' }}>"Deep Optimization"</strong> to enable Jina-powered grounding for maximum factual density.</p>
                             </div>
                         </div>
                     </div>
@@ -124,7 +124,7 @@ const sections = [
                         <h4 style={{ color: 'var(--text-primary)', fontWeight: '700', marginBottom: '0.75rem' }}>How to Elaborate the Results:</h4>
                         <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                             <li>• <strong style={{ color: 'var(--accent-primary)' }}>Scientific Audit:</strong> Check the "Grounding Gap" to see what facts were missing.</li>
-                            <li>• <strong style={{ color: 'var(--accent-primary)' }}>Citation Index:</strong> Look for the generated `[1]` markers—these are the trust signals AI engines crave.</li>
+                            <li>• <strong style={{ color: 'var(--accent-primary)' }}>Citation Index:</strong> Look for the generated trust signals AI engines crave.</li>
                             <li>• <strong style={{ color: 'var(--accent-primary)' }}>FAQ Density:</strong> Ensure the generated FAQs cover common user intent to rank in AI answer boxes.</li>
                         </ul>
                     </div>
@@ -146,7 +146,7 @@ const sections = [
                             <div style={{ padding: '0.5rem', background: 'rgba(168, 85, 247, 0.1)', borderRadius: '8px', color: '#A855F7' }}><MousePointer2 size={18}/></div>
                             <div>
                                 <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>1. Navigate</h4>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Go to **"AI Simulator"** from the sidebar.</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Go to <strong style={{ color: 'var(--text-primary)' }}>"AI Simulator"</strong> from the sidebar.</p>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
@@ -201,7 +201,7 @@ const sections = [
                     }}>
                         <h4 style={{ color: 'var(--text-primary)', fontWeight: '700', marginBottom: '0.75rem' }}>How to Elaborate the Results:</h4>
                         <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                            <li>• <strong style={{ color: '#A855F7' }}>Citation Probability:</strong> Anything above **80%** means your content is highly optimized.</li>
+                            <li>• <strong style={{ color: '#A855F7' }}>Citation Probability:</strong> Anything above <strong style={{ color: 'var(--text-primary)' }}>80%</strong> means your content is highly optimized.</li>
                             <li>• <strong style={{ color: '#A855F7' }}>Semantic Alignment:</strong> If the score is low, re-optimize your content with more specific "Entities."</li>
                             <li>• <strong style={{ color: '#A855F7' }}>Direct Response Test:</strong> The result simulates if a user would be satisfied by the AI using your content.</li>
                         </ul>
@@ -224,7 +224,7 @@ const sections = [
                             <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', color: '#10B981' }}><MousePointer2 size={18}/></div>
                             <div>
                                 <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>1. Navigate</h4>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Select **"Visibility Analysis"** from the sidebar.</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Select <strong style={{ color: 'var(--text-primary)' }}>"Visibility Analysis"</strong> from the sidebar.</p>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
@@ -302,7 +302,7 @@ const sections = [
                             <div style={{ padding: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '8px', color: '#F59E0B' }}><MousePointer2 size={18}/></div>
                             <div>
                                 <h4 style={{ color: 'var(--text-primary)', fontWeight: '700' }}>1. Navigate</h4>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Click **"Content Strategy"** in the sidebar.</p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Click <strong style={{ color: 'var(--text-primary)' }}>"Content Strategy"</strong> in the sidebar.</p>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
