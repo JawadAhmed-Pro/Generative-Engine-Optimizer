@@ -826,6 +826,9 @@ def get_analysis_by_item(
             "llm_feedback": analysis.llm_scores.get('top_suggestion', '') if analysis.llm_scores else None,
             "rule_details": analysis.rule_based_scores,
             "llm_scores": analysis.llm_scores,
+            "logic_audit": analysis.llm_scores.get('logic_audit') if analysis.llm_scores else None,
+            "intent_analysis": analysis.llm_scores.get('intent_analysis') if analysis.llm_scores else None,
+            "eeat_analysis": analysis.llm_scores.get('eeat_analysis') if analysis.llm_scores else None,
             "recommendations": [s.get('text', str(s)) if isinstance(s, dict) else str(s) for s in (analysis.suggestions or [])[:8]],
             "suggestions_detailed": analysis.suggestions,
             "raw_content": item.content,
@@ -1161,7 +1164,13 @@ async def _run_analysis_job(**kwargs):
             await db.commit()
             
         if job_id: await job_manager.update_job_progress(job_id, 100, db_maker)
-        return {"content_item_id": content_item_id, "success": True}
+        
+        # Prepare full result for job completion
+        result_payload = final_scores.copy()
+        result_payload['content_item_id'] = content_item_id
+        result_payload['success'] = True
+        
+        return result_payload
         
     except Exception as e:
         app_logger.error(f"Analysis Job Failed: {str(e)}")

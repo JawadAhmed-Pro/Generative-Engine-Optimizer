@@ -148,6 +148,20 @@ class ScoreAggregator:
                 'score': llm_metrics['authoritativeness'],
                 'details': readability_details, # Reuse for UI consistency or fix if needed
                 'suggestions': []
+            },
+            # NEW: Persistent Strategic Analysis Fields
+            'logic_audit': llm_scores.get('explanation', 'Scientific logic derived from grounding analysis.'),
+            'intent_analysis': {
+                'query_intent': intent,
+                'alignment_score': user_intent_val,
+                'weights_used': weights
+            },
+            'eeat_analysis': {
+                'experience': experience_score,
+                'expertise': round(hybrid_expertise, 1),
+                'authoritativeness': authoritativeness_score,
+                'trustworthiness': round(hybrid_trust, 1),
+                'overall_eeat': round(overall_eeat, 1)
             }
         }
 
