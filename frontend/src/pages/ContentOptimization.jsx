@@ -138,7 +138,6 @@ function ContentOptimization() {
     const [compareView, setCompareView] = useState('side') // 'side' or 'diff'
     const [additionalInstructions, setAdditionalInstructions] = useState('')
     const [progress, setProgress] = useState(0)
-    const [loadingAnalysis, setLoadingAnalysis] = useState(false)
     const [selection, setSelection] = useState({ text: '', top: 0, left: 0, visible: false })
     const [versionHistory, setVersionHistory] = useState([])
 
@@ -561,30 +560,7 @@ function ContentOptimization() {
         }
     };
 
-    const handleInitialAnalysis = async () => {
-        if (!content.trim()) return
-        
-        setLoadingAnalysis(true)
-        setError(null)
-        
-        try {
-            const response = await axios.post('/api/analyze-text', {
-                content: content,
-                project_id: selectedProject || undefined,
-                engine: targetEngine,
-                content_type: contentType
-            });
-            
-            if (response.data.job_id) {
-                pollJobStatus(response.data.job_id, false, true);
-            }
-        } catch (err) {
-            const msg = err.response?.data?.detail || err.message || 'Analysis failed'
-            setError(msg)
-            toast.error(msg)
-            setLoadingAnalysis(false)
-        }
-    }
+
 
     const handleOptimize = async () => {
         if (!content.trim()) return
@@ -1411,35 +1387,9 @@ function ContentOptimization() {
                                 </button>
                             </>
                         ) : (
-                            <div style={{ display: 'grid', gap: '1rem' }}>
-                                <button
-                                    onClick={handleInitialAnalysis}
-                                    disabled={loading || loadingAnalysis || !content.trim()}
-                                    className="btn btn-outline"
-                                    style={{ 
-                                        width: '100%', 
-                                        padding: '1rem',
-                                        borderColor: 'var(--accent-primary)',
-                                        color: 'var(--accent-primary)',
-                                        background: 'rgba(99, 102, 241, 0.05)'
-                                    }}
-                                >
-                                    {loadingAnalysis ? (
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                                            <span>Running Baseline Analysis...</span>
-                                            <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{progress}% Complete</div>
-                                            <div style={{ width: '100%', height: '4px', background: 'rgba(99, 102, 241, 0.2)', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
-                                                <div style={{ width: `${progress}%`, height: '100%', background: 'var(--accent-primary)', transition: 'width 0.5s ease' }} />
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <><TrendingUp size={18} /> Step 1: Run Initial Analysis (Before)</>
-                                    )}
-                                </button>
-
                                 <button
                                     onClick={handleOptimize}
-                                    disabled={loading || loadingAnalysis || !content.trim()}
+                                    disabled={loading || !content.trim()}
                                     className="btn btn-primary"
                                     style={{ width: '100%', padding: '1rem' }}
                                 >
@@ -1454,10 +1404,10 @@ function ContentOptimization() {
                                     ) : (
                                         activeTab === 'generate'
                                             ? <><Sparkles size={18} /> Generate Optimized Content</>
-                                            : <><Zap size={18} /> Step 2: Optimize & Inject GEO Signals (After)</>
+                                            : <><Zap size={18} /> Optimize & Inject GEO Signals</>
                                     )}
                                 </button>
-                            </div>
+
                         )}
                         
 
