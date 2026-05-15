@@ -422,8 +422,6 @@ function ContentOptimization() {
     };
 
     const handleGenerateSchema = async () => {
-        if (!content.trim()) return
-        
         setSchemaLoading(true)
         setSchemaResult(null)
         setError(null)
@@ -439,17 +437,6 @@ function ContentOptimization() {
                 author: schemaMetadata.author,
                 datePublished: schemaMetadata.datePublished,
                 url: schemaMetadata.url,
-                description: schemaMetadata.description
-            }
-        } else if (schemaType === 'product') {
-            contentForSchema = schemaMetadata.description || schemaMetadata.productName
-            metadata = {
-                name: schemaMetadata.productName,
-                price: schemaMetadata.price,
-                currency: schemaMetadata.currency,
-                brand: schemaMetadata.brand,
-                availability: schemaMetadata.availability,
-                image: schemaMetadata.imageUrl,
                 description: schemaMetadata.description
             }
         } else if (schemaType === 'faq') {

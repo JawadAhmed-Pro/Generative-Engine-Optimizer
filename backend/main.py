@@ -1437,10 +1437,7 @@ def generate_schema(payload: GenerateSchemaRequest = Body(...)):
     except Exception as e:
         return {
             "success": False,
-            "error": str(e),
-            "primary_keyword": "",
-            "secondary_keywords": [],
-            "long_tail_keywords": []
+            "error": str(e)
         }
 
 

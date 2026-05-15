@@ -298,7 +298,7 @@ class OptimizeEntitySchemaRequest(BaseModel):
 
 
 class GenerateSchemaRequest(BaseModel):
-    content: str
+    content: Optional[str] = ""
     content_type: Optional[str] = None  # 'article', 'product', 'faq', 'howto', or None for auto-detect
     metadata: Optional[Dict[str, Any]] = None
 

@@ -118,17 +118,20 @@ class SchemaGenerator:
     
     def _generate_faq_schema(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Generate FAQPage schema from Q&A content."""
-        # Extract Q&A pairs from content
-        qa_pairs = self._extract_qa_pairs(content)
+        # Use metadata items if available, otherwise extract from content
+        qa_items = metadata.get("faqItems", [])
+        if not qa_items:
+            qa_pairs = self._extract_qa_pairs(content)
+            qa_items = [{"question": q, "answer": a} for q, a in qa_pairs]
         
         main_entity = []
-        for q, a in qa_pairs:
+        for item in qa_items:
             main_entity.append({
                 "@type": "Question",
-                "name": q,
+                "name": item.get("question", ""),
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": a
+                    "text": item.get("answer", "")
                 }
             })
         
@@ -149,16 +152,19 @@ class SchemaGenerator:
     
     def _generate_howto_schema(self, content: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Generate HowTo schema for tutorial content."""
-        # Extract steps from content
-        steps = self._extract_steps(content)
-        
+        # Use metadata steps if available, otherwise extract from content
+        manual_steps = metadata.get("steps", [])
+        if not manual_steps:
+            raw_steps = self._extract_steps(content)
+            manual_steps = [{"name": f"Step {i}", "text": step} for i, step in enumerate(raw_steps, 1)]
+            
         howto_steps = []
-        for i, step in enumerate(steps, 1):
+        for i, step in enumerate(manual_steps, 1):
             howto_steps.append({
                 "@type": "HowToStep",
                 "position": i,
-                "name": f"Step {i}",
-                "text": step
+                "name": step.get("name", f"Step {i}"),
+                "text": step.get("text", "")
             })
         
         schema = {
